@@ -20,15 +20,38 @@ on:
         description: "Maximum number of pages to scan"
         required: false
         default: "10"
+  issues:
+    types:
+      - opened
+      - reopened
   schedule:
     - cron: "17 13 * * 1"
+    - cron: "17 13 * * 2-5"
 
 permissions:
   contents: read
 
 jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "18"
+
+      - name: Run tests
+        run: npm test
+
   scan:
     runs-on: ubuntu-latest
+    needs: test
+    if: >
+      github.event_name != 'issues' ||
+      startsWith(github.event.issue.title, 'SCAN:')
     steps:
       - name: Check out repository
         uses: actions/checkout@v4
@@ -45,21 +68,60 @@ jobs:
         id: inputs
         env:
           EVENT_NAME: ${{ github.event_name }}
+          EVENT_SCHEDULE: ${{ github.event.schedule }}
           INPUT_URL: ${{ inputs.url }}
           INPUT_SYSTEM: ${{ inputs.system }}
           INPUT_CRAWL: ${{ inputs.crawl }}
           INPUT_MAX_PAGES: ${{ inputs.max_pages }}
+          ISSUE_TITLE: ${{ github.event.issue.title }}
+          ISSUE_BODY: ${{ github.event.issue.body }}
         run: |
-          if [ "$EVENT_NAME" = "schedule" ]; then
+          if [ "$EVENT_NAME" = "schedule" ] && [ "$EVENT_SCHEDULE" = "17 13 * * 1" ]; then
+            echo "url=https://designsystem.digital.gov/" >> "$GITHUB_OUTPUT"
+            echo "system=uswds" >> "$GITHUB_OUTPUT"
+            echo "crawl=true" >> "$GITHUB_OUTPUT"
+            echo "max_pages=20" >> "$GITHUB_OUTPUT"
+            echo "trigger=weekly" >> "$GITHUB_OUTPUT"
+          elif [ "$EVENT_NAME" = "schedule" ]; then
             echo "url=https://designsystem.digital.gov/" >> "$GITHUB_OUTPUT"
             echo "system=uswds" >> "$GITHUB_OUTPUT"
             echo "crawl=true" >> "$GITHUB_OUTPUT"
             echo "max_pages=10" >> "$GITHUB_OUTPUT"
+            echo "trigger=weekday" >> "$GITHUB_OUTPUT"
+          elif [ "$EVENT_NAME" = "issues" ]; then
+            URL=$(printf '%s\n%s\n' "$ISSUE_TITLE" "$ISSUE_BODY" | grep -Eo 'https?://[^ )]+' | head -n 1 || true)
+            SYSTEM=$(printf '%s\n' "$ISSUE_BODY" | sed -n 's/^system:[[:space:]]*//p' | head -n 1)
+            CRAWL=$(printf '%s\n' "$ISSUE_BODY" | sed -n 's/^crawl:[[:space:]]*//p' | head -n 1)
+            MAX_PAGES=$(printf '%s\n' "$ISSUE_BODY" | sed -n 's/^max_pages:[[:space:]]*//p' | head -n 1)
+
+            if [ -z "$URL" ]; then
+              echo "No URL found in issue title/body. Use a SCAN: issue with a URL in the title or body." >&2
+              exit 1
+            fi
+
+            if [ -z "$SYSTEM" ]; then
+              SYSTEM="uswds"
+            fi
+
+            if [ -z "$CRAWL" ]; then
+              CRAWL="true"
+            fi
+
+            if [ -z "$MAX_PAGES" ]; then
+              MAX_PAGES="10"
+            fi
+
+            echo "url=$URL" >> "$GITHUB_OUTPUT"
+            echo "system=$SYSTEM" >> "$GITHUB_OUTPUT"
+            echo "crawl=$CRAWL" >> "$GITHUB_OUTPUT"
+            echo "max_pages=$MAX_PAGES" >> "$GITHUB_OUTPUT"
+            echo "trigger=issue-${{ github.event.issue.number }}" >> "$GITHUB_OUTPUT"
           else
             echo "url=${INPUT_URL}" >> "$GITHUB_OUTPUT"
             echo "system=${INPUT_SYSTEM}" >> "$GITHUB_OUTPUT"
             echo "crawl=${INPUT_CRAWL}" >> "$GITHUB_OUTPUT"
             echo "max_pages=${INPUT_MAX_PAGES}" >> "$GITHUB_OUTPUT"
+            echo "trigger=manual" >> "$GITHUB_OUTPUT"
           fi
 
       - name: Run scanner
@@ -81,11 +143,24 @@ jobs:
             --save artifacts/scan.json \
             "$SCAN_URL" | tee artifacts/report.txt
 
+      - name: Save trigger metadata
+        run: |
+          {
+            echo "trigger=${{ steps.inputs.outputs.trigger }}"
+            echo "url=${{ steps.inputs.outputs.url }}"
+            echo "system=${{ steps.inputs.outputs.system }}"
+            echo "crawl=${{ steps.inputs.outputs.crawl }}"
+            echo "max_pages=${{ steps.inputs.outputs.max_pages }}"
+          } > artifacts/metadata.txt
+
       - name: Publish step summary
-        run: cat artifacts/report.txt >> "$GITHUB_STEP_SUMMARY"
+        run: |
+          echo "Trigger: ${{ steps.inputs.outputs.trigger }}" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          cat artifacts/report.txt >> "$GITHUB_STEP_SUMMARY"
 
       - name: Upload scan artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: design-system-scan-${{ github.run_number }}
+          name: design-system-scan-${{ steps.inputs.outputs.trigger }}-${{ github.run_number }}
           path: artifacts/

@@ -52,6 +52,12 @@ Emit JSON for downstream analysis:
 node src/cli.js --system uswds --json https://example.gov/
 ```
 
+Run the rule tests:
+
+```bash
+npm test
+```
+
 Scan a site starting from one page:
 
 ```bash
@@ -116,7 +122,10 @@ This repo now includes a starter workflow at [`.github/workflows/scan.yml`](/Use
 It supports:
 
 - manual runs from the Actions tab using `workflow_dispatch`
-- a weekly scheduled demo scan of `https://designsystem.digital.gov/`
+- `SCAN:` issues opened or reopened, as long as a URL is present in the title or body
+- weekday scheduled scans of `https://designsystem.digital.gov/`
+- a weekly deeper scheduled scan of `https://designsystem.digital.gov/`
+- `npm test` before the scan job runs
 - uploaded artifacts containing both `scan.json` and a text `report.txt`
 
 Once that workflow is pushed to GitHub, runs should appear at:
@@ -124,6 +133,29 @@ Once that workflow is pushed to GitHub, runs should appear at:
 - [Actions](https://github.com/mgifford/design-system-scan/actions)
 
 The first scheduled run depends on GitHub's scheduler, but you can trigger one immediately from the Actions tab after the workflow is on `main`.
+
+### SCAN issue convention
+
+To trigger a scan from an issue, open or reopen an issue whose title starts with `SCAN:`.
+
+Example:
+
+```text
+Title: SCAN: https://example.gov/
+
+Body:
+system: uswds
+crawl: true
+max_pages: 10
+```
+
+Notes:
+
+- The workflow uses the first URL it finds in the title or body.
+- `system` defaults to `uswds`.
+- `crawl` defaults to `true`.
+- `max_pages` defaults to `10`.
+- Non-`SCAN:` issues do not trigger the scan job.
 
 ## USWDS starter signals
 
@@ -137,23 +169,11 @@ The initial USWDS definition uses signals derived from official documentation, e
 
 The current component coverage includes:
 
-- Banner
-- Accordion
-- Header and navigation
-- Footer
-- Identifier
-- Buttons
-- Alert
-- Breadcrumb
-- Search
-- Form controls
-- Table
-- Modal
-- Pagination
-- Card
-- Collection
-- Tag
-- Skipnav
+- the full current official USWDS component inventory from the Components overview
+- fixture-based `absent` / `partial` / `full` tests for every official component
+- starter template detection for documentation pages, landing pages, 404 pages, authentication pages, and form templates
+
+The test suite uses synthetic HTML fixtures that mirror live-site evidence like documented classes, attributes, and structure. It validates the scanner’s rule model, which is different from proving that any arbitrary site is semantically correct.
 
 ## Current limitations
 

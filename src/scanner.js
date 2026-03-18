@@ -125,6 +125,16 @@ function extractClasses(html) {
   return uniq(classes);
 }
 
+function extractTags(html) {
+  const tags = [];
+
+  for (const match of html.matchAll(/<([a-z][a-z0-9-]*)\b/giu)) {
+    tags.push(match[1].toLowerCase());
+  }
+
+  return uniq(tags);
+}
+
 function extractLinkedAssets(html, baseUrl) {
   const stylesheetUrls = [];
   const scriptUrls = [];
@@ -235,6 +245,40 @@ function scoreSignals(signals, context, definitionThresholds) {
 }
 
 function signalMatches(signal, context) {
+  if (signal.type === "component-ref") {
+    const component = context.componentMap?.get(signal.componentId);
+
+    if (!component) {
+      return null;
+    }
+
+    const minimum = signal.minimumStatus ?? "partial";
+    const ranks = {
+      absent: 0,
+      partial: 1,
+      full: 2,
+    };
+
+    if ((ranks[component.status] ?? 0) < (ranks[minimum] ?? 1)) {
+      return null;
+    }
+
+    return {
+      source: "component",
+      value: `${component.name}:${component.status}`,
+    };
+  }
+
+  if (signal.type === "tag-exact") {
+    const tagName = context.tags.find((value) => value === signal.pattern.toLowerCase());
+    return tagName ? { source: "tag", value: tagName } : null;
+  }
+
+  if (signal.type === "tag-prefix") {
+    const tagName = context.tags.find((value) => value.startsWith(signal.pattern.toLowerCase()));
+    return tagName ? { source: "tag", value: tagName } : null;
+  }
+
   if (signal.type === "asset-substring") {
     const asset = context.assetUrls.find((value) => value.includes(signal.pattern));
     return asset ? { source: "asset-url", value: asset } : null;
@@ -308,6 +352,7 @@ function buildContext(page, assets) {
   return {
     html: page.html,
     classes: page.classes,
+    tags: page.tags,
     cssTexts,
     jsTexts,
     assetUrls,
@@ -338,6 +383,9 @@ function summarizePage(pageReport, definition) {
   const matchedComponents = pageReport.components.filter(
     (component) => component.status !== "absent"
   );
+  const matchedTemplates = (pageReport.templates ?? []).filter(
+    (template) => template.status !== "absent"
+  );
   const fullyImplemented = matchedComponents.filter(
     (component) => component.status === "full"
   ).length;
@@ -353,22 +401,94 @@ function summarizePage(pageReport, definition) {
     matchedComponentCount: matchedComponents.length,
     fullComponentCount: fullyImplemented,
     partialComponentCount: partiallyImplemented,
+    matchedTemplateCount: matchedTemplates.length,
     overallCoverage: Number.parseFloat(clamp(overallCoverage, 0, 1).toFixed(3)),
   };
 }
 
-export async function scanUrl(url, definition, options) {
+function evaluatePageContent(url, html, definition, options, assetContent = { css: [], js: [] }) {
   const page = {
     url,
-    html: "",
-    classes: [],
+    html,
+    classes: extractClasses(html),
+    tags: extractTags(html),
     cssUrls: [],
     jsUrls: [],
     errors: [],
   };
 
+  const linkedAssets = extractLinkedAssets(page.html, url);
+  page.cssUrls = linkedAssets.cssUrls;
+  page.jsUrls = linkedAssets.jsUrls;
+
+  const context = buildContext(page, assetContent);
+  const siteFingerprint = scoreSignals(
+    definition.siteFingerprint.signals,
+    context,
+    definition.siteFingerprint.thresholds
+  );
+  const components = definition.components.map((component) => ({
+    id: component.id,
+    name: component.name,
+    ...scoreSignals(component.signals, context, component.thresholds),
+  }));
+  const componentMap = new Map(components.map((component) => [component.id, component]));
+  const templates = (definition.templates ?? []).map((template) => ({
+    id: template.id,
+    name: template.name,
+    ...scoreSignals(
+      template.signals,
+      {
+        ...context,
+        componentMap,
+      },
+      template.thresholds
+    ),
+  }));
+
+  const versionTexts = [
+    page.html,
+    ...context.assetUrls,
+    ...context.cssTexts,
+    ...context.jsTexts,
+  ];
+  const versions = detectVersions(versionTexts);
+  const assetErrors = [...assetContent.css, ...assetContent.js]
+    .filter((asset) => asset.error)
+    .map((asset) => `${asset.url}: ${asset.error}`);
+
+  return {
+    url,
+    error: null,
+    scannedAt: new Date().toISOString(),
+    versions,
+    siteFingerprint,
+    components,
+    templates,
+    assetInventory: {
+      cssUrls: page.cssUrls,
+      jsUrls: page.jsUrls,
+      cssFetched: assetContent.css.length,
+      jsFetched: assetContent.js.length,
+      assetErrors,
+    },
+    summary: summarizePage({ components, templates }, definition),
+  };
+}
+
+export function evaluateHtml(url, html, definition) {
+  return evaluatePageContent(url, html, definition, {
+    includeAssets: false,
+    assetLimit: 0,
+    timeoutMs: 0,
+  });
+}
+
+export async function scanUrl(url, definition, options) {
+  let html = "";
+
   try {
-    page.html = await fetchText(url, options.timeoutMs);
+    html = await fetchText(url, options.timeoutMs);
   } catch (error) {
     return {
       url,
@@ -384,11 +504,7 @@ export async function scanUrl(url, definition, options) {
       },
     };
   }
-
-  page.classes = extractClasses(page.html);
-  const assets = extractLinkedAssets(page.html, url);
-  page.cssUrls = assets.cssUrls;
-  page.jsUrls = assets.jsUrls;
+  const linkedAssets = extractLinkedAssets(html, url);
 
   const assetContent = {
     css: [],
@@ -396,51 +512,11 @@ export async function scanUrl(url, definition, options) {
   };
 
   if (options.includeAssets) {
-    assetContent.css = await fetchAssets(page.cssUrls, options.assetLimit, options.timeoutMs);
-    assetContent.js = await fetchAssets(page.jsUrls, options.assetLimit, options.timeoutMs);
+    assetContent.css = await fetchAssets(linkedAssets.cssUrls, options.assetLimit, options.timeoutMs);
+    assetContent.js = await fetchAssets(linkedAssets.jsUrls, options.assetLimit, options.timeoutMs);
   }
 
-  const context = buildContext(page, assetContent);
-  const siteFingerprint = scoreSignals(
-    definition.siteFingerprint.signals,
-    context,
-    definition.siteFingerprint.thresholds
-  );
-
-  const components = definition.components.map((component) => ({
-    id: component.id,
-    name: component.name,
-    ...scoreSignals(component.signals, context, component.thresholds),
-  }));
-
-  const versionTexts = [
-    page.html,
-    ...context.assetUrls,
-    ...context.cssTexts,
-    ...context.jsTexts,
-  ];
-
-  const versions = detectVersions(versionTexts);
-  const assetErrors = [...assetContent.css, ...assetContent.js]
-    .filter((asset) => asset.error)
-    .map((asset) => `${asset.url}: ${asset.error}`);
-
-  return {
-    url,
-    error: null,
-    scannedAt: new Date().toISOString(),
-    versions,
-    siteFingerprint,
-    components,
-    assetInventory: {
-      cssUrls: page.cssUrls,
-      jsUrls: page.jsUrls,
-      cssFetched: assetContent.css.length,
-      jsFetched: assetContent.js.length,
-      assetErrors,
-    },
-    summary: summarizePage({ components }, definition),
-  };
+  return evaluatePageContent(url, html, definition, options, assetContent);
 }
 
 export async function discoverUrls(seedUrls, options) {
@@ -518,6 +594,7 @@ function summarizeSite(pages) {
     (page) => page.siteFingerprint && page.siteFingerprint.status !== "absent"
   );
   const componentCounts = new Map();
+  const templateCounts = new Map();
 
   for (const page of successfulPages) {
     for (const component of page.components) {
@@ -540,6 +617,27 @@ function summarizeSite(pages) {
 
       componentCounts.set(component.id, current);
     }
+
+    for (const template of page.templates ?? []) {
+      if (template.status === "absent") {
+        continue;
+      }
+
+      const current = templateCounts.get(template.id) ?? {
+        id: template.id,
+        name: template.name,
+        full: 0,
+        partial: 0,
+      };
+
+      if (template.status === "full") {
+        current.full += 1;
+      } else if (template.status === "partial") {
+        current.partial += 1;
+      }
+
+      templateCounts.set(template.id, current);
+    }
   }
 
   return {
@@ -547,6 +645,11 @@ function summarizeSite(pages) {
     successfulPageCount: successfulPages.length,
     fingerprintedPageCount: fingerprintPages.length,
     components: [...componentCounts.values()].sort((left, right) => {
+      const leftScore = left.full * 2 + left.partial;
+      const rightScore = right.full * 2 + right.partial;
+      return rightScore - leftScore;
+    }),
+    templates: [...templateCounts.values()].sort((left, right) => {
       const leftScore = left.full * 2 + left.partial;
       const rightScore = right.full * 2 + right.partial;
       return rightScore - leftScore;

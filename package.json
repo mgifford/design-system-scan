@@ -9,6 +9,7 @@
   "scripts": {
     "scan": "node ./src/cli.js",
     "scan:uswds": "node ./src/cli.js --system uswds",
+    "test": "node --test",
     "test:sample": "node ./src/cli.js --system uswds https://designsystem.digital.gov/"
   },
   "engines": {

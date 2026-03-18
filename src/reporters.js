@@ -9,6 +9,13 @@ function topComponents(components) {
     .slice(0, 10);
 }
 
+function topTemplates(templates) {
+  return templates
+    .filter((template) => template.status !== "absent")
+    .sort((left, right) => right.coverage - left.coverage)
+    .slice(0, 5);
+}
+
 export function formatTextReport(report) {
   const lines = [];
 
@@ -30,6 +37,14 @@ export function formatTextReport(report) {
     lines.push(`Site-wide component tells: ${componentSummary}`);
   }
 
+  if ((report.siteSummary.templates ?? []).length > 0) {
+    const templateSummary = report.siteSummary.templates
+      .slice(0, 6)
+      .map((template) => `${template.name} (${template.full} full, ${template.partial} partial)`)
+      .join("; ");
+    lines.push(`Site-wide template tells: ${templateSummary}`);
+  }
+
   lines.push("");
 
   for (const page of report.pages) {
@@ -47,6 +62,7 @@ export function formatTextReport(report) {
     lines.push(
       `  Adoption: ${page.summary.fullComponentCount} full, ${page.summary.partialComponentCount} partial, ${formatPercent(page.summary.overallCoverage)} overall`
     );
+    lines.push(`  Templates: ${page.summary.matchedTemplateCount} detected`);
     lines.push(
       `  Version clues: ${page.versions.length > 0 ? page.versions.join(", ") : "none detected"}`
     );
@@ -63,6 +79,22 @@ export function formatTextReport(report) {
           .join(" | ");
         lines.push(
           `    - ${component.name}: ${component.status} (${formatPercent(component.coverage)})${evidence ? ` via ${evidence}` : ""}`
+        );
+      }
+    }
+
+    const templates = topTemplates(page.templates ?? []);
+
+    if (templates.length > 0) {
+      lines.push("  Templates:");
+
+      for (const template of templates) {
+        const evidence = template.matchedSignals
+          .slice(0, 2)
+          .map((signal) => signal.value)
+          .join(" | ");
+        lines.push(
+          `    - ${template.name}: ${template.status} (${formatPercent(template.coverage)})${evidence ? ` via ${evidence}` : ""}`
         );
       }
     }
@@ -101,6 +133,16 @@ export function formatDiffReport(diff) {
     lines.push("Component changes:");
 
     diff.summary.componentChanges.slice(0, 12).forEach((change) => {
+      lines.push(
+        `  - ${change.name}: full ${change.previous.full} -> ${change.current.full}, partial ${change.previous.partial} -> ${change.current.partial}`
+      );
+    });
+  }
+
+  if (diff.summary.templateChanges.length > 0) {
+    lines.push("Template changes:");
+
+    diff.summary.templateChanges.slice(0, 12).forEach((change) => {
       lines.push(
         `  - ${change.name}: full ${change.previous.full} -> ${change.current.full}, partial ${change.previous.partial} -> ${change.current.partial}`
       );
