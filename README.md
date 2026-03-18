@@ -115,6 +115,8 @@ https://example.gov/
 ## Project structure
 
 - [`ACCESSIBILITY.md`](/Users/mike.gifford/design-system-scan/ACCESSIBILITY.md): locked accessibility patterns for report UI behavior
+- [`docs/design-system-component-matrix.md`](/Users/mike.gifford/design-system-scan/docs/design-system-component-matrix.md): cross-system semantic matrix and CMS theme comparison
+- [`data/design-system-component-matrix.json`](/Users/mike.gifford/design-system-scan/data/design-system-component-matrix.json): machine-readable semantic component matrix
 - [`src/cli.js`](/Users/mike.gifford/design-system-scan/src/cli.js): command-line entrypoint
 - [`src/scanner.js`](/Users/mike.gifford/design-system-scan/src/scanner.js): fetch, extract, score, and summarize pages
 - [`src/snapshots.js`](/Users/mike.gifford/design-system-scan/src/snapshots.js): save, load, and diff scan snapshots

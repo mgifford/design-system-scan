@@ -1,0 +1,251 @@
+{
+  "version": "2026-03-18",
+  "scope": "Scanner-supported component families and semantic equivalents.",
+  "systems": [
+    {
+      "id": "uswds",
+      "name": "U.S. Web Design System"
+    },
+    {
+      "id": "va",
+      "name": "VA.gov Design System"
+    },
+    {
+      "id": "cms",
+      "name": "CMS Design System"
+    }
+  ],
+  "cmsThemes": [
+    {
+      "id": "core",
+      "name": "Core"
+    },
+    {
+      "id": "cmsgov",
+      "name": "CMS.gov"
+    },
+    {
+      "id": "healthcare",
+      "name": "HealthCare.gov"
+    },
+    {
+      "id": "medicare",
+      "name": "Medicare.gov"
+    }
+  ],
+  "semanticFamilies": [
+    {
+      "id": "official-gov-banner",
+      "name": "Official government banner",
+      "pattern": "Converged",
+      "systems": {
+        "uswds": { "status": "direct", "components": ["banner"] },
+        "va": { "status": "direct", "components": ["official-gov-banner"] },
+        "cms": { "status": "direct", "components": ["usa-banner"] }
+      },
+      "cmsThemes": {
+        "core": "Y",
+        "cmsgov": "Y",
+        "healthcare": "Y",
+        "medicare": "Y"
+      }
+    },
+    {
+      "id": "accordion",
+      "name": "Accordion / disclosure",
+      "pattern": "Converged",
+      "systems": {
+        "uswds": { "status": "direct", "components": ["accordion"] },
+        "va": { "status": "direct", "components": ["accordion"] },
+        "cms": { "status": "direct", "components": ["accordion"] }
+      },
+      "cmsThemes": {
+        "core": "Y",
+        "cmsgov": "Y",
+        "healthcare": "Y",
+        "medicare": "Y"
+      }
+    },
+    {
+      "id": "alert",
+      "name": "Alert / notification",
+      "pattern": "Converged",
+      "systems": {
+        "uswds": { "status": "direct", "components": ["alert", "site-alert"] },
+        "va": { "status": "direct", "components": ["alert"] },
+        "cms": { "status": "direct", "components": ["alert"] }
+      },
+      "cmsThemes": {
+        "core": "Y",
+        "cmsgov": "Y",
+        "healthcare": "Y",
+        "medicare": "Y"
+      }
+    },
+    {
+      "id": "button",
+      "name": "Button / primary action",
+      "pattern": "Converged",
+      "systems": {
+        "uswds": { "status": "direct", "components": ["button"] },
+        "va": { "status": "direct", "components": ["button"] },
+        "cms": { "status": "direct", "components": ["button"] }
+      },
+      "cmsThemes": {
+        "core": "Y",
+        "cmsgov": "Y",
+        "healthcare": "Y",
+        "medicare": "Y"
+      }
+    },
+    {
+      "id": "dialog",
+      "name": "Modal / dialog",
+      "pattern": "Converged",
+      "systems": {
+        "uswds": { "status": "direct", "components": ["modal"] },
+        "va": { "status": "direct", "components": ["modal"] },
+        "cms": { "status": "direct", "components": ["dialog"] }
+      },
+      "cmsThemes": {
+        "core": "Y",
+        "cmsgov": "Y",
+        "healthcare": "Y",
+        "medicare": "Y"
+      }
+    },
+    {
+      "id": "breadcrumb",
+      "name": "Breadcrumbs",
+      "pattern": "Mostly converged",
+      "systems": {
+        "uswds": { "status": "direct", "components": ["breadcrumb"] },
+        "va": { "status": "direct", "components": ["breadcrumbs"] },
+        "cms": { "status": "none", "components": [] }
+      },
+      "cmsThemes": {
+        "core": "N",
+        "cmsgov": "N",
+        "healthcare": "N",
+        "medicare": "N"
+      }
+    },
+    {
+      "id": "site-header",
+      "name": "Header / global navigation",
+      "pattern": "Partially converged",
+      "systems": {
+        "uswds": { "status": "direct", "components": ["header"] },
+        "va": { "status": "none", "components": [] },
+        "cms": { "status": "direct", "components": ["header"] }
+      },
+      "cmsThemes": {
+        "core": "N",
+        "cmsgov": "N",
+        "healthcare": "Y",
+        "medicare": "Y"
+      }
+    },
+    {
+      "id": "site-footer",
+      "name": "Footer / site footer",
+      "pattern": "Partially converged",
+      "systems": {
+        "uswds": { "status": "direct", "components": ["footer"] },
+        "va": { "status": "none", "components": [] },
+        "cms": { "status": "direct", "components": ["footer"] }
+      },
+      "cmsThemes": {
+        "core": "N",
+        "cmsgov": "N",
+        "healthcare": "Y",
+        "medicare": "Y"
+      }
+    },
+    {
+      "id": "tooltip",
+      "name": "Tooltip / inline help",
+      "pattern": "Emerging",
+      "systems": {
+        "uswds": { "status": "direct", "components": ["tooltip"] },
+        "va": { "status": "none", "components": [] },
+        "cms": { "status": "direct", "components": ["tooltip"] }
+      },
+      "cmsThemes": {
+        "core": "Y",
+        "cmsgov": "Y",
+        "healthcare": "Y",
+        "medicare": "Y"
+      }
+    },
+    {
+      "id": "form-choice",
+      "name": "Choice controls",
+      "pattern": "Shared semantics, different granularity",
+      "systems": {
+        "uswds": { "status": "direct", "components": ["checkbox", "radio-buttons"] },
+        "va": { "status": "none", "components": [] },
+        "cms": { "status": "direct", "components": ["choice"] }
+      },
+      "cmsThemes": {
+        "core": "Y",
+        "cmsgov": "Y",
+        "healthcare": "Y",
+        "medicare": "Y"
+      }
+    },
+    {
+      "id": "form-select",
+      "name": "Select / dropdown",
+      "pattern": "Shared semantics, different granularity",
+      "systems": {
+        "uswds": { "status": "direct", "components": ["select", "combo-box"] },
+        "va": { "status": "none", "components": [] },
+        "cms": { "status": "direct", "components": ["dropdown"] }
+      },
+      "cmsThemes": {
+        "core": "Y",
+        "cmsgov": "Y",
+        "healthcare": "Y",
+        "medicare": "Y"
+      }
+    },
+    {
+      "id": "date-entry",
+      "name": "Date input",
+      "pattern": "Shared semantics, different granularity",
+      "systems": {
+        "uswds": { "status": "direct", "components": ["date-picker", "date-range-picker", "memorable-date"] },
+        "va": { "status": "none", "components": [] },
+        "cms": { "status": "direct", "components": ["date-field"] }
+      },
+      "cmsThemes": {
+        "core": "Y",
+        "cmsgov": "Y",
+        "healthcare": "Y",
+        "medicare": "Y"
+      }
+    },
+    {
+      "id": "badge-tag",
+      "name": "Badge / tag / status label",
+      "pattern": "Weak convergence",
+      "systems": {
+        "uswds": { "status": "semantic", "components": ["tag"] },
+        "va": { "status": "none", "components": [] },
+        "cms": { "status": "direct", "components": ["badge"] }
+      },
+      "cmsThemes": {
+        "core": "Y",
+        "cmsgov": "Y",
+        "healthcare": "Y",
+        "medicare": "Y"
+      }
+    }
+  ],
+  "notes": [
+    "This file tracks what the scanner currently models, not the full official inventory of each design system.",
+    "USWDS coverage is broad; VA and CMS coverage are starter definitions centered on distinctive, high-signal components.",
+    "CMS theme differences are primarily branding and site-chrome differences layered on a shared component family."
+  ]
+}
