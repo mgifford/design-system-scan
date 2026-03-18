@@ -222,6 +222,8 @@ jobs:
             await writeArchiveSite("site", mergedHistory);
             await fs.mkdir("site/latest", { recursive: true });
             await writeDashboardSite("site/latest", report, metadata);
+            await fs.mkdir(`site/runs/${process.env.RUN_ID}`, { recursive: true });
+            await writeDashboardSite(`site/runs/${process.env.RUN_ID}`, report, metadata);
 
             await fs.writeFile("site/report.txt", reportText, "utf8");
             await fs.writeFile("site/scan.json", JSON.stringify(report, null, 2), "utf8");
@@ -273,13 +275,27 @@ jobs:
             const issueNumber = context.payload.issue.number;
             const runUrl = `https://github.com/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`;
             const pageUrl = process.env.PAGE_URL || 'GitHub Pages deployment pending';
+            const pageBase = typeof pageUrl === 'string' && pageUrl.startsWith('http')
+              ? pageUrl.replace(/\/?$/, '/')
+              : null;
+            const archiveEntryUrl = pageBase ? `${pageBase}#scan-${context.runId}` : 'GitHub Pages deployment pending';
+            const runDetailUrl = pageBase ? `${pageBase}runs/${context.runId}/` : 'GitHub Pages deployment pending';
+            const latestUrl = pageBase ? `${pageBase}latest/` : 'GitHub Pages deployment pending';
+            const artifactsUrl = `${runUrl}#artifacts`;
             const body = [
               `Scan completed successfully for ${context.payload.issue.title}.`,
               ``,
-              `Archive page: ${pageUrl}`,
-              `Latest run detail: ${pageUrl}latest/`,
-              `Workflow run: ${runUrl}`,
-              `Artifacts: ${runUrl}`
+              `Review links:`,
+              `- Run detail page: ${runDetailUrl}`,
+              `- Archive entry: ${archiveEntryUrl}`,
+              `- Workflow run: ${runUrl}`,
+              `- Artifacts: ${artifactsUrl}`,
+              `- Latest published dashboard: ${latestUrl}`,
+              ``,
+              `Suggested review path:`,
+              `1. Open the run detail page for the exact scan output.`,
+              `2. Use the archive entry to compare this run with other scans.`,
+              `3. Open the workflow run if you need logs or downloadable artifacts.`
             ].join('\n');
             await github.rest.issues.createComment({
               owner: context.repo.owner,
