@@ -20,7 +20,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Dispatch scans for open SCAN issues
-        uses: actions/github-script@v7
+        uses: actions/github-script@v8
         env:
           MAX_ISSUES: ${{ github.event.inputs.max_issues || '10' }}
         with:

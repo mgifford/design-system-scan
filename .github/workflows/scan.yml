@@ -43,10 +43,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Check out repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Set up Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v6
         with:
           node-version: "24"
 
@@ -71,10 +71,10 @@ jobs:
       partial_component_types: ${{ steps.scan_stats.outputs.partial_component_types }}
     steps:
       - name: Check out repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Set up Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v6
         with:
           node-version: "24"
 
@@ -342,13 +342,13 @@ jobs:
           cat artifacts/report.txt >> "$GITHUB_STEP_SUMMARY"
 
       - name: Upload scan artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: design-system-scan-${{ steps.inputs.outputs.trigger }}-${{ github.run_number }}
           path: artifacts/
 
       - name: Upload Pages artifact
-        uses: actions/upload-pages-artifact@v3
+        uses: actions/upload-pages-artifact@v4
         with:
           path: site/
 
@@ -375,7 +375,7 @@ jobs:
       (github.event_name == 'workflow_dispatch' && github.event.inputs.issue_number != '')
     steps:
       - name: Comment on issue with report links
-        uses: actions/github-script@v7
+        uses: actions/github-script@v8
         env:
           PAGE_URL: ${{ needs.deploy-pages.outputs.page_url }}
           DETECTED_SYSTEM: ${{ needs.scan.outputs.detected_system }}
@@ -449,7 +449,7 @@ jobs:
             });
 
       - name: Close issue after successful scan
-        uses: actions/github-script@v7
+        uses: actions/github-script@v8
         with:
           script: |
             const issueNumber = context.payload.issue?.number || Number(context.payload.inputs.issue_number);
