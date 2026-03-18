@@ -16,6 +16,13 @@ function topTemplates(templates) {
     .slice(0, 5);
 }
 
+function describeMissing(item) {
+  return item.missingSignals
+    .slice(0, 3)
+    .map((signal) => signal.label)
+    .join(" | ");
+}
+
 export function formatTextReport(report) {
   const lines = [];
 
@@ -77,9 +84,13 @@ export function formatTextReport(report) {
           .slice(0, 2)
           .map((signal) => signal.value)
           .join(" | ");
+        const missing = describeMissing(component);
         lines.push(
           `    - ${component.name}: ${component.status} (${formatPercent(component.coverage)})${evidence ? ` via ${evidence}` : ""}`
         );
+        if (missing) {
+          lines.push(`      missing: ${missing}`);
+        }
       }
     }
 
@@ -93,9 +104,13 @@ export function formatTextReport(report) {
           .slice(0, 2)
           .map((signal) => signal.value)
           .join(" | ");
+        const missing = describeMissing(template);
         lines.push(
           `    - ${template.name}: ${template.status} (${formatPercent(template.coverage)})${evidence ? ` via ${evidence}` : ""}`
         );
+        if (missing) {
+          lines.push(`      missing: ${missing}`);
+        }
       }
     }
 

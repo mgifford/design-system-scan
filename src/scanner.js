@@ -200,6 +200,7 @@ function detectVersions(texts) {
 
 function scoreSignals(signals, context, definitionThresholds) {
   const matchedSignals = [];
+  const missingSignals = [];
   let matchedWeight = 0;
   let possibleWeight = 0;
 
@@ -209,6 +210,10 @@ function scoreSignals(signals, context, definitionThresholds) {
 
     const matched = signalMatches(signal, context);
     if (!matched) {
+      missingSignals.push({
+        label: signal.label,
+        weight,
+      });
       continue;
     }
 
@@ -241,6 +246,7 @@ function scoreSignals(signals, context, definitionThresholds) {
     possibleWeight,
     coverage: Number.parseFloat(coverage.toFixed(3)),
     matchedSignals,
+    missingSignals,
   };
 }
 

@@ -32,7 +32,7 @@ It can now also:
 
 Requirements:
 
-- Node.js 18+
+- Node.js 22+
 
 Run against one or more URLs:
 
@@ -155,7 +155,25 @@ Notes:
 - `system` defaults to `uswds`.
 - `crawl` defaults to `true`.
 - `max_pages` defaults to `10`.
+- `pages:` and `number:` are also accepted as aliases for `max_pages:`.
 - Non-`SCAN:` issues do not trigger the scan job.
+
+### Why scores are below 100%
+
+The text report now includes a short `missing:` line for components and templates when some expected tells were not found.
+
+Example:
+
+```text
+- Accordion: full (89%) via usa-accordion | usa-accordion__button
+  missing: Accordion heading
+```
+
+This helps distinguish:
+
+- components that are clearly present but missing part of the documented structure
+- components that are only partially implemented
+- templates that match some component combinations but not the full expected layout
 
 ## USWDS starter signals
 
