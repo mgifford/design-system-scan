@@ -30,6 +30,9 @@ on:
 
 permissions:
   contents: read
+  issues: write
+  pages: write
+  id-token: write
 
 jobs:
   test:
@@ -151,7 +154,87 @@ jobs:
             echo "system=${{ steps.inputs.outputs.system }}"
             echo "crawl=${{ steps.inputs.outputs.crawl }}"
             echo "max_pages=${{ steps.inputs.outputs.max_pages }}"
+            echo "run_url=https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
           } > artifacts/metadata.txt
+
+      - name: Build Pages report
+        env:
+          REPOSITORY: ${{ github.repository }}
+          RUN_ID: ${{ github.run_id }}
+          RUN_NUMBER: ${{ github.run_number }}
+          SHA: ${{ github.sha }}
+          URL: ${{ steps.inputs.outputs.url }}
+          SYSTEM: ${{ steps.inputs.outputs.system }}
+          CRAWL: ${{ steps.inputs.outputs.crawl }}
+          MAX_PAGES: ${{ steps.inputs.outputs.max_pages }}
+          TRIGGER: ${{ steps.inputs.outputs.trigger }}
+        run: |
+          mkdir -p site
+          cp artifacts/report.txt site/report.txt
+          cp artifacts/scan.json site/scan.json
+          node --input-type=module <<'EOF'
+          import fs from "node:fs/promises";
+
+          const reportText = await fs.readFile("artifacts/report.txt", "utf8");
+          const metadata = {
+            repository: process.env.REPOSITORY,
+            runId: process.env.RUN_ID,
+            runNumber: process.env.RUN_NUMBER,
+            sha: process.env.SHA,
+            url: process.env.URL,
+            system: process.env.SYSTEM,
+            crawl: process.env.CRAWL,
+            maxPages: process.env.MAX_PAGES,
+            trigger: process.env.TRIGGER,
+          };
+
+          const escapeHtml = (value) =>
+            value
+              .replaceAll("&", "&amp;")
+              .replaceAll("<", "&lt;")
+              .replaceAll(">", "&gt;");
+
+          const html = `<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Design System Scan Report</title>
+    <style>
+      :root { color-scheme: light; }
+      body { font-family: Georgia, serif; margin: 2rem auto; max-width: 72rem; padding: 0 1rem; line-height: 1.5; color: #16202a; background: #f7f7f2; }
+      main { background: white; border: 1px solid #dfe1e2; padding: 1.5rem; box-shadow: 0 8px 24px rgba(0,0,0,.06); }
+      h1, h2 { font-family: ui-sans-serif, system-ui, sans-serif; }
+      dl { display: grid; grid-template-columns: max-content 1fr; gap: .5rem 1rem; }
+      dt { font-weight: 700; }
+      pre { white-space: pre-wrap; overflow-wrap: anywhere; background: #112e51; color: #f0f7ff; padding: 1rem; border-radius: .25rem; }
+      a { color: #005ea2; }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>Design System Scan Report</h1>
+      <p><a href="https://github.com/${metadata.repository}/actions/runs/${metadata.runId}">View workflow run</a></p>
+      <h2>Run metadata</h2>
+      <dl>
+        <dt>Repository</dt><dd>${escapeHtml(metadata.repository)}</dd>
+        <dt>Run</dt><dd>${escapeHtml(metadata.runNumber)}</dd>
+        <dt>Commit</dt><dd>${escapeHtml(metadata.sha)}</dd>
+        <dt>Trigger</dt><dd>${escapeHtml(metadata.trigger)}</dd>
+        <dt>URL</dt><dd>${escapeHtml(metadata.url)}</dd>
+        <dt>System</dt><dd>${escapeHtml(metadata.system)}</dd>
+        <dt>Crawl</dt><dd>${escapeHtml(metadata.crawl)}</dd>
+        <dt>Max pages</dt><dd>${escapeHtml(metadata.maxPages)}</dd>
+      </dl>
+      <h2>Text report</h2>
+      <pre>${escapeHtml(reportText)}</pre>
+      <p><a href="./report.txt">Plain text report</a> | <a href="./scan.json">JSON report</a></p>
+    </main>
+  </body>
+</html>`;
+
+          await fs.writeFile("site/index.html", html, "utf8");
+          EOF
 
       - name: Publish step summary
         run: |
@@ -164,3 +247,62 @@ jobs:
         with:
           name: design-system-scan-${{ steps.inputs.outputs.trigger }}-${{ github.run_number }}
           path: artifacts/
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: site/
+
+  deploy-pages:
+    runs-on: ubuntu-latest
+    needs: scan
+    outputs:
+      page_url: ${{ steps.deployment.outputs.page_url }}
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
+
+  issue-followup:
+    runs-on: ubuntu-latest
+    needs:
+      - scan
+      - deploy-pages
+    if: github.event_name == 'issues' && startsWith(github.event.issue.title, 'SCAN:')
+    steps:
+      - name: Comment on issue with report links
+        uses: actions/github-script@v7
+        env:
+          PAGE_URL: ${{ needs.deploy-pages.outputs.page_url }}
+        with:
+          script: |
+            const issueNumber = context.payload.issue.number;
+            const runUrl = `https://github.com/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`;
+            const pageUrl = process.env.PAGE_URL || 'GitHub Pages deployment pending';
+            const body = [
+              `Scan completed successfully for ${context.payload.issue.title}.`,
+              ``,
+              `Report page: ${pageUrl}`,
+              `Workflow run: ${runUrl}`,
+              `Artifacts: ${runUrl}`
+            ].join('\n');
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: issueNumber,
+              body,
+            });
+
+      - name: Close issue after successful scan
+        uses: actions/github-script@v7
+        with:
+          script: |
+            await github.rest.issues.update({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.payload.issue.number,
+              state: 'closed',
+            });

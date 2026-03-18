@@ -127,6 +127,8 @@ It supports:
 - a weekly deeper scheduled scan of `https://designsystem.digital.gov/`
 - `npm test` before the scan job runs
 - uploaded artifacts containing both `scan.json` and a text `report.txt`
+- publishing the latest run to GitHub Pages
+- commenting on successful `SCAN:` issues with report links, then closing the issue
 
 Once that workflow is pushed to GitHub, runs should appear at:
 
