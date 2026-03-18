@@ -13,7 +13,7 @@
     "test:sample": "node ./src/cli.js --system uswds https://designsystem.digital.gov/"
   },
   "engines": {
-    "node": ">=22"
+    "node": ">=24"
   },
   "license": "Apache-2.0"
 }

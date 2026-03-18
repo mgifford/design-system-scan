@@ -32,7 +32,7 @@ It can now also:
 
 Requirements:
 
-- Node.js 22+
+- Node.js 24+
 
 Run against one or more URLs:
 
