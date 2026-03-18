@@ -1,0 +1,91 @@
+name: Design system scan
+
+on:
+  workflow_dispatch:
+    inputs:
+      url:
+        description: "Seed URL to scan"
+        required: false
+        default: "https://designsystem.digital.gov/"
+      system:
+        description: "Design system definition"
+        required: false
+        default: "uswds"
+      crawl:
+        description: "Crawl same-origin pages from the seed URL"
+        required: false
+        type: boolean
+        default: true
+      max_pages:
+        description: "Maximum number of pages to scan"
+        required: false
+        default: "10"
+  schedule:
+    - cron: "17 13 * * 1"
+
+permissions:
+  contents: read
+
+jobs:
+  scan:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "18"
+
+      - name: Prepare output directory
+        run: mkdir -p artifacts
+
+      - name: Resolve scan inputs
+        id: inputs
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          INPUT_URL: ${{ inputs.url }}
+          INPUT_SYSTEM: ${{ inputs.system }}
+          INPUT_CRAWL: ${{ inputs.crawl }}
+          INPUT_MAX_PAGES: ${{ inputs.max_pages }}
+        run: |
+          if [ "$EVENT_NAME" = "schedule" ]; then
+            echo "url=https://designsystem.digital.gov/" >> "$GITHUB_OUTPUT"
+            echo "system=uswds" >> "$GITHUB_OUTPUT"
+            echo "crawl=true" >> "$GITHUB_OUTPUT"
+            echo "max_pages=10" >> "$GITHUB_OUTPUT"
+          else
+            echo "url=${INPUT_URL}" >> "$GITHUB_OUTPUT"
+            echo "system=${INPUT_SYSTEM}" >> "$GITHUB_OUTPUT"
+            echo "crawl=${INPUT_CRAWL}" >> "$GITHUB_OUTPUT"
+            echo "max_pages=${INPUT_MAX_PAGES}" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Run scanner
+        env:
+          SCAN_URL: ${{ steps.inputs.outputs.url }}
+          SCAN_SYSTEM: ${{ steps.inputs.outputs.system }}
+          SCAN_CRAWL: ${{ steps.inputs.outputs.crawl }}
+          SCAN_MAX_PAGES: ${{ steps.inputs.outputs.max_pages }}
+        run: |
+          set -eu
+          CRAWL_ARGS=""
+          if [ "$SCAN_CRAWL" = "true" ]; then
+            CRAWL_ARGS="--crawl --max-pages $SCAN_MAX_PAGES"
+          fi
+
+          node src/cli.js \
+            --system "$SCAN_SYSTEM" \
+            $CRAWL_ARGS \
+            --save artifacts/scan.json \
+            "$SCAN_URL" | tee artifacts/report.txt
+
+      - name: Publish step summary
+        run: cat artifacts/report.txt >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload scan artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: design-system-scan-${{ github.run_number }}
+          path: artifacts/

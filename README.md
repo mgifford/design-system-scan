@@ -22,6 +22,12 @@ The scanner evaluates each URL in three layers:
 
 This is heuristic, not a conformance validator. It helps surface evidence and likely alignment, not certify compliance.
 
+It can now also:
+
+- crawl a limited number of same-origin pages from a seed URL
+- save JSON snapshots of scan results
+- compare a new scan against an older snapshot to track drift over time
+
 ## Quick start
 
 Requirements:
@@ -46,6 +52,24 @@ Emit JSON for downstream analysis:
 node src/cli.js --system uswds --json https://example.gov/
 ```
 
+Scan a site starting from one page:
+
+```bash
+node src/cli.js --system uswds --crawl --max-pages 20 https://example.gov/
+```
+
+Save a snapshot:
+
+```bash
+node src/cli.js --system uswds --crawl --max-pages 20 --save snapshots/example-2026-03-18.json https://example.gov/
+```
+
+Compare against an earlier snapshot:
+
+```bash
+node src/cli.js --system uswds --crawl --max-pages 20 --save snapshots/current.json --compare snapshots/previous.json https://example.gov/
+```
+
 ## Example output
 
 ```text
@@ -66,6 +90,7 @@ https://example.gov/
 
 - [`src/cli.js`](/Users/mike.gifford/design-system-scan/src/cli.js): command-line entrypoint
 - [`src/scanner.js`](/Users/mike.gifford/design-system-scan/src/scanner.js): fetch, extract, score, and summarize pages
+- [`src/snapshots.js`](/Users/mike.gifford/design-system-scan/src/snapshots.js): save, load, and diff scan snapshots
 - [`src/systems/uswds.js`](/Users/mike.gifford/design-system-scan/src/systems/uswds.js): starter USWDS rule definition
 
 ## Maintaining the design system knowledge base
@@ -79,6 +104,26 @@ Recommended workflow:
 3. Adjust weights and thresholds when false positives or false negatives show up in real scans.
 4. Stamp each definition with a tracked revision like `starter-2026-03` so rule changes are visible over time.
 5. Save raw JSON scan results if you want to compare the same site across months or against new rule versions.
+
+Suggested snapshot convention:
+
+- `snapshots/<system>/<hostname>/<yyyy-mm-dd>.json`
+
+## GitHub Actions
+
+This repo now includes a starter workflow at [`.github/workflows/scan.yml`](/Users/mike.gifford/design-system-scan/.github/workflows/scan.yml).
+
+It supports:
+
+- manual runs from the Actions tab using `workflow_dispatch`
+- a weekly scheduled demo scan of `https://designsystem.digital.gov/`
+- uploaded artifacts containing both `scan.json` and a text `report.txt`
+
+Once that workflow is pushed to GitHub, runs should appear at:
+
+- [Actions](https://github.com/mgifford/design-system-scan/actions)
+
+The first scheduled run depends on GitHub's scheduler, but you can trigger one immediately from the Actions tab after the workflow is on `main`.
 
 ## USWDS starter signals
 
@@ -112,9 +157,9 @@ The current component coverage includes:
 
 ## Current limitations
 
-- It scans the URLs you provide, but it does not crawl an entire domain yet.
+- The crawler is intentionally lightweight and only follows same-origin HTML links from the seed pages.
 - It only includes a starter USWDS definition today.
 - It infers versions only when sites expose version strings in markup or assets.
-- It does not yet diff historical scans or auto-refresh design system definitions.
+- It does not yet auto-refresh design system definitions.
 
 Those are good next steps once the starter scanner and rule model feel right.

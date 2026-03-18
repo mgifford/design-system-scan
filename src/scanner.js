@@ -1,9 +1,8 @@
 import { URL } from "node:url";
 
 const VERSION_REGEXES = [
-  /uswds(?:[-/.@]|%40)?v?(\d+\.\d+\.\d+)/giu,
+  /(?:^|[^a-z])uswds(?:[-/.@]|%40|%2f|\/|@)?(?:min[.-])?(?:css|js)?[^0-9]{0,10}v?(\d+\.\d+\.\d+)/giu,
   /@uswds\/uswds@(\d+\.\d+\.\d+)/giu,
-  /uswds[\w./-]*?(\d+\.\d+\.\d+)/giu,
   /USWDS\s+(\d+\.\d+\.\d+)/giu,
 ];
 
@@ -57,6 +56,58 @@ function resolveUrl(baseUrl, candidate) {
   }
 }
 
+function normalizePageUrl(url) {
+  try {
+    const parsed = new URL(url);
+    parsed.hash = "";
+
+    if ((parsed.pathname === "" || parsed.pathname === "/") && !parsed.search) {
+      parsed.pathname = "/";
+    }
+
+    return parsed.toString();
+  } catch {
+    return url;
+  }
+}
+
+function sameOrigin(left, right) {
+  try {
+    return new URL(left).origin === new URL(right).origin;
+  } catch {
+    return false;
+  }
+}
+
+function shouldSkipCrawlUrl(url) {
+  try {
+    const parsed = new URL(url);
+    const pathname = parsed.pathname.toLowerCase();
+
+    if (parsed.hash && !pathname) {
+      return true;
+    }
+
+    return (
+      pathname.endsWith(".pdf") ||
+      pathname.endsWith(".jpg") ||
+      pathname.endsWith(".jpeg") ||
+      pathname.endsWith(".png") ||
+      pathname.endsWith(".gif") ||
+      pathname.endsWith(".svg") ||
+      pathname.endsWith(".zip") ||
+      pathname.endsWith(".doc") ||
+      pathname.endsWith(".docx") ||
+      pathname.endsWith(".xls") ||
+      pathname.endsWith(".xlsx") ||
+      pathname.endsWith(".ppt") ||
+      pathname.endsWith(".pptx")
+    );
+  } catch {
+    return true;
+  }
+}
+
 function extractClasses(html) {
   const classValues = [];
 
@@ -104,6 +155,23 @@ function extractLinkedAssets(html, baseUrl) {
     cssUrls: uniq(stylesheetUrls),
     jsUrls: uniq(scriptUrls),
   };
+}
+
+function extractLinkedPages(html, baseUrl) {
+  const links = [];
+
+  for (const match of html.matchAll(/<a\b[^>]*href=["']([^"']+)["'][^>]*>/giu)) {
+    const href = match[1];
+    const absolute = normalizePageUrl(resolveUrl(baseUrl, href));
+
+    if (!absolute || !sameOrigin(baseUrl, absolute) || shouldSkipCrawlUrl(absolute)) {
+      continue;
+    }
+
+    links.push(absolute);
+  }
+
+  return uniq(links);
 }
 
 function detectVersions(texts) {
@@ -375,12 +443,54 @@ export async function scanUrl(url, definition, options) {
   };
 }
 
+export async function discoverUrls(seedUrls, options) {
+  const queue = seedUrls.map((url) => normalizePageUrl(url));
+  const seen = new Set();
+  const discovered = [];
+
+  while (queue.length > 0 && discovered.length < options.maxPages) {
+    const url = queue.shift();
+
+    if (!url || seen.has(url)) {
+      continue;
+    }
+
+    seen.add(url);
+    discovered.push(url);
+
+    if (!options.crawl) {
+      continue;
+    }
+
+    let html = "";
+
+    try {
+      html = await fetchText(url, options.timeoutMs);
+    } catch {
+      continue;
+    }
+
+    const nextUrls = extractLinkedPages(html, url);
+
+    for (const nextUrl of nextUrls) {
+      if (!seen.has(nextUrl) && queue.length + discovered.length < options.maxPages * 4) {
+        queue.push(nextUrl);
+      }
+    }
+  }
+
+  return discovered;
+}
+
 export async function scanUrls(urls, definition, options) {
+  const discoveredUrls = await discoverUrls(urls, options);
   const pages = [];
 
-  for (const url of urls) {
+  for (const url of discoveredUrls) {
     pages.push(await scanUrl(url, definition, options));
   }
+
+  const siteSummary = summarizeSite(pages);
 
   return {
     system: {
@@ -391,6 +501,55 @@ export async function scanUrls(urls, definition, options) {
       docs: definition.docs,
     },
     options,
+    crawl: {
+      enabled: options.crawl,
+      requestedSeeds: urls,
+      scannedUrls: discoveredUrls,
+      maxPages: options.maxPages,
+    },
     pages,
+    siteSummary,
+  };
+}
+
+function summarizeSite(pages) {
+  const successfulPages = pages.filter((page) => !page.error);
+  const fingerprintPages = successfulPages.filter(
+    (page) => page.siteFingerprint && page.siteFingerprint.status !== "absent"
+  );
+  const componentCounts = new Map();
+
+  for (const page of successfulPages) {
+    for (const component of page.components) {
+      if (component.status === "absent") {
+        continue;
+      }
+
+      const current = componentCounts.get(component.id) ?? {
+        id: component.id,
+        name: component.name,
+        full: 0,
+        partial: 0,
+      };
+
+      if (component.status === "full") {
+        current.full += 1;
+      } else if (component.status === "partial") {
+        current.partial += 1;
+      }
+
+      componentCounts.set(component.id, current);
+    }
+  }
+
+  return {
+    pageCount: pages.length,
+    successfulPageCount: successfulPages.length,
+    fingerprintedPageCount: fingerprintPages.length,
+    components: [...componentCounts.values()].sort((left, right) => {
+      const leftScore = left.full * 2 + left.partial;
+      const rightScore = right.full * 2 + right.partial;
+      return rightScore - leftScore;
+    }),
   };
 }
