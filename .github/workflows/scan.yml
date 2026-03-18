@@ -92,13 +92,26 @@ jobs:
             echo "max_pages=10" >> "$GITHUB_OUTPUT"
             echo "trigger=weekday" >> "$GITHUB_OUTPUT"
           elif [ "$EVENT_NAME" = "issues" ]; then
-            URL=$(printf '%s\n%s\n' "$ISSUE_TITLE" "$ISSUE_BODY" | grep -Eo 'https?://[^ )]+' | head -n 1 || true)
+            RAW_URL=$(printf '%s\n%s\n' "$ISSUE_TITLE" "$ISSUE_BODY" | grep -Eio 'https?://[^ )]+|([[:alnum:]-]+\.)+[[:alpha:]]{2,}(/[^\ )]*)?' | head -n 1 || true)
             SYSTEM=$(printf '%s\n' "$ISSUE_BODY" | sed -n 's/^system:[[:space:]]*//p' | head -n 1)
             CRAWL=$(printf '%s\n' "$ISSUE_BODY" | sed -n 's/^crawl:[[:space:]]*//p' | head -n 1)
             MAX_PAGES=$(printf '%s\n' "$ISSUE_BODY" | awk 'BEGIN{IGNORECASE=1} /^(max_pages|pages|number):[[:space:]]*/ { sub(/^[^:]+:[[:space:]]*/, "", $0); print; exit }')
 
+            if [ -n "$RAW_URL" ]; then
+              case "$RAW_URL" in
+                http://*|https://*)
+                  URL="$RAW_URL"
+                  ;;
+                *)
+                  URL="https://$RAW_URL"
+                  ;;
+              esac
+            else
+              URL=""
+            fi
+
             if [ -z "$URL" ]; then
-              echo "No URL found in issue title/body. Use a SCAN: issue with a URL in the title or body." >&2
+              echo "No URL found in issue title/body. Use a SCAN: issue with a URL or bare domain in the title or body." >&2
               exit 1
             fi
 
