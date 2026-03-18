@@ -427,13 +427,15 @@ export function buildDashboardHtml(report, metadata) {
         <div class="meta">
           <div class="meta-card"><strong>Trigger</strong>${escapeHtml(metadata.trigger)}</div>
           <div class="meta-card"><strong>Seed URL</strong>${escapeHtml(metadata.url)}</div>
-          <div class="meta-card"><strong>System</strong>${escapeHtml(metadata.system)}</div>
+          <div class="meta-card"><strong>System</strong>${escapeHtml(report.system?.name ?? metadata.system ?? "Unknown")}</div>
+          <div class="meta-card"><strong>Theme</strong>${escapeHtml(report.siteSummary.primaryTheme?.name ?? "None detected")}</div>
           <div class="meta-card"><strong>Pages scanned</strong>${report.siteSummary.successfulPageCount}/${report.siteSummary.pageCount}</div>
           <div class="meta-card"><strong>Fingerprint pages</strong>${report.siteSummary.fingerprintedPageCount}</div>
           <div class="meta-card"><strong>Max pages</strong>${escapeHtml(metadata.maxPages)}</div>
         </div>
       </section>
 
+      ${renderSummaryTable("Site-wide theme tells", report.siteSummary.themes ?? [], "Top theme matches across all scanned pages.")}
       ${renderSummaryTable("Site-wide component tells", report.siteSummary.components, "Top signals across all scanned pages.")}
       ${renderSummaryTable("Site-wide template tells", report.siteSummary.templates, "Top template matches across all scanned pages.")}
 

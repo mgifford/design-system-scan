@@ -1,7 +1,8 @@
+import { cms } from "./cms.js";
 import { uswds } from "./uswds.js";
 import { va } from "./va.js";
 
-const DETECTABLE_SYSTEMS = [uswds, va];
+const DETECTABLE_SYSTEMS = [uswds, va, cms];
 const AUTO_SYSTEM = {
   id: "auto",
   name: "Auto-detect design system",

@@ -1,6 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 
+import { cms } from "../src/systems/cms.js";
 import { evaluateHtml, selectBestSystemReport } from "../src/scanner.js";
 import { uswds } from "../src/systems/uswds.js";
 import { va } from "../src/systems/va.js";
@@ -62,4 +63,25 @@ test("auto detection prefers VA on VA web components", () => {
   ]);
 
   assert.equal(selection.selected.system.id, "va");
+});
+
+test("auto detection prefers CMSDS on ds web components", () => {
+  const html = `
+    <script type="module">
+      import "@cmsgov/ds-healthcare-gov";
+    </script>
+    <script src="https://design.cms.gov/cdn/ds-healthcare-gov/15.0.0/web-components/bundle/all.js"></script>
+    <link rel="stylesheet" href="https://design.cms.gov/cdn/ds-healthcare-gov/15.0.0/css/healthcare-theme.css" />
+    <ds-alert variation="warn"></ds-alert>
+    <ds-button variation="solid"></ds-button>
+    <ds-tooltip></ds-tooltip>
+  `;
+
+  const selection = selectBestSystemReport([
+    wrapReport(uswds, evaluateHtml("https://example.gov/", html, uswds)),
+    wrapReport(va, evaluateHtml("https://example.gov/", html, va)),
+    wrapReport(cms, evaluateHtml("https://example.gov/", html, cms)),
+  ]);
+
+  assert.equal(selection.selected.system.id, "cms");
 });

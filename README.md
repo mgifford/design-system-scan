@@ -2,7 +2,7 @@
 
 `design-system-scan` is a rules-driven scanner for checking how closely a site appears to implement a design system.
 
-It now includes starter definitions for both the [U.S. Web Design System](https://designsystem.digital.gov/) and the [VA.gov Design System](https://design.va.gov/), with auto-detection to determine which one better matches a submitted URL.
+It now includes starter definitions for the [U.S. Web Design System](https://designsystem.digital.gov/), the [VA.gov Design System](https://design.va.gov/), and the [CMS Design System](https://design.cms.gov/), with auto-detection to determine which one better matches a submitted URL.
 
 The scanner is built to answer questions like:
 
@@ -52,6 +52,12 @@ Target the VA Design System explicitly:
 
 ```bash
 npm run scan:va -- https://design.va.gov/
+```
+
+Target the CMS Design System explicitly:
+
+```bash
+npm run scan:cms -- https://design.cms.gov/?theme=core
 ```
 
 Use a file of newline-delimited URLs:
@@ -113,6 +119,8 @@ https://example.gov/
 - [`src/scanner.js`](/Users/mike.gifford/design-system-scan/src/scanner.js): fetch, extract, score, and summarize pages
 - [`src/snapshots.js`](/Users/mike.gifford/design-system-scan/src/snapshots.js): save, load, and diff scan snapshots
 - [`src/systems/uswds.js`](/Users/mike.gifford/design-system-scan/src/systems/uswds.js): starter USWDS rule definition
+- [`src/systems/va.js`](/Users/mike.gifford/design-system-scan/src/systems/va.js): starter VA rule definition
+- [`src/systems/cms.js`](/Users/mike.gifford/design-system-scan/src/systems/cms.js): starter CMS Design System rule definition with child-theme detection
 
 ## Maintaining the design system knowledge base
 
@@ -237,6 +245,22 @@ The test suite uses synthetic HTML fixtures that mirror live-site evidence like 
 ## VA.gov starter signals
 
 The initial VA definition is optimized around the official Web Components guidance and distinctive `va-` custom elements.
+
+## CMS Design System starter signals
+
+The CMS definition is optimized around the official `ds-*` Web Components, the `@cmsgov/*` package family, and theme-specific CDN assets.
+
+As of March 18, 2026, the public docs expose four theme contexts in the switcher:
+
+- `Core`
+- `CMS.gov`
+- `HealthCare.gov`
+- `Medicare.gov`
+
+The scanner treats this as one CMS design-system family with child-theme detection, so it can report both:
+
+- whether a site appears to use CMSDS at all
+- which theme is the strongest match based on package imports, theme CSS, CDN paths, and theme-specific header/footer components
 
 The starter coverage currently prioritizes:
 

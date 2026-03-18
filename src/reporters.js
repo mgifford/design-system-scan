@@ -51,6 +51,20 @@ export function formatTextReport(report) {
     `Pages with design system fingerprint: ${report.siteSummary.fingerprintedPageCount}`
   );
 
+  if ((report.siteSummary.themes ?? []).length > 0) {
+    const themeSummary = report.siteSummary.themes
+      .slice(0, 6)
+      .map((theme) => `${theme.name} (${theme.full} full, ${theme.partial} partial)`)
+      .join("; ");
+    lines.push(`Site-wide theme tells: ${themeSummary}`);
+  }
+
+  if (report.siteSummary.primaryTheme) {
+    lines.push(
+      `Primary theme match: ${report.siteSummary.primaryTheme.name} (${report.siteSummary.primaryTheme.full} full, ${report.siteSummary.primaryTheme.partial} partial)`
+    );
+  }
+
   if (report.siteSummary.components.length > 0) {
     const componentSummary = report.siteSummary.components
       .slice(0, 8)
@@ -84,6 +98,11 @@ export function formatTextReport(report) {
     lines.push(
       `  Adoption: ${page.summary.fullComponentCount} full, ${page.summary.partialComponentCount} partial, ${formatPercent(page.summary.overallCoverage)} overall`
     );
+    if (page.primaryTheme) {
+      lines.push(
+        `  Theme: ${page.primaryTheme.name} (${page.primaryTheme.status}, ${formatPercent(page.primaryTheme.coverage)})`
+      );
+    }
     lines.push(`  Templates: ${page.summary.matchedTemplateCount} detected`);
     lines.push(
       `  Version clues: ${page.versions.length > 0 ? page.versions.join(", ") : "none detected"}`

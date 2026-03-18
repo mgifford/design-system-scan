@@ -4,6 +4,7 @@ const VERSION_REGEXES = [
   /(?:^|[^a-z])uswds(?:[-/.@]|%40|%2f|\/|@)?(?:min[.-])?(?:css|js)?[^0-9]{0,10}v?(\d+\.\d+\.\d+)/giu,
   /@uswds\/uswds@(\d+\.\d+\.\d+)/giu,
   /USWDS\s+(\d+\.\d+\.\d+)/giu,
+  /(?:@cmsgov\/(?:design-system|ds-cms-gov|ds-healthcare-gov|ds-medicare-gov)|\/cdn\/(?:design-system|ds-cms-gov|ds-healthcare-gov|ds-medicare-gov)\/)(\d+\.\d+\.\d+(?:-[a-z0-9.-]+)?)/giu,
 ];
 
 function clamp(value, min, max) {
@@ -389,6 +390,7 @@ function summarizePage(pageReport, definition) {
   const matchedComponents = pageReport.components.filter(
     (component) => component.status !== "absent"
   );
+  const matchedThemes = (pageReport.themes ?? []).filter((theme) => theme.status !== "absent");
   const matchedTemplates = (pageReport.templates ?? []).filter(
     (template) => template.status !== "absent"
   );
@@ -405,10 +407,44 @@ function summarizePage(pageReport, definition) {
 
   return {
     matchedComponentCount: matchedComponents.length,
+    matchedThemeCount: matchedThemes.length,
     fullComponentCount: fullyImplemented,
     partialComponentCount: partiallyImplemented,
     matchedTemplateCount: matchedTemplates.length,
     overallCoverage: Number.parseFloat(clamp(overallCoverage, 0, 1).toFixed(3)),
+  };
+}
+
+function selectPrimaryMatch(items) {
+  const matches = (items ?? []).filter((item) => item.status !== "absent");
+
+  if (matches.length === 0) {
+    return null;
+  }
+
+  matches.sort((left, right) => {
+    if (right.coverage !== left.coverage) {
+      return right.coverage - left.coverage;
+    }
+
+    const rank = {
+      full: 2,
+      partial: 1,
+      absent: 0,
+    };
+
+    if ((rank[right.status] ?? 0) !== (rank[left.status] ?? 0)) {
+      return (rank[right.status] ?? 0) - (rank[left.status] ?? 0);
+    }
+
+    return left.name.localeCompare(right.name);
+  });
+
+  return {
+    id: matches[0].id,
+    name: matches[0].name,
+    status: matches[0].status,
+    coverage: matches[0].coverage,
   };
 }
 
@@ -437,6 +473,11 @@ function evaluatePageContent(url, html, definition, options, assetContent = { cs
     id: component.id,
     name: component.name,
     ...scoreSignals(component.signals, context, component.thresholds),
+  }));
+  const themes = (definition.themes ?? []).map((theme) => ({
+    id: theme.id,
+    name: theme.name,
+    ...scoreSignals(theme.signals, context, theme.thresholds),
   }));
   const componentMap = new Map(components.map((component) => [component.id, component]));
   const templates = (definition.templates ?? []).map((template) => ({
@@ -470,7 +511,9 @@ function evaluatePageContent(url, html, definition, options, assetContent = { cs
     versions,
     siteFingerprint,
     components,
+    themes,
     templates,
+    primaryTheme: selectPrimaryMatch(themes),
     assetInventory: {
       cssUrls: page.cssUrls,
       jsUrls: page.jsUrls,
@@ -502,8 +545,10 @@ export async function scanUrl(url, definition, options) {
       siteFingerprint: null,
       versions: [],
       components: [],
+      themes: [],
       summary: {
         matchedComponentCount: 0,
+        matchedThemeCount: 0,
         fullComponentCount: 0,
         partialComponentCount: 0,
         overallCoverage: 0,
@@ -717,6 +762,7 @@ function summarizeSite(pages) {
     (page) => page.siteFingerprint && page.siteFingerprint.status !== "absent"
   );
   const componentCounts = new Map();
+  const themeCounts = new Map();
   const templateCounts = new Map();
 
   for (const page of successfulPages) {
@@ -739,6 +785,27 @@ function summarizeSite(pages) {
       }
 
       componentCounts.set(component.id, current);
+    }
+
+    for (const theme of page.themes ?? []) {
+      if (theme.status === "absent") {
+        continue;
+      }
+
+      const current = themeCounts.get(theme.id) ?? {
+        id: theme.id,
+        name: theme.name,
+        full: 0,
+        partial: 0,
+      };
+
+      if (theme.status === "full") {
+        current.full += 1;
+      } else if (theme.status === "partial") {
+        current.partial += 1;
+      }
+
+      themeCounts.set(theme.id, current);
     }
 
     for (const template of page.templates ?? []) {
@@ -772,10 +839,28 @@ function summarizeSite(pages) {
       const rightScore = right.full * 2 + right.partial;
       return rightScore - leftScore;
     }),
+    themes: [...themeCounts.values()].sort((left, right) => {
+      const leftScore = left.full * 2 + left.partial;
+      const rightScore = right.full * 2 + right.partial;
+      return rightScore - leftScore;
+    }),
     templates: [...templateCounts.values()].sort((left, right) => {
       const leftScore = left.full * 2 + left.partial;
       const rightScore = right.full * 2 + right.partial;
       return rightScore - leftScore;
     }),
+    primaryTheme:
+      [...themeCounts.values()]
+        .sort((left, right) => {
+          const leftScore = left.full * 2 + left.partial;
+          const rightScore = right.full * 2 + right.partial;
+          return rightScore - leftScore;
+        })
+        .map((theme) => ({
+          id: theme.id,
+          name: theme.name,
+          full: theme.full,
+          partial: theme.partial,
+        }))[0] ?? null,
   };
 }
