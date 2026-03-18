@@ -94,6 +94,7 @@ https://example.gov/
 
 ## Project structure
 
+- [`ACCESSIBILITY.md`](/Users/mike.gifford/design-system-scan/ACCESSIBILITY.md): locked accessibility patterns for report UI behavior
 - [`src/cli.js`](/Users/mike.gifford/design-system-scan/src/cli.js): command-line entrypoint
 - [`src/scanner.js`](/Users/mike.gifford/design-system-scan/src/scanner.js): fetch, extract, score, and summarize pages
 - [`src/snapshots.js`](/Users/mike.gifford/design-system-scan/src/snapshots.js): save, load, and diff scan snapshots
