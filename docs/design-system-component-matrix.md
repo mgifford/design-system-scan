@@ -17,42 +17,43 @@ Legend:
 | USWDS | Broad starter coverage across the official component inventory |
 | VA.gov Design System | Starter coverage focused on distinctive Web Components and high-signal patterns |
 | CMS Design System | Starter coverage focused on `ds-*` Web Components, package/CDN fingerprints, and child-theme detection |
+| GOV.UK Design System | Starter coverage focused on GOV.UK Frontend classes, `data-module` hooks, and the official component inventory |
 
 ## Cross-system semantic grid
 
-| Semantic family | USWDS | VA | CMSDS | Notes |
-| --- | --- | --- | --- | --- |
-| Official government banner | Y | Y | Y | Strong convergence. Each system has a clear government-banner pattern. |
-| Accordion / disclosure | Y | Y | Y | Strong convergence. |
-| Alert / notification | Y | Y | Y | Strong convergence. |
-| Button / primary action | Y | Y | Y | Strong convergence. |
-| Modal / dialog | Y | Y | Y | Strong convergence, though CMS names this `Dialog`. |
-| Breadcrumbs | Y | Y | N | USWDS and VA align closely here. |
-| Header / global navigation | Y | N | Y | CMS currently models theme-specific headers. |
-| Footer / site footer | Y | N | Y | CMS currently models theme-specific footers. |
-| Tooltip / inline help | Y | N | Y | Emerging convergence. |
-| Choice controls | Y | N | Y | Semantics align, but CMS collapses several input patterns into `Choice`. |
-| Select / dropdown | Y | N | Y | Same semantic role, different implementation granularity. |
-| Date input | Y | N | Y | Same semantic role, different implementation granularity. |
-| Badge / tag / status label | ~ | N | Y | USWDS `Tag` is semantically adjacent to CMS `Badge`. |
+| Semantic family | USWDS | VA | CMSDS | GOV.UK | Notes |
+| --- | --- | --- | --- | --- | --- |
+| Official government banner | Y | Y | Y | N | GOV.UK does not expose a directly equivalent official-banner component in the current scanner model. |
+| Accordion / disclosure | Y | Y | Y | Y | Strong convergence. |
+| Alert / notification | Y | Y | Y | ~ | GOV.UK expresses this mostly via notification and error patterns. |
+| Button / primary action | Y | Y | Y | Y | Strong convergence. |
+| Modal / dialog | Y | Y | Y | ~ | GOV.UK tends to use other disclosure patterns instead of a modal component. |
+| Breadcrumbs | Y | Y | N | Y | Strong semantic alignment across USWDS, VA, and GOV.UK. |
+| Header / global navigation | Y | N | Y | Y | CMS currently models theme-specific headers. |
+| Footer / site footer | Y | N | Y | Y | CMS currently models theme-specific footers. |
+| Tooltip / inline help | Y | N | Y | N | GOV.UK does not currently expose a tooltip component in the scanner model. |
+| Choice controls | Y | N | Y | Y | Semantics align, but systems split the pattern differently. |
+| Select / dropdown | Y | N | Y | Y | Same semantic role, different implementation granularity. |
+| Date input | Y | N | Y | Y | Same semantic role, different implementation granularity. |
+| Badge / tag / status label | ~ | N | Y | Y | GOV.UK and CMS align directly here; USWDS is adjacent via `Tag`. |
 
 ## Where convergence is strongest
 
 The clearest common pattern across the currently tracked systems is:
 
-1. Official government banner
-2. Accordion
-3. Alert
-4. Button
-5. Modal/dialog
+1. Accordion
+2. Button
+3. Breadcrumbs
+4. Header/footer
+5. Core form controls
 
-Those five areas are the best candidates for a shared semantic taxonomy because all three tracked systems already express them directly.
+Those are the best candidates for a shared semantic taxonomy across USWDS, CMS, GOV.UK, and the currently indexed VA subset.
 
 The next tier of convergence is partial:
 
-1. Breadcrumbs are aligned between USWDS and VA.
-2. Header and footer are aligned between USWDS and CMS.
-3. Tooltip/help patterns are aligned between USWDS and CMS.
+1. Alerts/notifications are aligned, but GOV.UK expresses them differently.
+2. Modal/dialog patterns are aligned in USWDS, VA, and CMS, but not strongly in GOV.UK.
+3. Tooltip/help patterns are aligned between USWDS and CMS, but not yet across all systems.
 4. Form controls align semantically, but not at the same level of component granularity.
 
 ## CMS theme matrix
@@ -121,8 +122,8 @@ These are the semantic families most worth normalizing as new design systems are
 ## Important limitations
 
 1. This matrix describes the scanner-supported inventory today.
-2. USWDS is much more complete than VA and CMS at the moment.
-3. VA and CMS should still be expanded toward their full official component inventories.
+2. USWDS is much more complete than VA, CMS, and GOV.UK at the moment.
+3. VA, CMS, and GOV.UK should still be expanded toward their full official component inventories in scanner logic.
 4. Some semantic matches are intentionally broad because different systems split the same user need into different component shapes.
 
 ## Sources
@@ -133,3 +134,4 @@ These are the semantic families most worth normalizing as new design systems are
 - [CMS For developers](https://design.cms.gov/getting-started/for-developers/?theme=medicare)
 - [CMS components overview](https://design.cms.gov/components/overview/)
 - [CMS component analytics](https://design.cms.gov/components/analytics/?theme=cmsgov)
+- [GOV.UK components](https://design-system.service.gov.uk/components/)

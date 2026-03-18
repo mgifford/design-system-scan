@@ -13,6 +13,10 @@
     {
       "id": "cms",
       "name": "CMS Design System"
+    },
+    {
+      "id": "govuk",
+      "name": "GOV.UK Design System"
     }
   ],
   "cmsThemes": [
@@ -57,7 +61,8 @@
       "systems": {
         "uswds": { "status": "direct", "components": ["accordion"] },
         "va": { "status": "direct", "components": ["accordion"] },
-        "cms": { "status": "direct", "components": ["accordion"] }
+        "cms": { "status": "direct", "components": ["accordion"] },
+        "govuk": { "status": "direct", "components": ["accordion"] }
       },
       "cmsThemes": {
         "core": "Y",
@@ -73,7 +78,8 @@
       "systems": {
         "uswds": { "status": "direct", "components": ["alert", "site-alert"] },
         "va": { "status": "direct", "components": ["alert"] },
-        "cms": { "status": "direct", "components": ["alert"] }
+        "cms": { "status": "direct", "components": ["alert"] },
+        "govuk": { "status": "semantic", "components": ["notification-banner", "error-summary"] }
       },
       "cmsThemes": {
         "core": "Y",
@@ -89,7 +95,8 @@
       "systems": {
         "uswds": { "status": "direct", "components": ["button"] },
         "va": { "status": "direct", "components": ["button"] },
-        "cms": { "status": "direct", "components": ["button"] }
+        "cms": { "status": "direct", "components": ["button"] },
+        "govuk": { "status": "direct", "components": ["button"] }
       },
       "cmsThemes": {
         "core": "Y",
@@ -105,7 +112,8 @@
       "systems": {
         "uswds": { "status": "direct", "components": ["modal"] },
         "va": { "status": "direct", "components": ["modal"] },
-        "cms": { "status": "direct", "components": ["dialog"] }
+        "cms": { "status": "direct", "components": ["dialog"] },
+        "govuk": { "status": "semantic", "components": ["details", "notification-banner"] }
       },
       "cmsThemes": {
         "core": "Y",
@@ -121,7 +129,8 @@
       "systems": {
         "uswds": { "status": "direct", "components": ["breadcrumb"] },
         "va": { "status": "direct", "components": ["breadcrumbs"] },
-        "cms": { "status": "none", "components": [] }
+        "cms": { "status": "none", "components": [] },
+        "govuk": { "status": "direct", "components": ["breadcrumbs"] }
       },
       "cmsThemes": {
         "core": "N",
@@ -137,7 +146,8 @@
       "systems": {
         "uswds": { "status": "direct", "components": ["header"] },
         "va": { "status": "none", "components": [] },
-        "cms": { "status": "direct", "components": ["header"] }
+        "cms": { "status": "direct", "components": ["header"] },
+        "govuk": { "status": "direct", "components": ["header", "service-navigation"] }
       },
       "cmsThemes": {
         "core": "N",
@@ -153,7 +163,8 @@
       "systems": {
         "uswds": { "status": "direct", "components": ["footer"] },
         "va": { "status": "none", "components": [] },
-        "cms": { "status": "direct", "components": ["footer"] }
+        "cms": { "status": "direct", "components": ["footer"] },
+        "govuk": { "status": "direct", "components": ["footer"] }
       },
       "cmsThemes": {
         "core": "N",
@@ -169,7 +180,8 @@
       "systems": {
         "uswds": { "status": "direct", "components": ["tooltip"] },
         "va": { "status": "none", "components": [] },
-        "cms": { "status": "direct", "components": ["tooltip"] }
+        "cms": { "status": "direct", "components": ["tooltip"] },
+        "govuk": { "status": "none", "components": [] }
       },
       "cmsThemes": {
         "core": "Y",
@@ -185,7 +197,8 @@
       "systems": {
         "uswds": { "status": "direct", "components": ["checkbox", "radio-buttons"] },
         "va": { "status": "none", "components": [] },
-        "cms": { "status": "direct", "components": ["choice"] }
+        "cms": { "status": "direct", "components": ["choice"] },
+        "govuk": { "status": "direct", "components": ["checkboxes", "radios"] }
       },
       "cmsThemes": {
         "core": "Y",
@@ -201,7 +214,8 @@
       "systems": {
         "uswds": { "status": "direct", "components": ["select", "combo-box"] },
         "va": { "status": "none", "components": [] },
-        "cms": { "status": "direct", "components": ["dropdown"] }
+        "cms": { "status": "direct", "components": ["dropdown"] },
+        "govuk": { "status": "direct", "components": ["select"] }
       },
       "cmsThemes": {
         "core": "Y",
@@ -217,7 +231,8 @@
       "systems": {
         "uswds": { "status": "direct", "components": ["date-picker", "date-range-picker", "memorable-date"] },
         "va": { "status": "none", "components": [] },
-        "cms": { "status": "direct", "components": ["date-field"] }
+        "cms": { "status": "direct", "components": ["date-field"] },
+        "govuk": { "status": "direct", "components": ["date-input"] }
       },
       "cmsThemes": {
         "core": "Y",
@@ -233,7 +248,8 @@
       "systems": {
         "uswds": { "status": "semantic", "components": ["tag"] },
         "va": { "status": "none", "components": [] },
-        "cms": { "status": "direct", "components": ["badge"] }
+        "cms": { "status": "direct", "components": ["badge"] },
+        "govuk": { "status": "direct", "components": ["tag"] }
       },
       "cmsThemes": {
         "core": "Y",
@@ -245,7 +261,7 @@
   ],
   "notes": [
     "This file tracks what the scanner currently models, not the full official inventory of each design system.",
-    "USWDS coverage is broad; VA and CMS coverage are starter definitions centered on distinctive, high-signal components.",
+    "USWDS coverage is broad; VA, CMS, and GOV.UK coverage are still starter definitions centered on distinctive, high-signal components.",
     "CMS theme differences are primarily branding and site-chrome differences layered on a shared component family."
   ]
 }

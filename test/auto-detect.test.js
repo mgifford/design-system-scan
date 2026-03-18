@@ -2,6 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 
 import { cms } from "../src/systems/cms.js";
+import { govuk } from "../src/systems/govuk.js";
 import { evaluateHtml, selectBestSystemReport } from "../src/scanner.js";
 import { uswds } from "../src/systems/uswds.js";
 import { va } from "../src/systems/va.js";
@@ -42,6 +43,7 @@ test("auto detection prefers USWDS on USWDS-style markup", () => {
   const selection = selectBestSystemReport([
     wrapReport(uswds, evaluateHtml("https://example.gov/", html, uswds)),
     wrapReport(va, evaluateHtml("https://example.gov/", html, va)),
+    wrapReport(govuk, evaluateHtml("https://example.gov/", html, govuk)),
   ]);
 
   assert.equal(selection.selected.system.id, "uswds");
@@ -60,6 +62,7 @@ test("auto detection prefers VA on VA web components", () => {
   const selection = selectBestSystemReport([
     wrapReport(uswds, evaluateHtml("https://www.va.gov/", html, uswds)),
     wrapReport(va, evaluateHtml("https://www.va.gov/", html, va)),
+    wrapReport(govuk, evaluateHtml("https://www.va.gov/", html, govuk)),
   ]);
 
   assert.equal(selection.selected.system.id, "va");
@@ -81,7 +84,29 @@ test("auto detection prefers CMSDS on ds web components", () => {
     wrapReport(uswds, evaluateHtml("https://example.gov/", html, uswds)),
     wrapReport(va, evaluateHtml("https://example.gov/", html, va)),
     wrapReport(cms, evaluateHtml("https://example.gov/", html, cms)),
+    wrapReport(govuk, evaluateHtml("https://example.gov/", html, govuk)),
   ]);
 
   assert.equal(selection.selected.system.id, "cms");
+});
+
+test("auto detection prefers GOV.UK on govuk frontend markup", () => {
+  const html = `
+    <link rel="stylesheet" href="https://assets.example.gov/govuk-frontend/govuk/all.min.css" />
+    <script type="module">
+      import "govuk-frontend/govuk/all";
+    </script>
+    <div class="govuk-cookie-banner" data-module="govuk-cookie-banner"></div>
+    <button class="govuk-button" data-module="govuk-button">Continue</button>
+    <nav class="govuk-pagination"></nav>
+  `;
+
+  const selection = selectBestSystemReport([
+    wrapReport(uswds, evaluateHtml("https://www.gov.uk/", html, uswds)),
+    wrapReport(va, evaluateHtml("https://www.gov.uk/", html, va)),
+    wrapReport(cms, evaluateHtml("https://www.gov.uk/", html, cms)),
+    wrapReport(govuk, evaluateHtml("https://www.gov.uk/", html, govuk)),
+  ]);
+
+  assert.equal(selection.selected.system.id, "govuk");
 });

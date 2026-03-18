@@ -2,7 +2,7 @@
 
 `design-system-scan` is a rules-driven scanner for checking how closely a site appears to implement a design system.
 
-It now includes starter definitions for the [U.S. Web Design System](https://designsystem.digital.gov/), the [VA.gov Design System](https://design.va.gov/), and the [CMS Design System](https://design.cms.gov/), with auto-detection to determine which one better matches a submitted URL.
+It now includes starter definitions for the [U.S. Web Design System](https://designsystem.digital.gov/), the [VA.gov Design System](https://design.va.gov/), the [CMS Design System](https://design.cms.gov/), and the [GOV.UK Design System](https://design-system.service.gov.uk/), with auto-detection to determine which one better matches a submitted URL.
 
 The scanner is built to answer questions like:
 
@@ -58,6 +58,12 @@ Target the CMS Design System explicitly:
 
 ```bash
 npm run scan:cms -- https://design.cms.gov/?theme=core
+```
+
+Target the GOV.UK Design System explicitly:
+
+```bash
+npm run scan:govuk -- https://design-system.service.gov.uk/
 ```
 
 Use a file of newline-delimited URLs:
@@ -117,12 +123,14 @@ https://example.gov/
 - [`ACCESSIBILITY.md`](/Users/mike.gifford/design-system-scan/ACCESSIBILITY.md): locked accessibility patterns for report UI behavior
 - [`docs/design-system-component-matrix.md`](/Users/mike.gifford/design-system-scan/docs/design-system-component-matrix.md): cross-system semantic matrix and CMS theme comparison
 - [`data/design-system-component-matrix.json`](/Users/mike.gifford/design-system-scan/data/design-system-component-matrix.json): machine-readable semantic component matrix
+- [`data/design-systems/`](/Users/mike.gifford/design-system-scan/data/design-systems): official component inventories for each tracked design system
 - [`src/cli.js`](/Users/mike.gifford/design-system-scan/src/cli.js): command-line entrypoint
 - [`src/scanner.js`](/Users/mike.gifford/design-system-scan/src/scanner.js): fetch, extract, score, and summarize pages
 - [`src/snapshots.js`](/Users/mike.gifford/design-system-scan/src/snapshots.js): save, load, and diff scan snapshots
 - [`src/systems/uswds.js`](/Users/mike.gifford/design-system-scan/src/systems/uswds.js): starter USWDS rule definition
 - [`src/systems/va.js`](/Users/mike.gifford/design-system-scan/src/systems/va.js): starter VA rule definition
 - [`src/systems/cms.js`](/Users/mike.gifford/design-system-scan/src/systems/cms.js): starter CMS Design System rule definition with child-theme detection
+- [`src/systems/govuk.js`](/Users/mike.gifford/design-system-scan/src/systems/govuk.js): starter GOV.UK Design System rule definition
 
 ## Maintaining the design system knowledge base
 
@@ -268,6 +276,12 @@ The scanner treats this as one CMS design-system family with child-theme detecti
 
 - whether a site appears to use CMSDS at all
 - which theme is the strongest match based on package imports, theme CSS, CDN paths, and theme-specific header/footer components
+
+## GOV.UK starter signals
+
+The GOV.UK definition is optimized around the official `govuk-` class prefix, `govuk-frontend`, and the standard `data-module` hooks used by GOV.UK Frontend.
+
+The repo now also tracks machine-readable component inventories for each design system under [data/design-systems/](/Users/mike.gifford/design-system-scan/data/design-systems), so all official component sets can be indexed separately from current scanner coverage.
 
 The starter coverage currently prioritizes:
 

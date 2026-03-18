@@ -5,6 +5,8 @@ const VERSION_REGEXES = [
   /@uswds\/uswds@(\d+\.\d+\.\d+)/giu,
   /USWDS\s+(\d+\.\d+\.\d+)/giu,
   /(?:@cmsgov\/(?:design-system|ds-cms-gov|ds-healthcare-gov|ds-medicare-gov)|\/cdn\/(?:design-system|ds-cms-gov|ds-healthcare-gov|ds-medicare-gov)\/)(\d+\.\d+\.\d+(?:-[a-z0-9.-]+)?)/giu,
+  /govuk-frontend(?:[@/]|%40)(\d+\.\d+\.\d+(?:-[a-z0-9.-]+)?)/giu,
+  /GOV\.UK Frontend v(\d+\.\d+\.\d+(?:-[a-z0-9.-]+)?)/giu,
 ];
 
 function clamp(value, min, max) {
