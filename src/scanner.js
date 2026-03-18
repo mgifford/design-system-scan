@@ -594,6 +594,123 @@ export async function scanUrls(urls, definition, options) {
   };
 }
 
+function detectionScore(report) {
+  const successfulPages = report.pages.filter((page) => !page.error);
+  const fullComponents = successfulPages.reduce(
+    (total, page) => total + (page.summary?.fullComponentCount ?? 0),
+    0
+  );
+  const partialComponents = successfulPages.reduce(
+    (total, page) => total + (page.summary?.partialComponentCount ?? 0),
+    0
+  );
+  const matchedTemplates = successfulPages.reduce(
+    (total, page) => total + (page.summary?.matchedTemplateCount ?? 0),
+    0
+  );
+  const fingerprintCoverageTotal = successfulPages.reduce(
+    (total, page) => total + (page.siteFingerprint?.coverage ?? 0),
+    0
+  );
+
+  return Number.parseFloat(
+    (
+      (report.siteSummary?.fingerprintedPageCount ?? 0) * 100 +
+      fullComponents * 10 +
+      partialComponents * 4 +
+      matchedTemplates * 3 +
+      fingerprintCoverageTotal * 20
+    ).toFixed(3)
+  );
+}
+
+function summarizeCandidate(report) {
+  const successfulPages = report.pages.filter((page) => !page.error);
+  const fullComponents = successfulPages.reduce(
+    (total, page) => total + (page.summary?.fullComponentCount ?? 0),
+    0
+  );
+  const partialComponents = successfulPages.reduce(
+    (total, page) => total + (page.summary?.partialComponentCount ?? 0),
+    0
+  );
+  const matchedTemplates = successfulPages.reduce(
+    (total, page) => total + (page.summary?.matchedTemplateCount ?? 0),
+    0
+  );
+  const averageFingerprintCoverage =
+    successfulPages.length === 0
+      ? 0
+      : successfulPages.reduce((total, page) => total + (page.siteFingerprint?.coverage ?? 0), 0) /
+        successfulPages.length;
+
+  return {
+    id: report.system.id,
+    name: report.system.name,
+    trackedVersion: report.system.trackedVersion,
+    score: detectionScore(report),
+    successfulPages: report.siteSummary?.successfulPageCount ?? 0,
+    pageCount: report.siteSummary?.pageCount ?? 0,
+    fingerprintedPages: report.siteSummary?.fingerprintedPageCount ?? 0,
+    fullComponents,
+    partialComponents,
+    matchedTemplates,
+    averageFingerprintCoverage: Number.parseFloat(averageFingerprintCoverage.toFixed(3)),
+  };
+}
+
+export function selectBestSystemReport(reports) {
+  const candidates = reports.map((report) => ({
+    report,
+    summary: summarizeCandidate(report),
+  }));
+
+  candidates.sort((left, right) => {
+    if (right.summary.score !== left.summary.score) {
+      return right.summary.score - left.summary.score;
+    }
+
+    if (right.summary.fingerprintedPages !== left.summary.fingerprintedPages) {
+      return right.summary.fingerprintedPages - left.summary.fingerprintedPages;
+    }
+
+    if (right.summary.fullComponents !== left.summary.fullComponents) {
+      return right.summary.fullComponents - left.summary.fullComponents;
+    }
+
+    return left.summary.name.localeCompare(right.summary.name);
+  });
+
+  return {
+    selected: candidates[0]?.report ?? null,
+    candidates: candidates.map((candidate) => candidate.summary),
+  };
+}
+
+export async function scanUrlsForDefinitions(urls, definitions, options) {
+  const reports = [];
+
+  for (const definition of definitions) {
+    reports.push(await scanUrls(urls, definition, options));
+  }
+
+  const selection = selectBestSystemReport(reports);
+
+  if (!selection.selected) {
+    throw new Error("No system definitions were available for auto-detection.");
+  }
+
+  return {
+    ...selection.selected,
+    detection: {
+      mode: "auto",
+      selectedSystemId: selection.selected.system.id,
+      selectedSystemName: selection.selected.system.name,
+      candidates: selection.candidates,
+    },
+  };
+}
+
 function summarizeSite(pages) {
   const successfulPages = pages.filter((page) => !page.error);
   const fingerprintPages = successfulPages.filter(

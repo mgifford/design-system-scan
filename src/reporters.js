@@ -26,6 +26,21 @@ function describeMissing(item) {
 export function formatTextReport(report) {
   const lines = [];
 
+  if (report.detection?.mode === "auto") {
+    lines.push(`Detected system: ${report.detection.selectedSystemName}`);
+
+    if ((report.detection.candidates ?? []).length > 0) {
+      lines.push("System candidates:");
+      report.detection.candidates.forEach((candidate) => {
+        lines.push(
+          `  - ${candidate.name}: score ${candidate.score}, fingerprint pages ${candidate.fingerprintedPages}/${candidate.pageCount}, components ${candidate.fullComponents} full + ${candidate.partialComponents} partial`
+        );
+      });
+    }
+
+    lines.push("");
+  }
+
   lines.push(`${report.system.name} scan`);
   lines.push(`Tracked definition: ${report.system.trackedVersion}`);
   lines.push(`Docs: ${report.system.homepage}`);

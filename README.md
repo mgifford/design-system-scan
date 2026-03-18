@@ -2,7 +2,9 @@
 
 `design-system-scan` is a rules-driven scanner for checking how closely a site appears to implement a design system.
 
-The first included definition targets the [U.S. Web Design System](https://designsystem.digital.gov/) and is built to answer questions like:
+It now includes starter definitions for both the [U.S. Web Design System](https://designsystem.digital.gov/) and the [VA.gov Design System](https://design.va.gov/), with auto-detection to determine which one better matches a submitted URL.
+
+The scanner is built to answer questions like:
 
 - Is USWDS present at all?
 - Which components look fully implemented vs partially implemented?
@@ -14,7 +16,7 @@ The first included definition targets the [U.S. Web Design System](https://desig
 The scanner evaluates each URL in three layers:
 
 1. Site fingerprint
-   It looks for broad tells such as `uswds.min.css`, `uswds.min.js`, `uswds-init`, the `usa-` class prefix, and common utility patterns.
+   It looks for broad tells such as `uswds.min.css`, `uswds.min.js`, `uswds-init`, the `usa-` class prefix, the VA `va-` Web Component prefix, and other system-specific package or event markers.
 2. Component detection
    It scores known components using weighted tells. For example, `usa-banner` alone suggests partial banner adoption, while `usa-banner` plus `usa-banner__header` and `usa-banner__content` is stronger evidence of a fuller implementation.
 3. Version clues
@@ -34,10 +36,22 @@ Requirements:
 
 - Node.js 24+
 
-Run against one or more URLs:
+Run against one or more URLs with auto-detection:
+
+```bash
+npm run scan -- https://designsystem.digital.gov/
+```
+
+Target USWDS explicitly:
 
 ```bash
 npm run scan:uswds -- https://designsystem.digital.gov/
+```
+
+Target the VA Design System explicitly:
+
+```bash
+npm run scan:va -- https://design.va.gov/
 ```
 
 Use a file of newline-delimited URLs:
@@ -155,7 +169,7 @@ max_pages: 10
 Notes:
 
 - The workflow uses the first URL it finds in the title or body.
-- `system` defaults to `uswds`.
+- `system` defaults to `auto`.
 - `crawl` defaults to `true`.
 - `max_pages` defaults to `10`.
 - `pages:` and `number:` are also accepted as aliases for `max_pages:`.
@@ -217,6 +231,16 @@ The current component coverage includes:
 - starter template detection for documentation pages, landing pages, 404 pages, authentication pages, and form templates
 
 The test suite uses synthetic HTML fixtures that mirror live-site evidence like documented classes, attributes, and structure. It validates the scanner’s rule model, which is different from proving that any arbitrary site is semantically correct.
+
+## VA.gov starter signals
+
+The initial VA definition is optimized around the official Web Components guidance and distinctive `va-` custom elements.
+
+The starter coverage currently prioritizes:
+
+- VA Web Component fingerprinting
+- core components like Alert, Button, Modal, Breadcrumbs, Accordion, and the Official Gov banner
+- auto-detection alongside USWDS so a submitted URL can be compared against both systems
 
 ## Current limitations
 

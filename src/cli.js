@@ -4,9 +4,14 @@ import fs from "node:fs/promises";
 import process from "node:process";
 
 import { scanUrls } from "./scanner.js";
+import { scanUrlsForDefinitions } from "./scanner.js";
 import { formatDiffReport, formatTextReport } from "./reporters.js";
 import { diffSnapshots, loadSnapshot, saveSnapshot } from "./snapshots.js";
-import { getSystemDefinition, listSystemDefinitions } from "./systems/index.js";
+import {
+  getSystemDefinition,
+  listDetectableSystemDefinitions,
+  listSystemDefinitions,
+} from "./systems/index.js";
 
 function printHelp() {
   console.log(`design-system-scan
@@ -16,7 +21,7 @@ Usage:
   node src/cli.js --system uswds --file urls.txt
 
 Options:
-  --system <id>         Design system definition to use. Default: uswds
+  --system <id>         Design system definition to use. Default: auto
   --file <path>         Read newline-delimited URLs from a file
   --crawl               Discover same-origin pages from the seed URLs
   --max-pages <n>       Max pages to scan when crawling. Default: 25
@@ -33,7 +38,7 @@ Options:
 
 function parseArgs(argv) {
   const options = {
-    system: "uswds",
+    system: "auto",
     includeAssets: true,
     assetLimit: 8,
     crawl: false,
@@ -165,13 +170,16 @@ async function main() {
     return;
   }
 
-  const report = await scanUrls(urls, system, {
+  const scanOptions = {
     includeAssets: options.includeAssets,
     assetLimit: options.assetLimit,
     crawl: options.crawl,
     maxPages: options.maxPages,
     timeoutMs: options.timeoutMs,
-  });
+  };
+  const report = system.autoDetect
+    ? await scanUrlsForDefinitions(urls, listDetectableSystemDefinitions(), scanOptions)
+    : await scanUrls(urls, system, scanOptions);
 
   if (options.save) {
     await saveSnapshot(options.save, report);

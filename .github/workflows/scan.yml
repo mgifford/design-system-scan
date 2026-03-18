@@ -10,7 +10,7 @@ on:
       system:
         description: "Design system definition"
         required: false
-        default: "uswds"
+        default: "auto"
       crawl:
         description: "Crawl same-origin pages from the seed URL"
         required: false
@@ -81,13 +81,13 @@ jobs:
         run: |
           if [ "$EVENT_NAME" = "schedule" ] && [ "$EVENT_SCHEDULE" = "17 13 * * 1" ]; then
             echo "url=https://designsystem.digital.gov/" >> "$GITHUB_OUTPUT"
-            echo "system=uswds" >> "$GITHUB_OUTPUT"
+            echo "system=auto" >> "$GITHUB_OUTPUT"
             echo "crawl=true" >> "$GITHUB_OUTPUT"
             echo "max_pages=20" >> "$GITHUB_OUTPUT"
             echo "trigger=weekly" >> "$GITHUB_OUTPUT"
           elif [ "$EVENT_NAME" = "schedule" ]; then
             echo "url=https://designsystem.digital.gov/" >> "$GITHUB_OUTPUT"
-            echo "system=uswds" >> "$GITHUB_OUTPUT"
+            echo "system=auto" >> "$GITHUB_OUTPUT"
             echo "crawl=true" >> "$GITHUB_OUTPUT"
             echo "max_pages=10" >> "$GITHUB_OUTPUT"
             echo "trigger=weekday" >> "$GITHUB_OUTPUT"
@@ -116,7 +116,7 @@ jobs:
             fi
 
             if [ -z "$SYSTEM" ]; then
-              SYSTEM="uswds"
+              SYSTEM="auto"
             fi
 
             if [ -z "$CRAWL" ]; then
