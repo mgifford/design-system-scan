@@ -189,6 +189,16 @@ It emphasizes:
 
 This is a better fit for scans that include many pages or many reviewed sites.
 
+## Multi-scan archive
+
+The Pages site now publishes:
+
+- `/` as a cumulative archive of scans across runs
+- `/latest/` as a dashboard for the most recent run
+- `/history.json` as the cumulative machine-readable scan history
+
+Each new successful run merges into the published archive so the site can scale beyond a single scan result.
+
 ## USWDS starter signals
 
 The initial USWDS definition uses signals derived from official documentation, especially:

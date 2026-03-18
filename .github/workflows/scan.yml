@@ -157,7 +157,14 @@ jobs:
             echo "run_url=https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
           } > artifacts/metadata.txt
 
-      - name: Build Pages report
+      - name: Fetch existing Pages history
+        env:
+          HISTORY_URL: https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/history.json
+        run: |
+          mkdir -p pages-input
+          curl -fsSL "$HISTORY_URL" -o pages-input/history.json || echo '{"version":1,"updatedAt":null,"scans":[]}' > pages-input/history.json
+
+      - name: Build Pages archive
         env:
           REPOSITORY: ${{ github.repository }}
           RUN_ID: ${{ github.run_id }}
@@ -172,12 +179,18 @@ jobs:
           mkdir -p site
           node --input-type=module <<'EOF'
             import fs from "node:fs/promises";
+            import {
+              createArchiveEntry,
+              loadArchiveHistory,
+              mergeArchiveHistory,
+              writeArchiveSite,
+            } from "./src/archive.js";
             import { writeDashboardSite } from "./src/dashboard.js";
 
             const reportText = await fs.readFile("artifacts/report.txt", "utf8");
             const report = JSON.parse(await fs.readFile("artifacts/scan.json", "utf8"));
-
-            await writeDashboardSite("site", report, {
+            const history = await loadArchiveHistory("pages-input/history.json");
+            const metadata = {
               reportText,
               repository: process.env.REPOSITORY,
               runId: process.env.RUN_ID,
@@ -189,7 +202,16 @@ jobs:
               maxPages: process.env.MAX_PAGES,
               trigger: process.env.TRIGGER,
               runUrl: `https://github.com/${process.env.REPOSITORY}/actions/runs/${process.env.RUN_ID}`,
-            });
+            };
+            const entry = createArchiveEntry(report, metadata);
+            const mergedHistory = mergeArchiveHistory(history, entry);
+
+            await writeArchiveSite("site", mergedHistory);
+            await fs.mkdir("site/latest", { recursive: true });
+            await writeDashboardSite("site/latest", report, metadata);
+
+            await fs.writeFile("site/report.txt", reportText, "utf8");
+            await fs.writeFile("site/scan.json", JSON.stringify(report, null, 2), "utf8");
           EOF
 
       - name: Publish step summary
@@ -241,7 +263,8 @@ jobs:
             const body = [
               `Scan completed successfully for ${context.payload.issue.title}.`,
               ``,
-              `Report page: ${pageUrl}`,
+              `Archive page: ${pageUrl}`,
+              `Latest run detail: ${pageUrl}latest/`,
               `Workflow run: ${runUrl}`,
               `Artifacts: ${runUrl}`
             ].join('\n');
