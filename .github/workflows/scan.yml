@@ -277,7 +277,19 @@ jobs:
           HISTORY_URL: https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/history.json
         run: |
           mkdir -p pages-input
-          curl -fsSL "$HISTORY_URL" -o pages-input/history.json || echo '{"version":1,"updatedAt":null,"scans":[]}' > pages-input/history.json
+          HTTP_CODE=$(curl -sSL -w "%{http_code}" "$HISTORY_URL" -o pages-input/history.json.tmp || true)
+          if [ "$HTTP_CODE" = "200" ]; then
+            mv pages-input/history.json.tmp pages-input/history.json
+          else
+            rm -f pages-input/history.json.tmp
+            echo '{"version":1,"updatedAt":null,"scans":[]}' > pages-input/history.json
+          fi
+
+          {
+            echo "history_url=$HISTORY_URL"
+            echo "http_code=$HTTP_CODE"
+            echo "history_bytes=$(wc -c < pages-input/history.json | tr -d ' ')"
+          } | tee pages-input/history-fetch.txt
 
       - name: Build Pages archive
         env:
@@ -335,9 +347,56 @@ jobs:
             await fs.writeFile("site/scan.json", JSON.stringify(report, null, 2), "utf8");
           EOF
 
+      - name: Debug generated Pages output
+        env:
+          RUN_ID: ${{ github.run_id }}
+          ISSUE_NUMBER: ${{ steps.inputs.outputs.issue_number }}
+        run: |
+          mkdir -p artifacts
+          find site -type f | sort | tee artifacts/site-files.txt
+
+          node --input-type=module <<'EOF' | tee artifacts/site-check.txt
+          import fs from "node:fs";
+
+          const runId = process.env.RUN_ID;
+          const issueNumber = process.env.ISSUE_NUMBER;
+          const expected = [
+            "site/index.html",
+            "site/history.json",
+            "site/latest/index.html",
+            `site/runs/${runId}/index.html`,
+            "site/report.txt",
+            "site/scan.json",
+          ];
+
+          if (issueNumber) {
+            expected.push(
+              `site/reports/issues/issue-${issueNumber}/run-${runId}/report.html`,
+              `site/reports/issues/issue-${issueNumber}/run-${runId}/report.md`,
+              `site/reports/issues/issue-${issueNumber}/run-${runId}/report.csv`,
+              `site/reports/issues/issue-${issueNumber}/run-${runId}/report.json`
+            );
+          }
+
+          for (const pathname of expected) {
+            const exists = fs.existsSync(pathname);
+            console.log(`${exists ? "OK" : "MISSING"} ${pathname}`);
+          }
+          EOF
+
       - name: Publish step summary
         run: |
           echo "Trigger: ${{ steps.inputs.outputs.trigger }}" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "History fetch:" >> "$GITHUB_STEP_SUMMARY"
+          echo '```text' >> "$GITHUB_STEP_SUMMARY"
+          cat pages-input/history-fetch.txt >> "$GITHUB_STEP_SUMMARY"
+          echo '```' >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "Generated Pages files:" >> "$GITHUB_STEP_SUMMARY"
+          echo '```text' >> "$GITHUB_STEP_SUMMARY"
+          cat artifacts/site-check.txt >> "$GITHUB_STEP_SUMMARY"
+          echo '```' >> "$GITHUB_STEP_SUMMARY"
           echo "" >> "$GITHUB_STEP_SUMMARY"
           cat artifacts/report.txt >> "$GITHUB_STEP_SUMMARY"
 

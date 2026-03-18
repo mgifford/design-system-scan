@@ -39,6 +39,14 @@ jobs:
               .slice(0, maxIssues);
 
             core.summary.addHeading("Queued SCAN issues");
+            core.summary.addTable([
+              [
+                { data: "Open issues fetched", header: true },
+                { data: "Open SCAN issues", header: true },
+                { data: "Dispatch limit", header: true },
+              ],
+              [String(issues.length), String(issues.filter((issue) => !issue.pull_request && issue.title.startsWith("SCAN:")).length), String(maxIssues)],
+            ]);
 
             if (scanIssues.length === 0) {
               core.summary.addRaw("No open SCAN issues found.");
@@ -64,6 +72,17 @@ jobs:
               core.summary.addList([
                 `Dispatched issue #${issue.number}: ${issue.title}`,
               ]);
+            }
+
+            const skippedIssues = issues
+              .filter((issue) => !issue.pull_request && issue.title.startsWith("SCAN:"))
+              .sort((left, right) => left.number - right.number)
+              .slice(maxIssues)
+              .map((issue) => `Skipped this run due to max_issues limit: #${issue.number} ${issue.title}`);
+
+            if (skippedIssues.length > 0) {
+              core.summary.addHeading("Skipped SCAN issues");
+              core.summary.addList(skippedIssues);
             }
 
             await core.summary.write();
