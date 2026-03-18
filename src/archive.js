@@ -258,8 +258,8 @@ function renderEvidenceTable(title, items) {
   `;
 }
 
-function renderPageTable(pages) {
-  const rows = pages
+function renderPageSections(pages) {
+  return (pages ?? [])
     .map((page) => {
       const versions = (page.versions ?? []).length ? page.versions.join(", ") : "none";
       const assetErrors = (page.assetErrors ?? [])
@@ -267,53 +267,24 @@ function renderPageTable(pages) {
         .join("");
 
       return `
-        <tr>
-          <td><a href="${escapeHtml(page.url)}">${escapeHtml(page.url)}</a></td>
-          <td>${statusBadge(page.fingerprint.status)}</td>
-          <td>${formatPercent(page.fingerprint.coverage)}</td>
-          <td>${page.summary.fullComponentCount}</td>
-          <td>${page.summary.partialComponentCount}</td>
-          <td>${page.summary.matchedTemplateCount}</td>
-          <td>${escapeHtml(versions)}</td>
-          <td>
-            <details>
-              <summary>Page details</summary>
-              ${
-                page.error
-                  ? `<p class="error">${escapeHtml(page.error)}</p>`
-                  : `
-                    <p><strong>Adoption:</strong> ${page.summary.fullComponentCount} full, ${page.summary.partialComponentCount} partial, ${formatPercent(page.summary.overallCoverage)} overall</p>
-                    ${renderEvidenceTable("Components", page.components ?? [])}
-                    ${renderEvidenceTable("Templates", page.templates ?? [])}
-                    ${assetErrors ? `<section><h4>Asset fetch issues</h4><ul>${assetErrors}</ul></section>` : ""}
-                  `
-              }
-            </details>
-          </td>
-        </tr>
+        <section class="page-section">
+          <h3><a href="${escapeHtml(page.url)}">${escapeHtml(page.url)}</a></h3>
+          ${
+            page.error
+              ? `<p class="error">${escapeHtml(page.error)}</p>`
+              : `
+                <p><strong>Fingerprint:</strong> ${statusBadge(page.fingerprint.status)} ${formatPercent(page.fingerprint.coverage)}</p>
+                <p><strong>Adoption:</strong> ${page.summary.fullComponentCount} full, ${page.summary.partialComponentCount} partial, ${page.summary.matchedTemplateCount} templates, ${formatPercent(page.summary.overallCoverage)} overall</p>
+                <p><strong>Version clues:</strong> ${escapeHtml(versions)}</p>
+                ${renderEvidenceTable("Components", page.components ?? [])}
+                ${renderEvidenceTable("Templates", page.templates ?? [])}
+                ${assetErrors ? `<section><h4>Asset fetch issues</h4><ul>${assetErrors}</ul></section>` : ""}
+              `
+          }
+        </section>
       `;
     })
     .join("");
-
-  return `
-    <div class="table-wrap">
-      <table>
-        <thead>
-          <tr>
-            <th>Page</th>
-            <th>Fingerprint</th>
-            <th>Coverage</th>
-            <th>Full components</th>
-            <th>Partial components</th>
-            <th>Templates</th>
-            <th>Version clues</th>
-            <th>Expand</th>
-          </tr>
-        </thead>
-        <tbody>${rows}</tbody>
-      </table>
-    </div>
-  `;
 }
 
 function renderArchiveRows(scans) {
@@ -322,9 +293,7 @@ function renderArchiveRows(scans) {
       const componentSnapshot = summarizeTopItems(scan.siteSummary?.components, 6);
       const templateSnapshot = summarizeTopItems(scan.siteSummary?.templates, 4);
       const reportPaths = scan.reportPaths ?? getScanReportPaths(scan);
-      const modalId = `scan-modal-${escapeHtml(scan.id)}`;
       const dateId = `scan-date-${escapeHtml(scan.id)}`;
-      const detailsLabel = `Details for ${scan.seedUrl}`;
 
       return `
         <tr data-filter="${escapeHtml([scan.seedUrl, scan.system, scan.trigger].join(" ").toLowerCase())}" id="scan-${escapeHtml(scan.id)}">
@@ -337,26 +306,7 @@ function renderArchiveRows(scans) {
           <td>${componentSnapshot ? escapeHtml(componentSnapshot) : '<span class="muted">None</span>'}</td>
           <td>${templateSnapshot ? escapeHtml(templateSnapshot) : '<span class="muted">None</span>'}</td>
           <td>
-            <button type="button" class="button-link" data-open-modal="${modalId}" aria-label="${escapeHtml(detailsLabel)}">Details</button>
-            <dialog id="${modalId}" class="scan-modal">
-              <div class="scan-modal__content">
-                <div class="modal-actions">
-                  <h3>${escapeHtml(scan.seedUrl)}</h3>
-                  <form method="dialog">
-                    <button type="submit" class="button-link">Close</button>
-                  </form>
-                </div>
-              <p><strong>Date:</strong> ${renderDateCell(scan.scannedAt, `${dateId}-modal`)}</p>
-              <p><strong>Trigger:</strong> ${renderTrigger(scan.trigger, scan.repository)}</p>
-              <p><strong>Run:</strong> <a href="${escapeHtml(scan.runUrl)}">${escapeHtml(scan.runNumber)}</a></p>
-              <p><strong>Reports:</strong> <a href="${escapeHtml(reportPaths.html)}">HTML</a> | <a href="${escapeHtml(reportPaths.markdown)}">Markdown</a> | <a href="${escapeHtml(reportPaths.csv)}">CSV</a> | <a href="${escapeHtml(reportPaths.json)}">JSON</a></p>
-              <p><strong>Commit:</strong> ${escapeHtml(scan.sha)}</p>
-              <p><strong>Accepted URLs:</strong> ${scan.acceptedUrls ?? scan.siteSummary?.pageCount ?? 0}</p>
-              <p><strong>Crawl:</strong> ${escapeHtml(scan.crawl)} | <strong>Max pages:</strong> ${escapeHtml(scan.maxPages)}</p>
-              <p><strong>Pages with design system fingerprint:</strong> ${scan.siteSummary?.fingerprintedPageCount ?? 0}</p>
-              ${renderPageTable(scan.pages)}
-              </div>
-            </dialog>
+            <a class="button-link" href="${escapeHtml(reportPaths.html)}">Details</a>
           </td>
         </tr>
       `;
@@ -576,20 +526,15 @@ export function buildArchiveIndexHtml(history) {
       .tooltip-trigger:focus-visible { outline: 3px solid var(--color-focus); outline-offset: 2px; border-radius: .1rem; }
       .tooltip-bubble { position: absolute; left: 50%; top: calc(100% + .45rem); transform: translateX(-50%); z-index: 5; min-width: max-content; max-width: min(18rem, 70vw); padding: .5rem .65rem; border: 1px solid var(--color-tooltip-bg); border-radius: .3rem; background: var(--color-tooltip-bg); color: var(--color-tooltip-text); box-shadow: 0 6px 20px rgba(0,0,0,.2); }
       .tooltip-bubble::before { content: ""; position: absolute; left: 50%; top: -.35rem; width: .7rem; height: .7rem; background: var(--color-tooltip-bg); border-left: 1px solid var(--color-tooltip-bg); border-top: 1px solid var(--color-tooltip-bg); transform: translateX(-50%) rotate(45deg); }
-      .scan-modal { width: min(92rem, calc(100vw - 2rem)); max-height: calc(100vh - 2rem); border: 1px solid var(--color-border); padding: 0; background: var(--color-surface); color: var(--color-text); }
-      .scan-modal::backdrop { background: rgba(17, 46, 81, .6); }
-      .scan-modal__content { padding: 1.25rem; }
-      .modal-actions { display: flex; align-items: center; justify-content: space-between; gap: 1rem; margin-bottom: 1rem; }
-      .modal-actions h3 { margin: 0; }
       @media (pointer: coarse) {
         .tooltip-bubble { max-width: min(16rem, 80vw); }
       }
       @media (forced-colors: active) {
-        .hero, section, .stat, table, th, td, .button-link, .theme-toggle, .scan-modal {
+        .hero, section, .stat, table, th, td, .button-link, .theme-toggle {
           border-color: CanvasText;
           box-shadow: none;
         }
-        body, .hero, section, .stat, table, th, td, .scan-modal {
+        body, .hero, section, .stat, table, th, td {
           background: Canvas;
           color: CanvasText;
         }
@@ -617,7 +562,7 @@ export function buildArchiveIndexHtml(history) {
         <div class="hero-header">
           <div class="hero-copy">
             <h1>Design System Scan Archive</h1>
-            <p>Compact history of scans across sites, with a table-first index and deeper details available in a modal for each run.</p>
+            <p>Compact history of scans across sites, with a table-first index and direct links to stable per-run reports.</p>
           </div>
           <div class="hero-actions">
             <button id="theme-toggle" class="theme-toggle" type="button" aria-label="Switch to dark mode">
@@ -649,7 +594,7 @@ export function buildArchiveIndexHtml(history) {
 
       <section>
         <h2>Scans</h2>
-        <p class="muted">Filter by URL, system, or trigger. “Pages with DS fingerprint” counts pages where the scanner found enough design-system evidence to classify the page as using the selected system. Use “Details” to open stable HTML, Markdown, CSV, and JSON report links for each run.</p>
+        <p class="muted">Filter by URL, system, or trigger. “Pages with DS fingerprint” counts pages where the scanner found enough design-system evidence to classify the page as using the selected system. Use “Details” to open the stable per-run report page.</p>
         <input id="scan-filter" type="search" placeholder="Filter scans">
         <div class="table-wrap">
           <table>
@@ -803,12 +748,6 @@ export function buildArchiveIndexHtml(history) {
         });
       });
 
-      document.querySelectorAll('[data-open-modal]').forEach((button) => {
-        button.addEventListener('click', () => {
-          const modal = document.getElementById(button.dataset.openModal);
-          modal?.showModal();
-        });
-      });
     </script>
   </body>
 </html>`;
@@ -847,6 +786,8 @@ export function buildScanReportHtml(scan) {
   const componentSnapshot = summarizeTopItems(scan.siteSummary?.components, 12);
   const templateSnapshot = summarizeTopItems(scan.siteSummary?.templates, 8);
   const themeSnapshot = summarizeTopItems(scan.siteSummary?.themes, 8);
+  const primaryTheme = scan.siteSummary?.primaryTheme?.name;
+  const reportPaths = scan.reportPaths ?? getScanReportPaths(scan);
 
   return `<!doctype html>
 <html lang="en">
@@ -871,6 +812,8 @@ export function buildScanReportHtml(scan) {
       a { color: #005ea2; }
       .muted { color: #5c6f82; }
       .table-wrap { overflow-x: auto; }
+      .page-section { border-top: 1px solid #d0d7de; padding-top: 1rem; margin-top: 1rem; }
+      .page-section:first-of-type { border-top: 0; padding-top: 0; margin-top: 0; }
       ul { margin: .25rem 0 0 1.25rem; }
     </style>
   </head>
@@ -880,6 +823,7 @@ export function buildScanReportHtml(scan) {
         <h1>Design system scan report</h1>
         <p><strong>Seed URL:</strong> <a href="${escapeHtml(scan.seedUrl)}">${escapeHtml(scan.seedUrl)}</a></p>
         <p><strong>System:</strong> ${escapeHtml(scan.systemInfo?.name ?? scan.system)}</p>
+        ${primaryTheme ? `<p><strong>Theme:</strong> ${escapeHtml(primaryTheme)}</p>` : ""}
         <p><strong>Trigger:</strong> ${renderTrigger(scan.trigger, scan.repository)}</p>
         <p><strong>Workflow run:</strong> <a href="${escapeHtml(scan.runUrl)}">${escapeHtml(scan.runUrl)}</a></p>
       </section>
@@ -887,11 +831,21 @@ export function buildScanReportHtml(scan) {
       <section>
         <div class="stats">
           <div class="stat"><strong>Accepted URLs</strong>${scan.acceptedUrls ?? scan.siteSummary?.pageCount ?? 0}</div>
-          <div class="stat"><strong>Scanned URLs</strong>${scan.siteSummary?.pageCount ?? 0}</div>
+          <div class="stat"><strong>Scanned pages</strong>${scan.siteSummary?.pageCount ?? 0}</div>
           <div class="stat"><strong>Pages with DS fingerprint</strong>${scan.siteSummary?.fingerprintedPageCount ?? 0}</div>
           <div class="stat"><strong>Rejected URLs</strong>0</div>
+          <div class="stat"><strong>Component types identified</strong>${scan.siteSummary?.components?.length ?? 0}</div>
           <div class="stat"><strong>Max pages</strong>${escapeHtml(scan.maxPages)}</div>
         </div>
+      </section>
+
+      <section>
+        <h2>Published files</h2>
+        <ul>
+          <li><a href="${escapeHtml(reportPaths.markdown)}">Markdown report</a></li>
+          <li><a href="${escapeHtml(reportPaths.csv)}">CSV export</a></li>
+          <li><a href="${escapeHtml(reportPaths.json)}">JSON data</a></li>
+        </ul>
       </section>
 
       <section>
@@ -922,6 +876,12 @@ export function buildScanReportHtml(scan) {
             </tbody>
           </table>
         </div>
+      </section>
+
+      <section>
+        <h2>Page details</h2>
+        <p class="muted">Each scanned page includes the detected design-system fingerprint, component evidence, template evidence, and any asset fetch issues.</p>
+        ${renderPageSections(scan.pages)}
       </section>
     </main>
   </body>

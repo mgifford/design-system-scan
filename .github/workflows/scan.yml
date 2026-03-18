@@ -63,6 +63,12 @@ jobs:
       accepted_urls: ${{ steps.inputs.outputs.url_count }}
       scanned_urls: ${{ steps.scan_stats.outputs.scanned_urls }}
       rejected_urls: ${{ steps.scan_stats.outputs.rejected_urls }}
+      detected_system: ${{ steps.scan_stats.outputs.detected_system }}
+      detected_theme: ${{ steps.scan_stats.outputs.detected_theme }}
+      fingerprinted_pages: ${{ steps.scan_stats.outputs.fingerprinted_pages }}
+      component_types: ${{ steps.scan_stats.outputs.component_types }}
+      full_component_types: ${{ steps.scan_stats.outputs.full_component_types }}
+      partial_component_types: ${{ steps.scan_stats.outputs.partial_component_types }}
     steps:
       - name: Check out repository
         uses: actions/checkout@v4
@@ -249,9 +255,22 @@ jobs:
       - name: Extract scan stats
         id: scan_stats
         run: |
-          SCANNED_URLS=$(node --input-type=module -e 'import fs from "node:fs"; const report = JSON.parse(fs.readFileSync("artifacts/scan.json", "utf8")); process.stdout.write(String(report.siteSummary?.pageCount ?? 0));')
-          echo "scanned_urls=$SCANNED_URLS" >> "$GITHUB_OUTPUT"
-          echo "rejected_urls=0" >> "$GITHUB_OUTPUT"
+          node --input-type=module <<'EOF' >> "$GITHUB_OUTPUT"
+          import fs from "node:fs";
+
+          const report = JSON.parse(fs.readFileSync("artifacts/scan.json", "utf8"));
+          const components = report.siteSummary?.components ?? [];
+          const primaryTheme = report.siteSummary?.primaryTheme?.name ?? "";
+
+          console.log(`scanned_urls=${report.siteSummary?.pageCount ?? 0}`);
+          console.log("rejected_urls=0");
+          console.log(`detected_system=${report.system?.name ?? ""}`);
+          console.log(`detected_theme=${primaryTheme}`);
+          console.log(`fingerprinted_pages=${report.siteSummary?.fingerprintedPageCount ?? 0}`);
+          console.log(`component_types=${components.length}`);
+          console.log(`full_component_types=${components.filter((component) => (component.full ?? 0) > 0).length}`);
+          console.log(`partial_component_types=${components.filter((component) => (component.partial ?? 0) > 0).length}`);
+          EOF
 
       - name: Fetch existing Pages history
         env:
@@ -359,10 +378,20 @@ jobs:
         uses: actions/github-script@v7
         env:
           PAGE_URL: ${{ needs.deploy-pages.outputs.page_url }}
+          DETECTED_SYSTEM: ${{ needs.scan.outputs.detected_system }}
+          DETECTED_THEME: ${{ needs.scan.outputs.detected_theme }}
+          ACCEPTED_URLS: ${{ needs.scan.outputs.accepted_urls }}
+          SCANNED_URLS: ${{ needs.scan.outputs.scanned_urls }}
+          REJECTED_URLS: ${{ needs.scan.outputs.rejected_urls }}
+          FINGERPRINTED_PAGES: ${{ needs.scan.outputs.fingerprinted_pages }}
+          COMPONENT_TYPES: ${{ needs.scan.outputs.component_types }}
+          FULL_COMPONENT_TYPES: ${{ needs.scan.outputs.full_component_types }}
+          PARTIAL_COMPONENT_TYPES: ${{ needs.scan.outputs.partial_component_types }}
         with:
           script: |
             const issueNumber = context.payload.issue?.number || Number(context.payload.inputs.issue_number);
             const issueTitle = context.payload.issue?.title || `SCAN issue #${issueNumber}`;
+            const scanLabel = issueTitle.replace(/^SCAN:\s*/i, "").replace(/\/$/, "");
             const runUrl = `https://github.com/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`;
             const pageUrl = process.env.PAGE_URL || 'GitHub Pages deployment pending';
             const pageBase = typeof pageUrl === 'string' && pageUrl.startsWith('http')
@@ -378,12 +407,10 @@ jobs:
             const reportJsonUrl = reportBase ? `${reportBase}report.json` : 'GitHub Pages deployment pending';
             const latestUrl = pageBase ? `${pageBase}latest/` : 'GitHub Pages deployment pending';
             const artifactsUrl = `${runUrl}#artifacts`;
-            const body = [
-              `Scan completed successfully for ${issueTitle}.`,
+            const bodyLines = [
+              `Scan complete for ${scanLabel}.`,
               ``,
-              `- Accepted URLs: ${{ needs.scan.outputs.accepted_urls }}`,
-              `- Scanned URLs: ${{ needs.scan.outputs.scanned_urls }}`,
-              `- Rejected URLs: ${{ needs.scan.outputs.rejected_urls }}`,
+              `- Detected design system: ${process.env.DETECTED_SYSTEM}`,
               `- Report (Pages): ${reportHtmlUrl}`,
               `- Markdown (Pages): ${reportMarkdownUrl}`,
               `- CSV (Pages): ${reportCsvUrl}`,
@@ -397,7 +424,23 @@ jobs:
               `1. Open the Pages report for the stable, run-specific report output.`,
               `2. Use the archive entry to compare this run with other scans.`,
               `3. Open the workflow run if you need logs or downloadable artifacts.`
-            ].join('\n');
+            ];
+
+            if (process.env.DETECTED_THEME) {
+              bodyLines.splice(3, 0, `- Detected theme: ${process.env.DETECTED_THEME}`);
+            }
+
+            bodyLines.splice(
+              process.env.DETECTED_THEME ? 4 : 3,
+              0,
+              `- Accepted URLs: ${process.env.ACCEPTED_URLS}`,
+              `- Scanned pages: ${process.env.SCANNED_URLS}`,
+              `- Rejected URLs: ${process.env.REJECTED_URLS}`,
+              `- Pages with design system fingerprint: ${process.env.FINGERPRINTED_PAGES}`,
+              `- Components identified: ${process.env.COMPONENT_TYPES} distinct types (${process.env.FULL_COMPONENT_TYPES} with full matches, ${process.env.PARTIAL_COMPONENT_TYPES} with partial matches)`
+            );
+
+            const body = bodyLines.join('\n');
             await github.rest.issues.createComment({
               owner: context.repo.owner,
               repo: context.repo.repo,
