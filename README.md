@@ -177,6 +177,18 @@ This helps distinguish:
 - components that are only partially implemented
 - templates that match some component combinations but not the full expected layout
 
+## Dashboard view
+
+The GitHub Pages view is now intended to be a dashboard rather than a raw text dump.
+
+It emphasizes:
+
+- a compact summary table of scanned pages
+- site-wide component and template summary tables
+- expandable details per page for matched tells and missing tells
+
+This is a better fit for scans that include many pages or many reviewed sites.
+
 ## USWDS starter signals
 
 The initial USWDS definition uses signals derived from official documentation, especially:

@@ -170,13 +170,15 @@ jobs:
           TRIGGER: ${{ steps.inputs.outputs.trigger }}
         run: |
           mkdir -p site
-          cp artifacts/report.txt site/report.txt
-          cp artifacts/scan.json site/scan.json
           node --input-type=module <<'EOF'
             import fs from "node:fs/promises";
+            import { writeDashboardSite } from "./src/dashboard.js";
 
             const reportText = await fs.readFile("artifacts/report.txt", "utf8");
-            const metadata = {
+            const report = JSON.parse(await fs.readFile("artifacts/scan.json", "utf8"));
+
+            await writeDashboardSite("site", report, {
+              reportText,
               repository: process.env.REPOSITORY,
               runId: process.env.RUN_ID,
               runNumber: process.env.RUN_NUMBER,
@@ -186,54 +188,8 @@ jobs:
               crawl: process.env.CRAWL,
               maxPages: process.env.MAX_PAGES,
               trigger: process.env.TRIGGER,
-            };
-
-            const escapeHtml = (value) =>
-              value
-                .replaceAll("&", "&amp;")
-                .replaceAll("<", "&lt;")
-                .replaceAll(">", "&gt;");
-
-            const html = `<!doctype html>
-            <html lang="en">
-              <head>
-                <meta charset="utf-8">
-                <meta name="viewport" content="width=device-width, initial-scale=1">
-                <title>Design System Scan Report</title>
-                <style>
-                  :root { color-scheme: light; }
-                  body { font-family: Georgia, serif; margin: 2rem auto; max-width: 72rem; padding: 0 1rem; line-height: 1.5; color: #16202a; background: #f7f7f2; }
-                  main { background: white; border: 1px solid #dfe1e2; padding: 1.5rem; box-shadow: 0 8px 24px rgba(0,0,0,.06); }
-                  h1, h2 { font-family: ui-sans-serif, system-ui, sans-serif; }
-                  dl { display: grid; grid-template-columns: max-content 1fr; gap: .5rem 1rem; }
-                  dt { font-weight: 700; }
-                  pre { white-space: pre-wrap; overflow-wrap: anywhere; background: #112e51; color: #f0f7ff; padding: 1rem; border-radius: .25rem; }
-                  a { color: #005ea2; }
-                </style>
-              </head>
-              <body>
-                <main>
-                  <h1>Design System Scan Report</h1>
-                  <p><a href="https://github.com/${metadata.repository}/actions/runs/${metadata.runId}">View workflow run</a></p>
-                  <h2>Run metadata</h2>
-                  <dl>
-                    <dt>Repository</dt><dd>${escapeHtml(metadata.repository)}</dd>
-                    <dt>Run</dt><dd>${escapeHtml(metadata.runNumber)}</dd>
-                    <dt>Commit</dt><dd>${escapeHtml(metadata.sha)}</dd>
-                    <dt>Trigger</dt><dd>${escapeHtml(metadata.trigger)}</dd>
-                    <dt>URL</dt><dd>${escapeHtml(metadata.url)}</dd>
-                    <dt>System</dt><dd>${escapeHtml(metadata.system)}</dd>
-                    <dt>Crawl</dt><dd>${escapeHtml(metadata.crawl)}</dd>
-                    <dt>Max pages</dt><dd>${escapeHtml(metadata.maxPages)}</dd>
-                  </dl>
-                  <h2>Text report</h2>
-                  <pre>${escapeHtml(reportText)}</pre>
-                  <p><a href="./report.txt">Plain text report</a> | <a href="./scan.json">JSON report</a></p>
-                </main>
-              </body>
-            </html>`;
-
-            await fs.writeFile("site/index.html", html, "utf8");
+              runUrl: `https://github.com/${process.env.REPOSITORY}/actions/runs/${process.env.RUN_ID}`,
+            });
           EOF
 
       - name: Publish step summary
