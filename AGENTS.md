@@ -1,0 +1,98 @@
+# AGENTS.md
+
+## Project overview
+
+`design-system-scan` is a Node.js CLI and GitHub Actions workflow for scanning sites for design-system adoption, currently focused on USWDS.
+
+The repo includes:
+
+- a CLI scanner in [`src/cli.js`](/Users/mike.gifford/design-system-scan/src/cli.js)
+- detection and crawl logic in [`src/scanner.js`](/Users/mike.gifford/design-system-scan/src/scanner.js)
+- USWDS rules in [`src/systems/uswds.js`](/Users/mike.gifford/design-system-scan/src/systems/uswds.js)
+- GitHub Pages report renderers in [`src/archive.js`](/Users/mike.gifford/design-system-scan/src/archive.js) and [`src/dashboard.js`](/Users/mike.gifford/design-system-scan/src/dashboard.js)
+- workflow automation in [`.github/workflows/scan.yml`](/Users/mike.gifford/design-system-scan/.github/workflows/scan.yml)
+
+Read these first when working here:
+
+- [`README.md`](/Users/mike.gifford/design-system-scan/README.md)
+- [`ACCESSIBILITY.md`](/Users/mike.gifford/design-system-scan/ACCESSIBILITY.md)
+
+## Setup commands
+
+- Use Node.js 24 or newer.
+- Preferred local version switch: `nvm use`
+- Install dependencies if needed: `npm install`
+
+## Common commands
+
+- Run tests: `npm test`
+- Run a sample scan: `npm run scan:uswds -- https://designsystem.digital.gov/`
+- Scan with crawling: `node src/cli.js --system uswds --crawl --max-pages 20 https://example.gov/`
+- Emit JSON only: `node src/cli.js --system uswds --json https://example.gov/`
+
+## Testing instructions
+
+- Run `npm test` after code changes.
+- If you change report rendering, keep or expand the render-level tests in:
+  - [`test/archive.test.js`](/Users/mike.gifford/design-system-scan/test/archive.test.js)
+  - [`test/dashboard.test.js`](/Users/mike.gifford/design-system-scan/test/dashboard.test.js)
+- If you change component rules, update the USWDS component tests in [`test/uswds-components.test.js`](/Users/mike.gifford/design-system-scan/test/uswds-components.test.js).
+- Do not leave the repo with failing tests.
+
+## Workflow notes
+
+- `SCAN:` issues can trigger scans through [`.github/workflows/scan.yml`](/Users/mike.gifford/design-system-scan/.github/workflows/scan.yml).
+- Issue titles or bodies may contain either full URLs or bare domains like `gsa.gov`.
+- The workflow publishes:
+  - `/` as the archive
+  - `/latest/` as the newest dashboard
+  - `/runs/<run-id>/` as the stable page for a specific run
+- Issue comments should point people to the exact run page, archive entry, workflow run, and artifacts.
+
+## Report UI guidance
+
+- Treat the Pages UI as a product surface, not a throwaway report.
+- Favor compact tables first, with deeper details available through progressive disclosure.
+- For run-level details, prefer stable links over moving targets like `/latest/` when referencing a specific scan.
+- Keep labels short and user-facing. Prefer `Date` over internal timestamps or implementation jargon.
+
+## Accessibility rules
+
+Follow [`ACCESSIBILITY.md`](/Users/mike.gifford/design-system-scan/ACCESSIBILITY.md).
+
+Important locked patterns:
+
+- Do not use native `title` tooltips for user-facing help.
+- Use accessible tooltip markup with `aria-describedby` and `role="tooltip"`.
+- Keep dark mode and light mode both accessible.
+- Respect `prefers-color-scheme`, `prefers-reduced-motion`, and `forced-colors`.
+- Preserve visible focus indicators.
+
+## Code style
+
+- Prefer small, direct modules over framework-heavy abstractions.
+- Keep output text human-readable and task-focused.
+- Use semantic names for scan summaries and report labels.
+- Avoid introducing dependencies unless they clearly simplify the project.
+
+## When updating detection logic
+
+- Preserve the distinction between:
+  - full implementation evidence
+  - partial implementation evidence
+  - absence of evidence
+- Prefer documented, stable tells from official design system docs.
+- When changing component coverage or thresholds, keep the reasoning visible in the rules and tests.
+
+## When updating issue comments or reports
+
+- Link to exact destinations whenever possible.
+- Avoid generic links that stop being correct after the next scan.
+- Make the next user action obvious.
+- If a scan fails because input is ambiguous, improve the workflow guidance or parser instead of only changing the error text.
+
+## Commit guidance
+
+- Keep commit messages short and descriptive.
+- Group related changes together.
+- If UI behavior changes, update tests and docs in the same change when possible.
