@@ -35,4 +35,7 @@ test("archive dates use accessible tooltip markup instead of title attributes", 
   assert.match(html, /aria-describedby="tooltip-scan-date-23253601700"/);
   assert.match(html, />Issue 6</);
   assert.doesNotMatch(html, /title=/);
+  assert.match(html, /id="theme-toggle"/);
+  assert.match(html, /prefers-color-scheme: dark/);
+  assert.match(html, /localStorage\.getItem\('theme'\)/);
 });

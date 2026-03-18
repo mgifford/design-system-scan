@@ -169,40 +169,261 @@ export function buildDashboardHtml(report, metadata) {
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Design System Scan Dashboard</title>
+    <script>
+      (() => {
+        try {
+          const savedTheme = window.localStorage.getItem('theme');
+          const theme = savedTheme || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+          document.documentElement.setAttribute('data-theme', theme);
+        } catch {}
+      })();
+    </script>
     <style>
-      :root { color-scheme: light; }
-      body { margin: 0; font-family: ui-sans-serif, system-ui, sans-serif; color: #112e51; background: linear-gradient(180deg, #f3f7fb 0%, #f7f7f2 100%); }
+      :root {
+        color-scheme: light dark;
+        --color-text: #112e51;
+        --color-background: #f3f7fb;
+        --color-background-accent: #f7f7f2;
+        --color-surface: #ffffff;
+        --color-surface-muted: #f8fbff;
+        --color-border: #d0d7de;
+        --color-border-strong: #a9bcd0;
+        --color-shadow: rgba(17, 46, 81, .08);
+        --color-link: #005ea2;
+        --color-link-hover: #1a4480;
+        --color-muted: #5c6f82;
+        --color-focus: #0050d8;
+        --color-table-row-even: #eef4fb;
+        --color-table-row-odd: #e6eef7;
+        --color-pre-bg: #112e51;
+        --color-pre-text: #f0f7ff;
+        --color-badge-full-bg: #dff6dd;
+        --color-badge-full-text: #17603a;
+        --color-badge-partial-bg: #fff4cc;
+        --color-badge-partial-text: #7a5300;
+        --color-badge-absent-bg: #f4dfe2;
+        --color-badge-absent-text: #8b1e2d;
+        --color-error: #b50909;
+        --color-button-bg: #005ea2;
+        --color-button-text: #ffffff;
+        --color-button-hover: #1a4480;
+      }
+
+      @media (prefers-color-scheme: dark) {
+        :root {
+          --color-text: #edf4ff;
+          --color-background: #0b1725;
+          --color-background-accent: #132235;
+          --color-surface: #102235;
+          --color-surface-muted: #16304a;
+          --color-border: #38506a;
+          --color-border-strong: #54708d;
+          --color-shadow: rgba(0, 0, 0, .28);
+          --color-link: #8ec5ff;
+          --color-link-hover: #bfdeff;
+          --color-muted: #b8c7d9;
+          --color-focus: #99ccff;
+          --color-table-row-even: #172c42;
+          --color-table-row-odd: #20364d;
+          --color-pre-bg: #07111d;
+          --color-pre-text: #edf4ff;
+          --color-badge-full-bg: #183c2d;
+          --color-badge-full-text: #b8f0cf;
+          --color-badge-partial-bg: #4a3910;
+          --color-badge-partial-text: #ffe39c;
+          --color-badge-absent-bg: #4a1f26;
+          --color-badge-absent-text: #ffc6cf;
+          --color-error: #ffb3be;
+          --color-button-bg: #8ec5ff;
+          --color-button-text: #07111d;
+          --color-button-hover: #bfdeff;
+        }
+      }
+
+      [data-theme="light"] {
+        --color-text: #112e51;
+        --color-background: #f3f7fb;
+        --color-background-accent: #f7f7f2;
+        --color-surface: #ffffff;
+        --color-surface-muted: #f8fbff;
+        --color-border: #d0d7de;
+        --color-border-strong: #a9bcd0;
+        --color-shadow: rgba(17, 46, 81, .08);
+        --color-link: #005ea2;
+        --color-link-hover: #1a4480;
+        --color-muted: #5c6f82;
+        --color-focus: #0050d8;
+        --color-table-row-even: #eef4fb;
+        --color-table-row-odd: #e6eef7;
+        --color-pre-bg: #112e51;
+        --color-pre-text: #f0f7ff;
+        --color-badge-full-bg: #dff6dd;
+        --color-badge-full-text: #17603a;
+        --color-badge-partial-bg: #fff4cc;
+        --color-badge-partial-text: #7a5300;
+        --color-badge-absent-bg: #f4dfe2;
+        --color-badge-absent-text: #8b1e2d;
+        --color-error: #b50909;
+        --color-button-bg: #005ea2;
+        --color-button-text: #ffffff;
+        --color-button-hover: #1a4480;
+      }
+
+      [data-theme="dark"] {
+        --color-text: #edf4ff;
+        --color-background: #0b1725;
+        --color-background-accent: #132235;
+        --color-surface: #102235;
+        --color-surface-muted: #16304a;
+        --color-border: #38506a;
+        --color-border-strong: #54708d;
+        --color-shadow: rgba(0, 0, 0, .28);
+        --color-link: #8ec5ff;
+        --color-link-hover: #bfdeff;
+        --color-muted: #b8c7d9;
+        --color-focus: #99ccff;
+        --color-table-row-even: #172c42;
+        --color-table-row-odd: #20364d;
+        --color-pre-bg: #07111d;
+        --color-pre-text: #edf4ff;
+        --color-badge-full-bg: #183c2d;
+        --color-badge-full-text: #b8f0cf;
+        --color-badge-partial-bg: #4a3910;
+        --color-badge-partial-text: #ffe39c;
+        --color-badge-absent-bg: #4a1f26;
+        --color-badge-absent-text: #ffc6cf;
+        --color-error: #ffb3be;
+        --color-button-bg: #8ec5ff;
+        --color-button-text: #07111d;
+        --color-button-hover: #bfdeff;
+      }
+
+      html, body, main, section, .hero, .meta-card, table, th, td, details, summary, a, button, input, pre {
+        transition: background-color .2s ease, color .2s ease, border-color .2s ease, box-shadow .2s ease;
+      }
+
+      @media (prefers-reduced-motion: reduce) {
+        html, body, main, section, .hero, .meta-card, table, th, td, details, summary, a, button, input, pre {
+          transition: none;
+        }
+      }
+
+      body { margin: 0; font-family: ui-sans-serif, system-ui, sans-serif; color: var(--color-text); background: linear-gradient(180deg, var(--color-background) 0%, var(--color-background-accent) 100%); }
       main { max-width: 92rem; margin: 0 auto; padding: 2rem 1rem 4rem; }
-      .hero { background: white; border: 1px solid #dfe1e2; box-shadow: 0 12px 32px rgba(0,0,0,.06); padding: 1.5rem; margin-bottom: 1.5rem; }
+      .hero { background: var(--color-surface); border: 1px solid var(--color-border); box-shadow: 0 12px 32px var(--color-shadow); padding: 1.5rem; margin-bottom: 1.5rem; }
+      .hero-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 1rem; flex-wrap: wrap; }
+      .hero-copy { min-width: min(22rem, 100%); flex: 1 1 28rem; }
       .hero h1 { margin-top: 0; margin-bottom: .5rem; font-size: 2rem; }
       .hero p { margin-top: 0; }
+      .hero-actions { display: flex; align-items: center; gap: .75rem; flex-wrap: wrap; }
+      .hero-links { display: flex; align-items: center; gap: .75rem; flex-wrap: wrap; }
       .meta { display: grid; grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr)); gap: 1rem; margin-top: 1rem; }
-      .meta-card { background: #f8fbff; border: 1px solid #d9e8f6; padding: .9rem; }
-      .meta-card strong { display: block; font-size: .8rem; text-transform: uppercase; letter-spacing: .04em; color: #5c6f82; margin-bottom: .35rem; }
-      section { background: white; border: 1px solid #dfe1e2; box-shadow: 0 12px 32px rgba(0,0,0,.04); padding: 1rem; margin-bottom: 1rem; }
+      .meta-card { background: var(--color-surface-muted); border: 1px solid var(--color-border); padding: .9rem; }
+      .meta-card strong { display: block; font-size: .8rem; text-transform: uppercase; letter-spacing: .04em; color: var(--color-muted); margin-bottom: .35rem; }
+      section { background: var(--color-surface); border: 1px solid var(--color-border); box-shadow: 0 12px 32px var(--color-shadow); padding: 1rem; margin-bottom: 1rem; }
       h2, h3, h4 { margin-top: 0; }
       .table-wrap { overflow-x: auto; }
-      table { width: 100%; border-collapse: collapse; }
-      th, td { text-align: left; vertical-align: top; padding: .65rem .5rem; border-bottom: 1px solid #e6e6e6; }
-      th { font-size: .8rem; text-transform: uppercase; letter-spacing: .04em; color: #5c6f82; }
+      table { width: 100%; border-collapse: collapse; background: var(--color-surface); }
+      tbody tr:nth-child(even) { background: var(--color-table-row-even); }
+      tbody tr:nth-child(odd) { background: var(--color-table-row-odd); }
+      th, td { text-align: left; vertical-align: top; padding: .65rem .5rem; border-bottom: 1px solid var(--color-border); }
+      th { font-size: .8rem; text-transform: uppercase; letter-spacing: .04em; color: var(--color-muted); background: var(--color-surface); }
       .badge { display: inline-block; padding: .15rem .45rem; border-radius: 999px; font-size: .8rem; font-weight: 700; text-transform: uppercase; }
-      .badge--full { background: #dff6dd; color: #17603a; }
-      .badge--partial { background: #fff4cc; color: #7a5300; }
-      .badge--absent { background: #f4dfe2; color: #8b1e2d; }
-      .muted { color: #5c6f82; }
-      .error { color: #b50909; font-weight: 700; }
+      .badge--full { background: var(--color-badge-full-bg); color: var(--color-badge-full-text); }
+      .badge--partial { background: var(--color-badge-partial-bg); color: var(--color-badge-partial-text); }
+      .badge--absent { background: var(--color-badge-absent-bg); color: var(--color-badge-absent-text); }
+      .muted { color: var(--color-muted); }
+      .error { color: var(--color-error); font-weight: 700; }
       details { margin-top: .5rem; }
       details summary { cursor: pointer; font-weight: 700; }
-      a { color: #005ea2; }
-      pre { white-space: pre-wrap; overflow-wrap: anywhere; background: #112e51; color: #f0f7ff; padding: 1rem; border-radius: .25rem; }
+      a { color: var(--color-link); }
+      a:hover { color: var(--color-link-hover); }
+      a:focus-visible, button:focus-visible, input:focus-visible, summary:focus-visible {
+        outline: 3px solid var(--color-focus);
+        outline-offset: 2px;
+      }
+      .theme-toggle {
+        margin-left: auto;
+        padding: .55rem;
+        border: 1px solid var(--color-border-strong);
+        background: var(--color-surface);
+        color: var(--color-text);
+        border-radius: .35rem;
+        cursor: pointer;
+      }
+      .theme-toggle:hover { background: var(--color-surface-muted); }
+      .theme-icon { display: block; width: 1.25rem; height: 1.25rem; }
+      .sun-icon { display: none; }
+      .moon-icon { display: block; }
+      @media (prefers-color-scheme: dark) {
+        .sun-icon { display: block; }
+        .moon-icon { display: none; }
+      }
+      [data-theme="dark"] .sun-icon { display: block; }
+      [data-theme="dark"] .moon-icon { display: none; }
+      [data-theme="light"] .sun-icon { display: none; }
+      [data-theme="light"] .moon-icon { display: block; }
+      pre { white-space: pre-wrap; overflow-wrap: anywhere; background: var(--color-pre-bg); color: var(--color-pre-text); padding: 1rem; border-radius: .25rem; }
+
+      @media (forced-colors: active) {
+        .hero, section, .meta-card, table, th, td, .theme-toggle {
+          border-color: CanvasText;
+          box-shadow: none;
+        }
+        body, .hero, section, .meta-card, table, th, td {
+          background: Canvas;
+          color: CanvasText;
+        }
+        a { color: LinkText; }
+        .theme-toggle {
+          background: ButtonFace;
+          color: ButtonText;
+        }
+        .badge {
+          border: 1px solid CanvasText;
+        }
+        tbody tr {
+          border-bottom: 1px solid CanvasText;
+        }
+      }
     </style>
   </head>
   <body>
     <main>
       <section class="hero">
-        <h1>Design System Scan Dashboard</h1>
-        <p>Compact view for scan results, with expandable details for component and template evidence.</p>
-        <p><a href="${escapeHtml(metadata.runUrl)}">View workflow run</a> · <a href="./report.txt">Plain text report</a> · <a href="./scan.json">JSON report</a></p>
+        <div class="hero-header">
+          <div class="hero-copy">
+            <h1>Design System Scan Dashboard</h1>
+            <p>Compact view for scan results, with expandable details for component and template evidence.</p>
+            <div class="hero-links">
+              <a href="${escapeHtml(metadata.runUrl)}">View workflow run</a>
+              <span aria-hidden="true">·</span>
+              <a href="./report.txt">Plain text report</a>
+              <span aria-hidden="true">·</span>
+              <a href="./scan.json">JSON report</a>
+            </div>
+          </div>
+          <div class="hero-actions">
+            <button id="theme-toggle" class="theme-toggle" type="button" aria-label="Switch to dark mode">
+              <svg aria-hidden="true" class="theme-icon sun-icon" viewBox="0 0 24 24" width="20" height="20">
+                <circle cx="12" cy="12" r="5" fill="currentColor"></circle>
+                <g stroke="currentColor" stroke-width="1.8" stroke-linecap="round">
+                  <path d="M12 1.8v3.1"></path>
+                  <path d="M12 19.1v3.1"></path>
+                  <path d="M4.2 4.2l2.2 2.2"></path>
+                  <path d="M17.6 17.6l2.2 2.2"></path>
+                  <path d="M1.8 12h3.1"></path>
+                  <path d="M19.1 12h3.1"></path>
+                  <path d="M4.2 19.8l2.2-2.2"></path>
+                  <path d="M17.6 6.4l2.2-2.2"></path>
+                </g>
+              </svg>
+              <svg aria-hidden="true" class="theme-icon moon-icon" viewBox="0 0 24 24" width="20" height="20">
+                <path fill="currentColor" d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"></path>
+              </svg>
+            </button>
+          </div>
+        </div>
         <div class="meta">
           <div class="meta-card"><strong>Trigger</strong>${escapeHtml(metadata.trigger)}</div>
           <div class="meta-card"><strong>Seed URL</strong>${escapeHtml(metadata.url)}</div>
@@ -237,6 +458,38 @@ export function buildDashboardHtml(report, metadata) {
         </div>
       </section>
     </main>
+    <script>
+      const themeToggle = document.getElementById('theme-toggle');
+      const prefersDarkScheme = window.matchMedia('(prefers-color-scheme: dark)');
+      const savedTheme = window.localStorage.getItem('theme');
+      let currentTheme = savedTheme || (prefersDarkScheme.matches ? 'dark' : 'light');
+      let userHasOverride = Boolean(savedTheme);
+
+      const applyTheme = (theme) => {
+        document.documentElement.setAttribute('data-theme', theme);
+        if (!themeToggle) {
+          return;
+        }
+        themeToggle.setAttribute('aria-label', theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode');
+        themeToggle.setAttribute('aria-pressed', theme === 'dark' ? 'true' : 'false');
+      };
+
+      themeToggle?.addEventListener('click', () => {
+        currentTheme = currentTheme === 'light' ? 'dark' : 'light';
+        userHasOverride = true;
+        window.localStorage.setItem('theme', currentTheme);
+        applyTheme(currentTheme);
+      });
+
+      prefersDarkScheme.addEventListener('change', (event) => {
+        if (!userHasOverride) {
+          currentTheme = event.matches ? 'dark' : 'light';
+          applyTheme(currentTheme);
+        }
+      });
+
+      applyTheme(currentTheme);
+    </script>
   </body>
 </html>`;
 }
