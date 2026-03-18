@@ -12,9 +12,30 @@ function formatPercent(value) {
   return `${Math.round((value ?? 0) * 100)}%`;
 }
 
-function renderDateCell(value) {
+function renderDateCell(value, id) {
   const iso = String(value ?? "");
-  return `<time datetime="${escapeHtml(iso)}" data-date="${escapeHtml(iso)}">${escapeHtml(iso)}</time>`;
+  const tooltipId = `tooltip-${id}`;
+
+  return `
+    <span class="tooltip-wrap" data-tooltip-wrap>
+      <button
+        type="button"
+        class="tooltip-trigger tooltip-trigger--date"
+        data-tooltip-trigger
+        data-date="${escapeHtml(iso)}"
+        aria-describedby="${escapeHtml(tooltipId)}"
+        aria-expanded="false"
+      >${escapeHtml(iso)}</button>
+      <span
+        id="${escapeHtml(tooltipId)}"
+        role="tooltip"
+        class="tooltip-bubble"
+        data-tooltip
+        data-tooltip-date="${escapeHtml(iso)}"
+        hidden
+      >${escapeHtml(iso)}</span>
+    </span>
+  `;
 }
 
 function renderTrigger(trigger, repository) {
@@ -254,11 +275,12 @@ function renderArchiveRows(scans) {
       const componentSnapshot = summarizeTopItems(scan.siteSummary?.components, 6);
       const templateSnapshot = summarizeTopItems(scan.siteSummary?.templates, 4);
       const modalId = `scan-modal-${escapeHtml(scan.id)}`;
+      const dateId = `scan-date-${escapeHtml(scan.id)}`;
       const detailsLabel = `Details for ${scan.seedUrl}`;
 
       return `
         <tr data-filter="${escapeHtml([scan.seedUrl, scan.system, scan.trigger].join(" ").toLowerCase())}" id="scan-${escapeHtml(scan.id)}">
-          <td>${renderDateCell(scan.scannedAt)}</td>
+          <td>${renderDateCell(scan.scannedAt, dateId)}</td>
           <td><a href="${escapeHtml(scan.seedUrl)}">${escapeHtml(scan.seedUrl)}</a></td>
           <td>${escapeHtml(scan.system)}</td>
           <td>${renderTrigger(scan.trigger, scan.repository)}</td>
@@ -276,7 +298,7 @@ function renderArchiveRows(scans) {
                     <button type="submit" class="button-link">Close</button>
                   </form>
                 </div>
-              <p><strong>Date:</strong> ${renderDateCell(scan.scannedAt)}</p>
+              <p><strong>Date:</strong> ${renderDateCell(scan.scannedAt, `${dateId}-modal`)}</p>
               <p><strong>Trigger:</strong> ${renderTrigger(scan.trigger, scan.repository)}</p>
               <p><strong>Run:</strong> <a href="${escapeHtml(scan.runUrl)}">${escapeHtml(scan.runNumber)}</a></p>
               <p><strong>Commit:</strong> ${escapeHtml(scan.sha)}</p>
@@ -330,11 +352,20 @@ export function buildArchiveIndexHtml(history) {
       a { color: #005ea2; }
       .button-link { appearance: none; border: 1px solid #005ea2; background: #005ea2; color: white; border-radius: .3rem; padding: .45rem .75rem; font: inherit; cursor: pointer; }
       .button-link:hover { background: #1a4480; border-color: #1a4480; }
+      .tooltip-wrap { position: relative; display: inline-flex; align-items: center; }
+      .tooltip-trigger { appearance: none; border: 0; background: transparent; color: inherit; padding: 0; font: inherit; }
+      .tooltip-trigger--date { text-decoration: underline dotted; text-underline-offset: .16em; cursor: help; }
+      .tooltip-trigger:focus-visible { outline: 3px solid #2491ff; outline-offset: 2px; border-radius: .1rem; }
+      .tooltip-bubble { position: absolute; left: 50%; top: calc(100% + .45rem); transform: translateX(-50%); z-index: 5; min-width: max-content; max-width: min(18rem, 70vw); padding: .5rem .65rem; border: 1px solid #1b1b1b; border-radius: .3rem; background: #1b1b1b; color: #ffffff; box-shadow: 0 6px 20px rgba(0,0,0,.2); }
+      .tooltip-bubble::before { content: ""; position: absolute; left: 50%; top: -.35rem; width: .7rem; height: .7rem; background: #1b1b1b; border-left: 1px solid #1b1b1b; border-top: 1px solid #1b1b1b; transform: translateX(-50%) rotate(45deg); }
       .scan-modal { width: min(92rem, calc(100vw - 2rem)); max-height: calc(100vh - 2rem); border: 1px solid #dfe1e2; padding: 0; }
       .scan-modal::backdrop { background: rgba(17, 46, 81, .6); }
       .scan-modal__content { padding: 1.25rem; }
       .modal-actions { display: flex; align-items: center; justify-content: space-between; gap: 1rem; margin-bottom: 1rem; }
       .modal-actions h3 { margin: 0; }
+      @media (pointer: coarse) {
+        .tooltip-bubble { max-width: min(16rem, 80vw); }
+      }
     </style>
   </head>
   <body>
@@ -345,7 +376,7 @@ export function buildArchiveIndexHtml(history) {
         <div class="stats">
           <div class="stat"><strong>Total scans</strong>${scans.length}</div>
           <div class="stat"><strong>Unique sites</strong>${uniqueSites}</div>
-          <div class="stat"><strong>Latest update</strong>${renderDateCell(history.updatedAt ?? "unknown")}</div>
+          <div class="stat"><strong>Latest update</strong>${renderDateCell(history.updatedAt ?? "unknown", "latest-update")}</div>
         </div>
       </section>
 
@@ -385,22 +416,93 @@ export function buildArchiveIndexHtml(history) {
         });
       });
 
-      const formatDate = (value, includeTime = false) => {
+      const formatDate = (value, options) => {
         const parsed = new Date(value);
         if (Number.isNaN(parsed.getTime())) {
           return value;
         }
 
-        return new Intl.DateTimeFormat(undefined, includeTime
-          ? { dateStyle: 'full', timeStyle: 'medium' }
-          : { dateStyle: 'medium' }
-        ).format(parsed);
+        return new Intl.DateTimeFormat(undefined, options).format(parsed);
       };
 
-      document.querySelectorAll('time[data-date]').forEach((element) => {
+      document.querySelectorAll('[data-tooltip-trigger][data-date]').forEach((element) => {
         const value = element.dataset.date;
-        element.textContent = formatDate(value, false);
-        element.title = formatDate(value, true);
+        element.textContent = formatDate(value, { dateStyle: 'medium' });
+      });
+
+      document.querySelectorAll('[data-tooltip][data-tooltip-date]').forEach((element) => {
+        const value = element.dataset.tooltipDate;
+        element.textContent = formatDate(value, { timeStyle: 'medium' });
+      });
+
+      const tooltipWraps = Array.from(document.querySelectorAll('[data-tooltip-wrap]'));
+
+      const hideTooltip = (wrap) => {
+        const trigger = wrap.querySelector('[data-tooltip-trigger]');
+        const tooltip = wrap.querySelector('[data-tooltip]');
+        if (!trigger || !tooltip) {
+          return;
+        }
+
+        tooltip.hidden = true;
+        trigger.setAttribute('aria-expanded', 'false');
+      };
+
+      const showTooltip = (wrap) => {
+        const trigger = wrap.querySelector('[data-tooltip-trigger]');
+        const tooltip = wrap.querySelector('[data-tooltip]');
+        if (!trigger || !tooltip) {
+          return;
+        }
+
+        tooltip.hidden = false;
+        trigger.setAttribute('aria-expanded', 'true');
+      };
+
+      tooltipWraps.forEach((wrap) => {
+        const trigger = wrap.querySelector('[data-tooltip-trigger]');
+        const tooltip = wrap.querySelector('[data-tooltip]');
+
+        if (!trigger || !tooltip) {
+          return;
+        }
+
+        const hideIfOutside = (event) => {
+          const nextTarget = event.relatedTarget;
+          if (nextTarget && wrap.contains(nextTarget)) {
+            return;
+          }
+          hideTooltip(wrap);
+        };
+
+        trigger.addEventListener('mouseenter', () => showTooltip(wrap));
+        trigger.addEventListener('mouseleave', hideIfOutside);
+        trigger.addEventListener('focusin', () => showTooltip(wrap));
+        trigger.addEventListener('focusout', hideIfOutside);
+        trigger.addEventListener('click', () => {
+          const expanded = trigger.getAttribute('aria-expanded') === 'true';
+          if (expanded) {
+            hideTooltip(wrap);
+            return;
+          }
+          showTooltip(wrap);
+        });
+        trigger.addEventListener('keydown', (event) => {
+          if (event.key === 'Escape') {
+            hideTooltip(wrap);
+          }
+        });
+
+        tooltip.addEventListener('mouseenter', () => showTooltip(wrap));
+        tooltip.addEventListener('mouseleave', hideIfOutside);
+      });
+
+      document.addEventListener('click', (event) => {
+        tooltipWraps.forEach((wrap) => {
+          if (!wrap.contains(event.target)) {
+            hideTooltip(wrap);
+          }
+        });
       });
 
       document.querySelectorAll('[data-open-modal]').forEach((button) => {
