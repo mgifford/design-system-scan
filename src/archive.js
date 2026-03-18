@@ -1,6 +1,8 @@
 import fs from "node:fs/promises";
 import path from "node:path";
 
+const REPORTS_ROOT_DIR = "reports";
+
 function escapeHtml(value) {
   return String(value ?? "")
     .replaceAll("&", "&amp;")
@@ -32,10 +34,10 @@ export function getScanReportRelativeDir(scan) {
   const issueNumber = extractIssueNumber(scan);
 
   if (issueNumber) {
-    return `reports/issues/issue-${issueNumber}/run-${scan.runId}`;
+    return `${REPORTS_ROOT_DIR}/issues/issue-${issueNumber}/run-${scan.runId}`;
   }
 
-  return `reports/triggers/${slugify(scan.trigger)}/run-${scan.runId}`;
+  return `${REPORTS_ROOT_DIR}/triggers/${slugify(scan.trigger)}/run-${scan.runId}`;
 }
 
 export function getScanReportPaths(scan) {
@@ -47,8 +49,45 @@ export function getScanReportPaths(scan) {
     markdown: `${relativeDir}/report.md`,
     csv: `${relativeDir}/report.csv`,
     json: `${relativeDir}/report.json`,
-    latestAlias: scan.runId ? `runs/${scan.runId}/index.html` : null,
+    latestAlias: scan.runId ? `${REPORTS_ROOT_DIR}/runs/${scan.runId}/index.html` : null,
   };
+}
+
+function toArchiveRelativePath(value) {
+  const pathname = String(value ?? "");
+  const prefix = `${REPORTS_ROOT_DIR}/`;
+  return pathname.startsWith(prefix) ? pathname.slice(prefix.length) : pathname;
+}
+
+function buildReportsLandingHtml() {
+  return `<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Design System Scan Reports</title>
+    <style>
+      body { margin: 0; font-family: ui-sans-serif, system-ui, sans-serif; color: #112e51; background: linear-gradient(180deg, #eef5fb 0%, #f7f7f2 100%); }
+      main { max-width: 60rem; margin: 0 auto; padding: 3rem 1rem 4rem; }
+      section { background: #fff; border: 1px solid #d0d7de; box-shadow: 0 12px 32px rgba(17, 46, 81, .08); padding: 1.25rem 1.5rem; }
+      .actions { display: flex; gap: .75rem; flex-wrap: wrap; margin-top: 1rem; }
+      a.button { display: inline-block; padding: .6rem .9rem; border-radius: .35rem; background: #005ea2; color: #fff; text-decoration: none; }
+      a.button.secondary { background: #fff; color: #005ea2; border: 1px solid #005ea2; }
+    </style>
+  </head>
+  <body>
+    <main>
+      <section>
+        <h1>Design System Scan Reports</h1>
+        <p>The scan archive and run-specific reports are published under <code>/reports/</code>.</p>
+        <div class="actions">
+          <a class="button" href="./reports/">Open archive</a>
+          <a class="button secondary" href="./reports/latest/">Open latest scan</a>
+        </div>
+      </section>
+    </main>
+  </body>
+</html>`;
 }
 
 function renderDateCell(value, id) {
@@ -306,7 +345,7 @@ function renderArchiveRows(scans) {
           <td>${componentSnapshot ? escapeHtml(componentSnapshot) : '<span class="muted">None</span>'}</td>
           <td>${templateSnapshot ? escapeHtml(templateSnapshot) : '<span class="muted">None</span>'}</td>
           <td>
-            <a class="button-link" href="${escapeHtml(reportPaths.html)}">Details</a>
+            <a class="button-link" href="${escapeHtml(toArchiveRelativePath(reportPaths.html))}">Details</a>
           </td>
         </tr>
       `;
@@ -787,7 +826,6 @@ export function buildScanReportHtml(scan) {
   const templateSnapshot = summarizeTopItems(scan.siteSummary?.templates, 8);
   const themeSnapshot = summarizeTopItems(scan.siteSummary?.themes, 8);
   const primaryTheme = scan.siteSummary?.primaryTheme?.name;
-  const reportPaths = scan.reportPaths ?? getScanReportPaths(scan);
 
   return `<!doctype html>
 <html lang="en">
@@ -842,9 +880,10 @@ export function buildScanReportHtml(scan) {
       <section>
         <h2>Published files</h2>
         <ul>
-          <li><a href="${escapeHtml(reportPaths.markdown)}">Markdown report</a></li>
-          <li><a href="${escapeHtml(reportPaths.csv)}">CSV export</a></li>
-          <li><a href="${escapeHtml(reportPaths.json)}">JSON data</a></li>
+          <li><a href="./report.md">Markdown report</a></li>
+          <li><a href="./report.csv">CSV export</a></li>
+          <li><a href="./report.json">JSON data</a></li>
+          <li><a href="../../../">Archive index</a></li>
         </ul>
       </section>
 
@@ -965,8 +1004,18 @@ export function buildScanReportCsv(scan) {
 
 export async function writeArchiveSite(outputDir, history) {
   await fs.mkdir(outputDir, { recursive: true });
-  await fs.writeFile(path.join(outputDir, "index.html"), buildArchiveIndexHtml(history), "utf8");
-  await fs.writeFile(path.join(outputDir, "history.json"), JSON.stringify(history, null, 2), "utf8");
+  await fs.writeFile(path.join(outputDir, "index.html"), buildReportsLandingHtml(), "utf8");
+  await fs.mkdir(path.join(outputDir, REPORTS_ROOT_DIR), { recursive: true });
+  await fs.writeFile(
+    path.join(outputDir, REPORTS_ROOT_DIR, "index.html"),
+    buildArchiveIndexHtml(history),
+    "utf8"
+  );
+  await fs.writeFile(
+    path.join(outputDir, REPORTS_ROOT_DIR, "history.json"),
+    JSON.stringify(history, null, 2),
+    "utf8"
+  );
 
   for (const scan of history.scans ?? []) {
     const reportPaths = scan.reportPaths ?? getScanReportPaths(scan);

@@ -229,9 +229,10 @@ This is a better fit for scans that include many pages or many reviewed sites.
 
 The Pages site now publishes:
 
-- `/` as a cumulative archive of scans across runs
-- `/latest/` as a dashboard for the most recent run
-- `/history.json` as the cumulative machine-readable scan history
+- `/` as a lightweight landing page that links into the scan reports
+- `/reports/` as a cumulative archive of scans across runs
+- `/reports/latest/` as a dashboard for the most recent run
+- `/reports/history.json` as the cumulative machine-readable scan history
 - `/reports/issues/issue-<n>/run-<run-id>/report.html` as the stable issue-specific HTML report
 - `/reports/issues/issue-<n>/run-<run-id>/report.md` as the Markdown report
 - `/reports/issues/issue-<n>/run-<run-id>/report.csv` as the page summary CSV

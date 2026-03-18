@@ -90,8 +90,8 @@ Core source:
 
 Published Pages UI:
 
-- `src/archive.js`: multi-run archive page at `/` plus stable published report files under `reports/...`
-- `src/dashboard.js`: dashboard page for `/latest/`
+- `src/archive.js`: landing page at `/`, multi-run archive page at `/reports/`, plus stable published report files under `reports/...`
+- `src/dashboard.js`: dashboard page for `/reports/latest/`
 
 Tests:
 
@@ -110,8 +110,10 @@ Important behavior:
 - `SCAN:` issues and reopened issues can trigger scans
 - Issue titles/bodies can contain either full URLs or bare domains like `gsa.gov`
 - Pages publishes:
-  - `/` archive
-  - `/latest/` newest run
+  - `/` landing page
+  - `/reports/` archive index
+  - `/reports/latest/` newest run
+  - `/reports/history.json` machine-readable archive history
   - `/reports/issues/issue-<n>/run-<run-id>/report.html`
   - `/reports/issues/issue-<n>/run-<run-id>/report.md`
   - `/reports/issues/issue-<n>/run-<run-id>/report.csv`

@@ -274,7 +274,7 @@ jobs:
 
       - name: Fetch existing Pages history
         env:
-          HISTORY_URL: https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/history.json
+          HISTORY_URL: https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/reports/history.json
         run: |
           mkdir -p pages-input
           HTTP_CODE=$(curl -sSL -w "%{http_code}" "$HISTORY_URL" -o pages-input/history.json.tmp || true)
@@ -338,10 +338,10 @@ jobs:
             const mergedHistory = mergeArchiveHistory(history, entry);
 
             await writeArchiveSite("site", mergedHistory);
-            await fs.mkdir("site/latest", { recursive: true });
-            await writeDashboardSite("site/latest", report, metadata);
-            await fs.mkdir(`site/runs/${process.env.RUN_ID}`, { recursive: true });
-            await writeDashboardSite(`site/runs/${process.env.RUN_ID}`, report, metadata);
+            await fs.mkdir("site/reports/latest", { recursive: true });
+            await writeDashboardSite("site/reports/latest", report, metadata);
+            await fs.mkdir(`site/reports/runs/${process.env.RUN_ID}`, { recursive: true });
+            await writeDashboardSite(`site/reports/runs/${process.env.RUN_ID}`, report, metadata);
 
             await fs.writeFile("site/report.txt", reportText, "utf8");
             await fs.writeFile("site/scan.json", JSON.stringify(report, null, 2), "utf8");
@@ -362,9 +362,10 @@ jobs:
           const issueNumber = process.env.ISSUE_NUMBER;
           const expected = [
             "site/index.html",
-            "site/history.json",
-            "site/latest/index.html",
-            `site/runs/${runId}/index.html`,
+            "site/reports/index.html",
+            "site/reports/history.json",
+            "site/reports/latest/index.html",
+            `site/reports/runs/${runId}/index.html`,
             "site/report.txt",
             "site/scan.json",
           ];
@@ -456,15 +457,16 @@ jobs:
             const pageBase = typeof pageUrl === 'string' && pageUrl.startsWith('http')
               ? pageUrl.replace(/\/?$/, '/')
               : null;
-            const archiveEntryUrl = pageBase ? `${pageBase}#scan-${context.runId}` : 'GitHub Pages deployment pending';
-            const reportBase = pageBase
-              ? `${pageBase}reports/issues/issue-${issueNumber}/run-${context.runId}/`
+            const reportsBase = pageBase ? `${pageBase}reports/` : null;
+            const archiveEntryUrl = reportsBase ? `${reportsBase}#scan-${context.runId}` : 'GitHub Pages deployment pending';
+            const reportBase = reportsBase
+              ? `${reportsBase}issues/issue-${issueNumber}/run-${context.runId}/`
               : null;
             const reportHtmlUrl = reportBase ? `${reportBase}report.html` : 'GitHub Pages deployment pending';
             const reportMarkdownUrl = reportBase ? `${reportBase}report.md` : 'GitHub Pages deployment pending';
             const reportCsvUrl = reportBase ? `${reportBase}report.csv` : 'GitHub Pages deployment pending';
             const reportJsonUrl = reportBase ? `${reportBase}report.json` : 'GitHub Pages deployment pending';
-            const latestUrl = pageBase ? `${pageBase}latest/` : 'GitHub Pages deployment pending';
+            const latestUrl = reportsBase ? `${reportsBase}latest/` : 'GitHub Pages deployment pending';
             const artifactsUrl = `${runUrl}#artifacts`;
             const bodyLines = [
               `Scan complete for ${scanLabel}.`,

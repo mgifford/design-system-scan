@@ -40,12 +40,12 @@ test("archive dates use accessible tooltip markup instead of title attributes", 
   assert.match(html, /role="tooltip"/);
   assert.match(html, /aria-describedby="tooltip-scan-date-23253601700"/);
   assert.match(html, />Issue 6</);
-  assert.match(html, /reports\/issues\/issue-6\/run-23253601700\/report\.html/);
+  assert.match(html, /issues\/issue-6\/run-23253601700\/report\.html/);
   assert.doesNotMatch(html, /title=/);
   assert.match(html, /id="theme-toggle"/);
   assert.match(html, /prefers-color-scheme: dark/);
   assert.match(html, /localStorage\.getItem\('theme'\)/);
-  assert.match(html, /<a class="button-link" href="reports\/issues\/issue-6\/run-23253601700\/report\.html">Details<\/a>/);
+  assert.match(html, /<a class="button-link" href="issues\/issue-6\/run-23253601700\/report\.html">Details<\/a>/);
   assert.doesNotMatch(html, /<dialog/);
 });
 
@@ -161,6 +161,8 @@ test("archive site writes stable per-issue report files", async () => {
     path.join(outputDir, "reports/issues/issue-6/run-23253601700/report.html"),
     "utf8"
   );
+  const archiveIndex = await fs.readFile(path.join(outputDir, "reports/index.html"), "utf8");
+  const rootIndex = await fs.readFile(path.join(outputDir, "index.html"), "utf8");
   const markdown = await fs.readFile(
     path.join(outputDir, "reports/issues/issue-6/run-23253601700/report.md"),
     "utf8"
@@ -170,7 +172,12 @@ test("archive site writes stable per-issue report files", async () => {
     "utf8"
   );
 
+  assert.match(rootIndex, /Open archive/);
+  assert.match(rootIndex, /href="\.\/reports\/"/);
+  assert.match(archiveIndex, /Design System Scan Archive/);
   assert.match(html, /Accepted URLs<\/strong>10/);
+  assert.match(html, /<a href="\.\/report\.md">Markdown report<\/a>/);
+  assert.match(html, /<a href="\.\.\/\.\.\/\.\.\/">Archive index<\/a>/);
   assert.match(markdown, /Accepted URLs: 10/);
   assert.match(csv, /page_url,fingerprint_status/);
 });
