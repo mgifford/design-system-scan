@@ -12,6 +12,44 @@ function formatPercent(value) {
   return `${Math.round((value ?? 0) * 100)}%`;
 }
 
+function renderDateCell(value) {
+  const iso = String(value ?? "");
+  return `<time datetime="${escapeHtml(iso)}" data-date="${escapeHtml(iso)}">${escapeHtml(iso)}</time>`;
+}
+
+function renderTrigger(trigger, repository) {
+  const value = String(trigger ?? "");
+  const issueMatch = /^issue-(\d+)$/i.exec(value);
+
+  if (issueMatch && repository) {
+    const issueNumber = issueMatch[1];
+    const issueUrl = `https://github.com/${repository}/issues/${issueNumber}`;
+    return `<a href="${escapeHtml(issueUrl)}">Issue ${escapeHtml(issueNumber)}</a>`;
+  }
+
+  return escapeHtml(value);
+}
+
+function summarizeTopItems(items, limit = 6) {
+  return (items ?? [])
+    .slice(0, limit)
+    .map((item) => {
+      const segments = [];
+
+      if (item.full) {
+        segments.push(`${item.full} full`);
+      }
+
+      if (item.partial) {
+        segments.push(`${item.partial} partial`);
+      }
+
+      const summary = segments.length ? segments.join(", ") : "0 matches";
+      return `${item.name} (${summary})`;
+    })
+    .join("; ");
+}
+
 function statusBadge(status) {
   const tone = {
     full: "full",
@@ -213,33 +251,40 @@ function renderPageTable(pages) {
 function renderArchiveRows(scans) {
   return scans
     .map((scan) => {
-      const componentSnapshot = (scan.siteSummary?.components ?? [])
-        .slice(0, 6)
-        .map((item) => `${item.name} (${item.full}/${item.partial})`)
-        .join("; ");
-      const templateSnapshot = (scan.siteSummary?.templates ?? [])
-        .slice(0, 4)
-        .map((item) => `${item.name} (${item.full}/${item.partial})`)
-        .join("; ");
+      const componentSnapshot = summarizeTopItems(scan.siteSummary?.components, 6);
+      const templateSnapshot = summarizeTopItems(scan.siteSummary?.templates, 4);
+      const modalId = `scan-modal-${escapeHtml(scan.id)}`;
+      const detailsLabel = `Details for ${scan.seedUrl}`;
 
       return `
         <tr data-filter="${escapeHtml([scan.seedUrl, scan.system, scan.trigger].join(" ").toLowerCase())}" id="scan-${escapeHtml(scan.id)}">
-          <td>${escapeHtml(scan.scannedAt)}</td>
+          <td>${renderDateCell(scan.scannedAt)}</td>
           <td><a href="${escapeHtml(scan.seedUrl)}">${escapeHtml(scan.seedUrl)}</a></td>
           <td>${escapeHtml(scan.system)}</td>
-          <td>${escapeHtml(scan.trigger)}</td>
+          <td>${renderTrigger(scan.trigger, scan.repository)}</td>
           <td>${scan.siteSummary?.successfulPageCount ?? 0}/${scan.siteSummary?.pageCount ?? 0}</td>
           <td>${scan.siteSummary?.fingerprintedPageCount ?? 0}</td>
           <td>${componentSnapshot ? escapeHtml(componentSnapshot) : '<span class="muted">None</span>'}</td>
           <td>${templateSnapshot ? escapeHtml(templateSnapshot) : '<span class="muted">None</span>'}</td>
           <td>
-            <details>
-              <summary>Scan details</summary>
+            <button type="button" class="button-link" data-open-modal="${modalId}" aria-label="${escapeHtml(detailsLabel)}">Details</button>
+            <dialog id="${modalId}" class="scan-modal">
+              <div class="scan-modal__content">
+                <div class="modal-actions">
+                  <h3>${escapeHtml(scan.seedUrl)}</h3>
+                  <form method="dialog">
+                    <button type="submit" class="button-link">Close</button>
+                  </form>
+                </div>
+              <p><strong>Date:</strong> ${renderDateCell(scan.scannedAt)}</p>
+              <p><strong>Trigger:</strong> ${renderTrigger(scan.trigger, scan.repository)}</p>
               <p><strong>Run:</strong> <a href="${escapeHtml(scan.runUrl)}">${escapeHtml(scan.runNumber)}</a></p>
               <p><strong>Commit:</strong> ${escapeHtml(scan.sha)}</p>
               <p><strong>Crawl:</strong> ${escapeHtml(scan.crawl)} | <strong>Max pages:</strong> ${escapeHtml(scan.maxPages)}</p>
+              <p><strong>Pages with design system fingerprint:</strong> ${scan.siteSummary?.fingerprintedPageCount ?? 0}</p>
               ${renderPageTable(scan.pages)}
-            </details>
+              </div>
+            </dialog>
           </td>
         </tr>
       `;
@@ -281,41 +326,46 @@ export function buildArchiveIndexHtml(history) {
       .badge--absent { background: #f4dfe2; color: #8b1e2d; }
       .muted { color: #5c6f82; }
       .error { color: #b50909; font-weight: 700; }
-      details { margin-top: .35rem; }
-      details summary { cursor: pointer; font-weight: 700; }
       input { width: min(30rem, 100%); padding: .65rem .8rem; border: 1px solid #a9bcd0; border-radius: .3rem; font: inherit; }
       a { color: #005ea2; }
+      .button-link { appearance: none; border: 1px solid #005ea2; background: #005ea2; color: white; border-radius: .3rem; padding: .45rem .75rem; font: inherit; cursor: pointer; }
+      .button-link:hover { background: #1a4480; border-color: #1a4480; }
+      .scan-modal { width: min(92rem, calc(100vw - 2rem)); max-height: calc(100vh - 2rem); border: 1px solid #dfe1e2; padding: 0; }
+      .scan-modal::backdrop { background: rgba(17, 46, 81, .6); }
+      .scan-modal__content { padding: 1.25rem; }
+      .modal-actions { display: flex; align-items: center; justify-content: space-between; gap: 1rem; margin-bottom: 1rem; }
+      .modal-actions h3 { margin: 0; }
     </style>
   </head>
   <body>
     <main>
       <section class="hero">
         <h1>Design System Scan Archive</h1>
-        <p>Compact history of scans across sites, with expandable details for each run and each scanned page.</p>
+        <p>Compact history of scans across sites, with a table-first index and deeper details available in a modal for each run.</p>
         <div class="stats">
           <div class="stat"><strong>Total scans</strong>${scans.length}</div>
           <div class="stat"><strong>Unique sites</strong>${uniqueSites}</div>
-          <div class="stat"><strong>Latest update</strong>${escapeHtml(history.updatedAt ?? "unknown")}</div>
+          <div class="stat"><strong>Latest update</strong>${renderDateCell(history.updatedAt ?? "unknown")}</div>
         </div>
       </section>
 
       <section>
         <h2>Scans</h2>
-        <p class="muted">Filter by URL, system, or trigger.</p>
+        <p class="muted">Filter by URL, system, or trigger. “Pages with DS fingerprint” counts pages where the scanner found enough USWDS evidence to classify the page as using the design system.</p>
         <input id="scan-filter" type="search" placeholder="Filter scans">
         <div class="table-wrap">
           <table>
             <thead>
               <tr>
-                <th>Scanned at</th>
+                <th>Date</th>
                 <th>Seed URL</th>
                 <th>System</th>
                 <th>Trigger</th>
                 <th>Pages</th>
-                <th>Fingerprint pages</th>
+                <th>Pages with DS fingerprint</th>
                 <th>Top components</th>
                 <th>Top templates</th>
-                <th>Expand</th>
+                <th>Details</th>
               </tr>
             </thead>
             <tbody id="scan-table-body">
@@ -332,6 +382,31 @@ export function buildArchiveIndexHtml(history) {
         const query = input.value.trim().toLowerCase();
         rows.forEach((row) => {
           row.style.display = !query || row.dataset.filter.includes(query) ? '' : 'none';
+        });
+      });
+
+      const formatDate = (value, includeTime = false) => {
+        const parsed = new Date(value);
+        if (Number.isNaN(parsed.getTime())) {
+          return value;
+        }
+
+        return new Intl.DateTimeFormat(undefined, includeTime
+          ? { dateStyle: 'full', timeStyle: 'medium' }
+          : { dateStyle: 'medium' }
+        ).format(parsed);
+      };
+
+      document.querySelectorAll('time[data-date]').forEach((element) => {
+        const value = element.dataset.date;
+        element.textContent = formatDate(value, false);
+        element.title = formatDate(value, true);
+      });
+
+      document.querySelectorAll('[data-open-modal]').forEach((button) => {
+        button.addEventListener('click', () => {
+          const modal = document.getElementById(button.dataset.openModal);
+          modal?.showModal();
         });
       });
     </script>
