@@ -3,6 +3,10 @@ name: Design system scan
 on:
   workflow_dispatch:
     inputs:
+      issue_number:
+        description: "Optional SCAN issue number to process"
+        required: false
+        default: ""
       url:
         description: "Seed URL to scan"
         required: false
@@ -70,8 +74,11 @@ jobs:
       - name: Resolve scan inputs
         id: inputs
         env:
+          GITHUB_TOKEN: ${{ github.token }}
+          REPOSITORY: ${{ github.repository }}
           EVENT_NAME: ${{ github.event_name }}
           EVENT_SCHEDULE: ${{ github.event.schedule }}
+          INPUT_ISSUE_NUMBER: ${{ github.event.inputs.issue_number }}
           INPUT_URL: ${{ github.event.inputs.url }}
           INPUT_SYSTEM: ${{ github.event.inputs.system }}
           INPUT_CRAWL: ${{ github.event.inputs.crawl }}
@@ -79,36 +86,49 @@ jobs:
           ISSUE_TITLE: ${{ github.event.issue.title }}
           ISSUE_BODY: ${{ github.event.issue.body }}
         run: |
+          mkdir -p artifacts
+
+          collect_issue_urls() {
+            local title="$1"
+            local body="$2"
+            printf '%s\n%s\n' "$title" "$body" \
+              | grep -Eio 'https?://[^ )]+|([[:alnum:]-]+\.)+[[:alpha:]]{2,}(/[^\ )]*)?' \
+              | sed 's/[)>.,;:]+$//' \
+              | while IFS= read -r raw_url; do
+                  case "$raw_url" in
+                    http://*|https://*)
+                      printf '%s\n' "$raw_url"
+                      ;;
+                    *)
+                      printf 'https://%s\n' "$raw_url"
+                      ;;
+                  esac
+                done \
+              | awk '!seen[$0]++'
+          }
+
           if [ "$EVENT_NAME" = "schedule" ] && [ "$EVENT_SCHEDULE" = "17 13 * * 1" ]; then
             echo "url=https://designsystem.digital.gov/" >> "$GITHUB_OUTPUT"
             echo "system=auto" >> "$GITHUB_OUTPUT"
             echo "crawl=true" >> "$GITHUB_OUTPUT"
             echo "max_pages=20" >> "$GITHUB_OUTPUT"
             echo "trigger=weekly" >> "$GITHUB_OUTPUT"
+            echo "issue_number=" >> "$GITHUB_OUTPUT"
+            echo "url_count=1" >> "$GITHUB_OUTPUT"
           elif [ "$EVENT_NAME" = "schedule" ]; then
             echo "url=https://designsystem.digital.gov/" >> "$GITHUB_OUTPUT"
             echo "system=auto" >> "$GITHUB_OUTPUT"
             echo "crawl=true" >> "$GITHUB_OUTPUT"
             echo "max_pages=10" >> "$GITHUB_OUTPUT"
             echo "trigger=weekday" >> "$GITHUB_OUTPUT"
+            echo "issue_number=" >> "$GITHUB_OUTPUT"
+            echo "url_count=1" >> "$GITHUB_OUTPUT"
           elif [ "$EVENT_NAME" = "issues" ]; then
-            RAW_URL=$(printf '%s\n%s\n' "$ISSUE_TITLE" "$ISSUE_BODY" | grep -Eio 'https?://[^ )]+|([[:alnum:]-]+\.)+[[:alpha:]]{2,}(/[^\ )]*)?' | head -n 1 || true)
+            collect_issue_urls "$ISSUE_TITLE" "$ISSUE_BODY" > artifacts/scan-urls.txt
+            URL=$(head -n 1 artifacts/scan-urls.txt || true)
             SYSTEM=$(printf '%s\n' "$ISSUE_BODY" | sed -n 's/^system:[[:space:]]*//p' | head -n 1)
             CRAWL=$(printf '%s\n' "$ISSUE_BODY" | sed -n 's/^crawl:[[:space:]]*//p' | head -n 1)
             MAX_PAGES=$(printf '%s\n' "$ISSUE_BODY" | awk 'BEGIN{IGNORECASE=1} /^(max_pages|pages|number):[[:space:]]*/ { sub(/^[^:]+:[[:space:]]*/, "", $0); print; exit }')
-
-            if [ -n "$RAW_URL" ]; then
-              case "$RAW_URL" in
-                http://*|https://*)
-                  URL="$RAW_URL"
-                  ;;
-                *)
-                  URL="https://$RAW_URL"
-                  ;;
-              esac
-            else
-              URL=""
-            fi
 
             if [ -z "$URL" ]; then
               echo "No URL found in issue title/body. Use a SCAN: issue with a URL or bare domain in the title or body." >&2
@@ -132,16 +152,58 @@ jobs:
             echo "crawl=$CRAWL" >> "$GITHUB_OUTPUT"
             echo "max_pages=$MAX_PAGES" >> "$GITHUB_OUTPUT"
             echo "trigger=issue-${{ github.event.issue.number }}" >> "$GITHUB_OUTPUT"
+            echo "issue_number=${{ github.event.issue.number }}" >> "$GITHUB_OUTPUT"
+            echo "url_count=$(wc -l < artifacts/scan-urls.txt | tr -d ' ')" >> "$GITHUB_OUTPUT"
+          elif [ -n "$INPUT_ISSUE_NUMBER" ]; then
+            ISSUE_JSON=$(curl -fsSL \
+              -H "Authorization: Bearer $GITHUB_TOKEN" \
+              -H "Accept: application/vnd.github+json" \
+              "https://api.github.com/repos/$REPOSITORY/issues/$INPUT_ISSUE_NUMBER")
+            ISSUE_TITLE=$(printf '%s' "$ISSUE_JSON" | node -e 'let data=""; process.stdin.on("data", c => data += c); process.stdin.on("end", () => { const issue = JSON.parse(data); process.stdout.write(issue.title || ""); });')
+            ISSUE_BODY=$(printf '%s' "$ISSUE_JSON" | node -e 'let data=""; process.stdin.on("data", c => data += c); process.stdin.on("end", () => { const issue = JSON.parse(data); process.stdout.write(issue.body || ""); });')
+            collect_issue_urls "$ISSUE_TITLE" "$ISSUE_BODY" > artifacts/scan-urls.txt
+            URL=$(head -n 1 artifacts/scan-urls.txt || true)
+            SYSTEM=$(printf '%s\n' "$ISSUE_BODY" | sed -n 's/^system:[[:space:]]*//p' | head -n 1)
+            CRAWL=$(printf '%s\n' "$ISSUE_BODY" | sed -n 's/^crawl:[[:space:]]*//p' | head -n 1)
+            MAX_PAGES=$(printf '%s\n' "$ISSUE_BODY" | awk 'BEGIN{IGNORECASE=1} /^(max_pages|pages|number):[[:space:]]*/ { sub(/^[^:]+:[[:space:]]*/, "", $0); print; exit }')
+
+            if [ -z "$URL" ]; then
+              echo "No URL found in issue title/body for issue #$INPUT_ISSUE_NUMBER." >&2
+              exit 1
+            fi
+
+            if [ -z "$SYSTEM" ]; then
+              SYSTEM="auto"
+            fi
+
+            if [ -z "$CRAWL" ]; then
+              CRAWL="true"
+            fi
+
+            if [ -z "$MAX_PAGES" ]; then
+              MAX_PAGES="10"
+            fi
+
+            echo "url=$URL" >> "$GITHUB_OUTPUT"
+            echo "system=$SYSTEM" >> "$GITHUB_OUTPUT"
+            echo "crawl=$CRAWL" >> "$GITHUB_OUTPUT"
+            echo "max_pages=$MAX_PAGES" >> "$GITHUB_OUTPUT"
+            echo "trigger=issue-$INPUT_ISSUE_NUMBER" >> "$GITHUB_OUTPUT"
+            echo "issue_number=$INPUT_ISSUE_NUMBER" >> "$GITHUB_OUTPUT"
+            echo "url_count=$(wc -l < artifacts/scan-urls.txt | tr -d ' ')" >> "$GITHUB_OUTPUT"
           else
             echo "url=${INPUT_URL}" >> "$GITHUB_OUTPUT"
             echo "system=${INPUT_SYSTEM}" >> "$GITHUB_OUTPUT"
             echo "crawl=${INPUT_CRAWL}" >> "$GITHUB_OUTPUT"
             echo "max_pages=${INPUT_MAX_PAGES}" >> "$GITHUB_OUTPUT"
             echo "trigger=manual" >> "$GITHUB_OUTPUT"
+            echo "issue_number=" >> "$GITHUB_OUTPUT"
+            echo "url_count=1" >> "$GITHUB_OUTPUT"
           fi
 
       - name: Run scanner
         env:
+          ISSUE_NUMBER: ${{ steps.inputs.outputs.issue_number }}
           SCAN_URL: ${{ steps.inputs.outputs.url }}
           SCAN_SYSTEM: ${{ steps.inputs.outputs.system }}
           SCAN_CRAWL: ${{ steps.inputs.outputs.crawl }}
@@ -153,11 +215,19 @@ jobs:
             CRAWL_ARGS="--crawl --max-pages $SCAN_MAX_PAGES"
           fi
 
-          node src/cli.js \
-            --system "$SCAN_SYSTEM" \
-            $CRAWL_ARGS \
-            --save artifacts/scan.json \
-            "$SCAN_URL" | tee artifacts/report.txt
+          if [ -n "$ISSUE_NUMBER" ] && [ -s artifacts/scan-urls.txt ]; then
+            node src/cli.js \
+              --system "$SCAN_SYSTEM" \
+              $CRAWL_ARGS \
+              --save artifacts/scan.json \
+              --file artifacts/scan-urls.txt | tee artifacts/report.txt
+          else
+            node src/cli.js \
+              --system "$SCAN_SYSTEM" \
+              $CRAWL_ARGS \
+              --save artifacts/scan.json \
+              "$SCAN_URL" | tee artifacts/report.txt
+          fi
 
       - name: Save trigger metadata
         run: |
@@ -167,6 +237,8 @@ jobs:
             echo "system=${{ steps.inputs.outputs.system }}"
             echo "crawl=${{ steps.inputs.outputs.crawl }}"
             echo "max_pages=${{ steps.inputs.outputs.max_pages }}"
+            echo "issue_number=${{ steps.inputs.outputs.issue_number }}"
+            echo "url_count=${{ steps.inputs.outputs.url_count }}"
             echo "run_url=https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
           } > artifacts/metadata.txt
 
@@ -264,7 +336,9 @@ jobs:
     needs:
       - scan
       - deploy-pages
-    if: github.event_name == 'issues' && startsWith(github.event.issue.title, 'SCAN:')
+    if: >
+      (github.event_name == 'issues' && startsWith(github.event.issue.title, 'SCAN:')) ||
+      (github.event_name == 'workflow_dispatch' && github.event.inputs.issue_number != '')
     steps:
       - name: Comment on issue with report links
         uses: actions/github-script@v7
@@ -272,7 +346,8 @@ jobs:
           PAGE_URL: ${{ needs.deploy-pages.outputs.page_url }}
         with:
           script: |
-            const issueNumber = context.payload.issue.number;
+            const issueNumber = context.payload.issue?.number || Number(context.payload.inputs.issue_number);
+            const issueTitle = context.payload.issue?.title || `SCAN issue #${issueNumber}`;
             const runUrl = `https://github.com/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`;
             const pageUrl = process.env.PAGE_URL || 'GitHub Pages deployment pending';
             const pageBase = typeof pageUrl === 'string' && pageUrl.startsWith('http')
@@ -283,7 +358,7 @@ jobs:
             const latestUrl = pageBase ? `${pageBase}latest/` : 'GitHub Pages deployment pending';
             const artifactsUrl = `${runUrl}#artifacts`;
             const body = [
-              `Scan completed successfully for ${context.payload.issue.title}.`,
+              `Scan completed successfully for ${issueTitle}.`,
               ``,
               `Review links:`,
               `- Run detail page: ${runDetailUrl}`,
@@ -308,9 +383,10 @@ jobs:
         uses: actions/github-script@v7
         with:
           script: |
+            const issueNumber = context.payload.issue?.number || Number(context.payload.inputs.issue_number);
             await github.rest.issues.update({
               owner: context.repo.owner,
               repo: context.repo.repo,
-              issue_number: context.payload.issue.number,
+              issue_number: issueNumber,
               state: 'closed',
             });

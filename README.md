@@ -138,6 +138,7 @@ It supports:
 
 - manual runs from the Actions tab using `workflow_dispatch`
 - `SCAN:` issues opened or reopened, as long as a URL is present in the title or body
+- a separate `Scan submitted URLs` workflow to process already-open `SCAN:` issues
 - weekday scheduled scans of `https://designsystem.digital.gov/`
 - a weekly deeper scheduled scan of `https://designsystem.digital.gov/`
 - `npm test` before the scan job runs
@@ -168,12 +169,13 @@ max_pages: 10
 
 Notes:
 
-- The workflow uses the first URL it finds in the title or body.
+- The issue-triggered workflow scans all URLs it finds in the title and body.
 - `system` defaults to `auto`.
 - `crawl` defaults to `true`.
 - `max_pages` defaults to `10`.
 - `pages:` and `number:` are also accepted as aliases for `max_pages:`.
 - Non-`SCAN:` issues do not trigger the scan job.
+- Already-open `SCAN:` issues can be dispatched by the separate `Scan submitted URLs` workflow.
 
 ### Why scores are below 100%
 
