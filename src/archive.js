@@ -12,6 +12,45 @@ function formatPercent(value) {
   return `${Math.round((value ?? 0) * 100)}%`;
 }
 
+function slugify(value) {
+  return String(value ?? "unknown")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/gu, "-")
+    .replace(/^-+|-+$/gu, "") || "unknown";
+}
+
+function extractIssueNumber(scan) {
+  if (scan.issueNumber) {
+    return String(scan.issueNumber);
+  }
+
+  const match = /^issue-(\d+)$/iu.exec(String(scan.trigger ?? ""));
+  return match?.[1] ?? null;
+}
+
+export function getScanReportRelativeDir(scan) {
+  const issueNumber = extractIssueNumber(scan);
+
+  if (issueNumber) {
+    return `reports/issues/issue-${issueNumber}/run-${scan.runId}`;
+  }
+
+  return `reports/triggers/${slugify(scan.trigger)}/run-${scan.runId}`;
+}
+
+export function getScanReportPaths(scan) {
+  const relativeDir = getScanReportRelativeDir(scan);
+
+  return {
+    relativeDir,
+    html: `${relativeDir}/report.html`,
+    markdown: `${relativeDir}/report.md`,
+    csv: `${relativeDir}/report.csv`,
+    json: `${relativeDir}/report.json`,
+    latestAlias: scan.runId ? `runs/${scan.runId}/index.html` : null,
+  };
+}
+
 function renderDateCell(value, id) {
   const iso = String(value ?? "");
   const tooltipId = `tooltip-${id}`;
@@ -121,6 +160,7 @@ function summarizePage(page) {
   return {
     url: page.url,
     error: null,
+    scannedAt: page.scannedAt ?? null,
     fingerprint: {
       status: page.siteFingerprint.status,
       coverage: page.siteFingerprint.coverage,
@@ -139,7 +179,7 @@ function summarizePage(page) {
 }
 
 export function createArchiveEntry(report, metadata) {
-  return {
+  const baseEntry = {
     id: String(metadata.runId),
     repository: metadata.repository,
     runId: String(metadata.runId),
@@ -147,14 +187,21 @@ export function createArchiveEntry(report, metadata) {
     runUrl: metadata.runUrl,
     scannedAt: report.pages[0]?.scannedAt ?? new Date().toISOString(),
     trigger: metadata.trigger,
+    issueNumber: metadata.issueNumber ? String(metadata.issueNumber) : null,
     seedUrl: metadata.url,
     system: metadata.system,
     crawl: metadata.crawl,
     maxPages: Number(metadata.maxPages),
+    acceptedUrls: Number(metadata.urlCount ?? 1),
     sha: metadata.sha,
     systemInfo: report.system,
     siteSummary: report.siteSummary,
     pages: report.pages.map(summarizePage),
+  };
+
+  return {
+    ...baseEntry,
+    reportPaths: getScanReportPaths(baseEntry),
   };
 }
 
@@ -214,8 +261,8 @@ function renderEvidenceTable(title, items) {
 function renderPageTable(pages) {
   const rows = pages
     .map((page) => {
-      const versions = page.versions.length ? page.versions.join(", ") : "none";
-      const assetErrors = page.assetErrors
+      const versions = (page.versions ?? []).length ? page.versions.join(", ") : "none";
+      const assetErrors = (page.assetErrors ?? [])
         .map((item) => `<li>${escapeHtml(item)}</li>`)
         .join("");
 
@@ -236,8 +283,8 @@ function renderPageTable(pages) {
                   ? `<p class="error">${escapeHtml(page.error)}</p>`
                   : `
                     <p><strong>Adoption:</strong> ${page.summary.fullComponentCount} full, ${page.summary.partialComponentCount} partial, ${formatPercent(page.summary.overallCoverage)} overall</p>
-                    ${renderEvidenceTable("Components", page.components)}
-                    ${renderEvidenceTable("Templates", page.templates)}
+                    ${renderEvidenceTable("Components", page.components ?? [])}
+                    ${renderEvidenceTable("Templates", page.templates ?? [])}
                     ${assetErrors ? `<section><h4>Asset fetch issues</h4><ul>${assetErrors}</ul></section>` : ""}
                   `
               }
@@ -274,6 +321,7 @@ function renderArchiveRows(scans) {
     .map((scan) => {
       const componentSnapshot = summarizeTopItems(scan.siteSummary?.components, 6);
       const templateSnapshot = summarizeTopItems(scan.siteSummary?.templates, 4);
+      const reportPaths = scan.reportPaths ?? getScanReportPaths(scan);
       const modalId = `scan-modal-${escapeHtml(scan.id)}`;
       const dateId = `scan-date-${escapeHtml(scan.id)}`;
       const detailsLabel = `Details for ${scan.seedUrl}`;
@@ -301,7 +349,9 @@ function renderArchiveRows(scans) {
               <p><strong>Date:</strong> ${renderDateCell(scan.scannedAt, `${dateId}-modal`)}</p>
               <p><strong>Trigger:</strong> ${renderTrigger(scan.trigger, scan.repository)}</p>
               <p><strong>Run:</strong> <a href="${escapeHtml(scan.runUrl)}">${escapeHtml(scan.runNumber)}</a></p>
+              <p><strong>Reports:</strong> <a href="${escapeHtml(reportPaths.html)}">HTML</a> | <a href="${escapeHtml(reportPaths.markdown)}">Markdown</a> | <a href="${escapeHtml(reportPaths.csv)}">CSV</a> | <a href="${escapeHtml(reportPaths.json)}">JSON</a></p>
               <p><strong>Commit:</strong> ${escapeHtml(scan.sha)}</p>
+              <p><strong>Accepted URLs:</strong> ${scan.acceptedUrls ?? scan.siteSummary?.pageCount ?? 0}</p>
               <p><strong>Crawl:</strong> ${escapeHtml(scan.crawl)} | <strong>Max pages:</strong> ${escapeHtml(scan.maxPages)}</p>
               <p><strong>Pages with design system fingerprint:</strong> ${scan.siteSummary?.fingerprintedPageCount ?? 0}</p>
               ${renderPageTable(scan.pages)}
@@ -599,7 +649,7 @@ export function buildArchiveIndexHtml(history) {
 
       <section>
         <h2>Scans</h2>
-        <p class="muted">Filter by URL, system, or trigger. “Pages with DS fingerprint” counts pages where the scanner found enough USWDS evidence to classify the page as using the design system.</p>
+        <p class="muted">Filter by URL, system, or trigger. “Pages with DS fingerprint” counts pages where the scanner found enough design-system evidence to classify the page as using the selected system. Use “Details” to open stable HTML, Markdown, CSV, and JSON report links for each run.</p>
         <input id="scan-filter" type="search" placeholder="Filter scans">
         <div class="table-wrap">
           <table>
@@ -773,8 +823,205 @@ export async function loadArchiveHistory(pathname) {
   }
 }
 
+function renderFlatPageRows(scan) {
+  return (scan.pages ?? [])
+    .map((page) => {
+      const versions = (page.versions ?? []).join(", ");
+      const url = escapeHtml(page.url);
+      return `
+        <tr>
+          <td><a href="${url}">${url}</a></td>
+          <td>${statusBadge(page.fingerprint?.status ?? "absent")}</td>
+          <td>${formatPercent(page.fingerprint?.coverage ?? 0)}</td>
+          <td>${page.summary?.fullComponentCount ?? 0}</td>
+          <td>${page.summary?.partialComponentCount ?? 0}</td>
+          <td>${page.summary?.matchedTemplateCount ?? 0}</td>
+          <td>${escapeHtml(versions || "none")}</td>
+        </tr>
+      `;
+    })
+    .join("");
+}
+
+export function buildScanReportHtml(scan) {
+  const componentSnapshot = summarizeTopItems(scan.siteSummary?.components, 12);
+  const templateSnapshot = summarizeTopItems(scan.siteSummary?.templates, 8);
+  const themeSnapshot = summarizeTopItems(scan.siteSummary?.themes, 8);
+
+  return `<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Design System Scan Report</title>
+    <style>
+      body { margin: 0; font-family: ui-sans-serif, system-ui, sans-serif; color: #112e51; background: #eef5fb; }
+      main { max-width: 88rem; margin: 0 auto; padding: 2rem 1rem 4rem; }
+      section { background: #fff; border: 1px solid #d0d7de; box-shadow: 0 12px 32px rgba(17, 46, 81, .08); padding: 1rem 1.25rem; margin-bottom: 1rem; }
+      .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(11rem, 1fr)); gap: .75rem; }
+      .stat { background: #f8fbff; border: 1px solid #d0d7de; padding: .85rem; }
+      .stat strong { display: block; color: #5c6f82; font-size: .8rem; text-transform: uppercase; letter-spacing: .04em; margin-bottom: .25rem; }
+      table { width: 100%; border-collapse: collapse; }
+      th, td { text-align: left; vertical-align: top; padding: .65rem .5rem; border-bottom: 1px solid #d0d7de; }
+      th { font-size: .8rem; text-transform: uppercase; letter-spacing: .04em; color: #5c6f82; }
+      .badge { display: inline-block; padding: .15rem .45rem; border-radius: 999px; font-size: .8rem; font-weight: 700; text-transform: uppercase; }
+      .badge--full { background: #dff6dd; color: #17603a; }
+      .badge--partial { background: #fff4cc; color: #7a5300; }
+      .badge--absent { background: #f4dfe2; color: #8b1e2d; }
+      a { color: #005ea2; }
+      .muted { color: #5c6f82; }
+      .table-wrap { overflow-x: auto; }
+      ul { margin: .25rem 0 0 1.25rem; }
+    </style>
+  </head>
+  <body>
+    <main>
+      <section>
+        <h1>Design system scan report</h1>
+        <p><strong>Seed URL:</strong> <a href="${escapeHtml(scan.seedUrl)}">${escapeHtml(scan.seedUrl)}</a></p>
+        <p><strong>System:</strong> ${escapeHtml(scan.systemInfo?.name ?? scan.system)}</p>
+        <p><strong>Trigger:</strong> ${renderTrigger(scan.trigger, scan.repository)}</p>
+        <p><strong>Workflow run:</strong> <a href="${escapeHtml(scan.runUrl)}">${escapeHtml(scan.runUrl)}</a></p>
+      </section>
+
+      <section>
+        <div class="stats">
+          <div class="stat"><strong>Accepted URLs</strong>${scan.acceptedUrls ?? scan.siteSummary?.pageCount ?? 0}</div>
+          <div class="stat"><strong>Scanned URLs</strong>${scan.siteSummary?.pageCount ?? 0}</div>
+          <div class="stat"><strong>Pages with DS fingerprint</strong>${scan.siteSummary?.fingerprintedPageCount ?? 0}</div>
+          <div class="stat"><strong>Rejected URLs</strong>0</div>
+          <div class="stat"><strong>Max pages</strong>${escapeHtml(scan.maxPages)}</div>
+        </div>
+      </section>
+
+      <section>
+        <h2>Top signals</h2>
+        <p class="muted">These are the strongest matches across all scanned pages.</p>
+        <p><strong>Components:</strong> ${escapeHtml(componentSnapshot || "None")}</p>
+        <p><strong>Templates:</strong> ${escapeHtml(templateSnapshot || "None")}</p>
+        ${themeSnapshot ? `<p><strong>Themes:</strong> ${escapeHtml(themeSnapshot)}</p>` : ""}
+      </section>
+
+      <section>
+        <h2>Page summary</h2>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Page</th>
+                <th>Fingerprint</th>
+                <th>Coverage</th>
+                <th>Full components</th>
+                <th>Partial components</th>
+                <th>Templates</th>
+                <th>Version clues</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${renderFlatPageRows(scan)}
+            </tbody>
+          </table>
+        </div>
+      </section>
+    </main>
+  </body>
+</html>`;
+}
+
+export function buildScanReportMarkdown(scan) {
+  const reportPaths = scan.reportPaths ?? getScanReportPaths(scan);
+  const lines = [
+    `# Design system scan report`,
+    ``,
+    `- Seed URL: ${scan.seedUrl}`,
+    `- System: ${scan.systemInfo?.name ?? scan.system}`,
+    `- Trigger: ${scan.trigger}`,
+    `- Workflow run: ${scan.runUrl}`,
+    `- Accepted URLs: ${scan.acceptedUrls ?? scan.siteSummary?.pageCount ?? 0}`,
+    `- Scanned URLs: ${scan.siteSummary?.pageCount ?? 0}`,
+    `- Rejected URLs: 0`,
+    `- Pages with DS fingerprint: ${scan.siteSummary?.fingerprintedPageCount ?? 0}`,
+    ``,
+    `## Published files`,
+    ``,
+    `- HTML: ${reportPaths.html}`,
+    `- Markdown: ${reportPaths.markdown}`,
+    `- CSV: ${reportPaths.csv}`,
+    `- JSON: ${reportPaths.json}`,
+    ``,
+    `## Top components`,
+    ``,
+    summarizeTopItems(scan.siteSummary?.components, 12) || "None",
+    ``,
+    `## Top templates`,
+    ``,
+    summarizeTopItems(scan.siteSummary?.templates, 8) || "None",
+    ``,
+    `## Pages`,
+    ``,
+    `| Page | Fingerprint | Coverage | Full | Partial | Templates | Versions |`,
+    `| --- | --- | --- | --- | --- | --- | --- |`,
+  ];
+
+  for (const page of scan.pages ?? []) {
+    lines.push(
+      `| ${page.url} | ${page.fingerprint?.status ?? "absent"} | ${formatPercent(page.fingerprint?.coverage ?? 0)} | ${page.summary?.fullComponentCount ?? 0} | ${page.summary?.partialComponentCount ?? 0} | ${page.summary?.matchedTemplateCount ?? 0} | ${(page.versions ?? []).join(", ") || "none"} |`
+    );
+  }
+
+  lines.push("");
+  return lines.join("\n");
+}
+
+export function buildScanReportCsv(scan) {
+  const rows = [
+    [
+      "page_url",
+      "fingerprint_status",
+      "fingerprint_coverage",
+      "full_components",
+      "partial_components",
+      "matched_templates",
+      "versions",
+    ].join(","),
+  ];
+
+  for (const page of scan.pages ?? []) {
+    const columns = [
+      JSON.stringify(page.url ?? ""),
+      JSON.stringify(page.fingerprint?.status ?? "absent"),
+      JSON.stringify(String(page.fingerprint?.coverage ?? 0)),
+      JSON.stringify(String(page.summary?.fullComponentCount ?? 0)),
+      JSON.stringify(String(page.summary?.partialComponentCount ?? 0)),
+      JSON.stringify(String(page.summary?.matchedTemplateCount ?? 0)),
+      JSON.stringify((page.versions ?? []).join("; ")),
+    ];
+
+    rows.push(columns.join(","));
+  }
+
+  return rows.join("\n");
+}
+
 export async function writeArchiveSite(outputDir, history) {
   await fs.mkdir(outputDir, { recursive: true });
   await fs.writeFile(path.join(outputDir, "index.html"), buildArchiveIndexHtml(history), "utf8");
   await fs.writeFile(path.join(outputDir, "history.json"), JSON.stringify(history, null, 2), "utf8");
+
+  for (const scan of history.scans ?? []) {
+    const reportPaths = scan.reportPaths ?? getScanReportPaths(scan);
+    const relativeDir = reportPaths.relativeDir;
+    const absoluteDir = path.join(outputDir, relativeDir);
+    await fs.mkdir(absoluteDir, { recursive: true });
+    await fs.writeFile(path.join(outputDir, reportPaths.html), buildScanReportHtml(scan), "utf8");
+    await fs.writeFile(path.join(outputDir, reportPaths.markdown), buildScanReportMarkdown(scan), "utf8");
+    await fs.writeFile(path.join(outputDir, reportPaths.csv), buildScanReportCsv(scan), "utf8");
+    await fs.writeFile(path.join(outputDir, reportPaths.json), JSON.stringify(scan, null, 2), "utf8");
+
+    if (reportPaths.latestAlias) {
+      const aliasPath = path.join(outputDir, reportPaths.latestAlias);
+      await fs.mkdir(path.dirname(aliasPath), { recursive: true });
+      await fs.writeFile(aliasPath, buildScanReportHtml(scan), "utf8");
+    }
+  }
 }

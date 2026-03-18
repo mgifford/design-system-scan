@@ -59,6 +59,10 @@ jobs:
     if: >
       github.event_name != 'issues' ||
       startsWith(github.event.issue.title, 'SCAN:')
+    outputs:
+      accepted_urls: ${{ steps.inputs.outputs.url_count }}
+      scanned_urls: ${{ steps.scan_stats.outputs.scanned_urls }}
+      rejected_urls: ${{ steps.scan_stats.outputs.rejected_urls }}
     steps:
       - name: Check out repository
         uses: actions/checkout@v4
@@ -242,6 +246,13 @@ jobs:
             echo "run_url=https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
           } > artifacts/metadata.txt
 
+      - name: Extract scan stats
+        id: scan_stats
+        run: |
+          SCANNED_URLS=$(node --input-type=module -e 'import fs from "node:fs"; const report = JSON.parse(fs.readFileSync("artifacts/scan.json", "utf8")); process.stdout.write(String(report.siteSummary?.pageCount ?? 0));')
+          echo "scanned_urls=$SCANNED_URLS" >> "$GITHUB_OUTPUT"
+          echo "rejected_urls=0" >> "$GITHUB_OUTPUT"
+
       - name: Fetch existing Pages history
         env:
           HISTORY_URL: https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/history.json
@@ -260,6 +271,8 @@ jobs:
           CRAWL: ${{ steps.inputs.outputs.crawl }}
           MAX_PAGES: ${{ steps.inputs.outputs.max_pages }}
           TRIGGER: ${{ steps.inputs.outputs.trigger }}
+          ISSUE_NUMBER: ${{ steps.inputs.outputs.issue_number }}
+          URL_COUNT: ${{ steps.inputs.outputs.url_count }}
         run: |
           mkdir -p site
           node --input-type=module <<'EOF'
@@ -286,6 +299,8 @@ jobs:
               crawl: process.env.CRAWL,
               maxPages: process.env.MAX_PAGES,
               trigger: process.env.TRIGGER,
+              issueNumber: process.env.ISSUE_NUMBER,
+              urlCount: process.env.URL_COUNT,
               runUrl: `https://github.com/${process.env.REPOSITORY}/actions/runs/${process.env.RUN_ID}`,
             };
             const entry = createArchiveEntry(report, metadata);
@@ -354,21 +369,32 @@ jobs:
               ? pageUrl.replace(/\/?$/, '/')
               : null;
             const archiveEntryUrl = pageBase ? `${pageBase}#scan-${context.runId}` : 'GitHub Pages deployment pending';
-            const runDetailUrl = pageBase ? `${pageBase}runs/${context.runId}/` : 'GitHub Pages deployment pending';
+            const reportBase = pageBase
+              ? `${pageBase}reports/issues/issue-${issueNumber}/run-${context.runId}/`
+              : null;
+            const reportHtmlUrl = reportBase ? `${reportBase}report.html` : 'GitHub Pages deployment pending';
+            const reportMarkdownUrl = reportBase ? `${reportBase}report.md` : 'GitHub Pages deployment pending';
+            const reportCsvUrl = reportBase ? `${reportBase}report.csv` : 'GitHub Pages deployment pending';
+            const reportJsonUrl = reportBase ? `${reportBase}report.json` : 'GitHub Pages deployment pending';
             const latestUrl = pageBase ? `${pageBase}latest/` : 'GitHub Pages deployment pending';
             const artifactsUrl = `${runUrl}#artifacts`;
             const body = [
               `Scan completed successfully for ${issueTitle}.`,
               ``,
-              `Review links:`,
-              `- Run detail page: ${runDetailUrl}`,
+              `- Accepted URLs: ${{ needs.scan.outputs.accepted_urls }}`,
+              `- Scanned URLs: ${{ needs.scan.outputs.scanned_urls }}`,
+              `- Rejected URLs: ${{ needs.scan.outputs.rejected_urls }}`,
+              `- Report (Pages): ${reportHtmlUrl}`,
+              `- Markdown (Pages): ${reportMarkdownUrl}`,
+              `- CSV (Pages): ${reportCsvUrl}`,
+              `- JSON (Pages): ${reportJsonUrl}`,
               `- Archive entry: ${archiveEntryUrl}`,
               `- Workflow run: ${runUrl}`,
               `- Artifacts: ${artifactsUrl}`,
               `- Latest published dashboard: ${latestUrl}`,
               ``,
               `Suggested review path:`,
-              `1. Open the run detail page for the exact scan output.`,
+              `1. Open the Pages report for the stable, run-specific report output.`,
               `2. Use the archive entry to compare this run with other scans.`,
               `3. Open the workflow run if you need logs or downloadable artifacts.`
             ].join('\n');

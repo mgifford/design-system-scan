@@ -154,6 +154,7 @@ It supports:
 - `npm test` before the scan job runs
 - uploaded artifacts containing both `scan.json` and a text `report.txt`
 - publishing the latest run to GitHub Pages
+- publishing stable Pages reports under `reports/issues/issue-<n>/run-<run-id>/`
 - commenting on successful `SCAN:` issues with report links, then closing the issue
 
 Once that workflow is pushed to GitHub, runs should appear at:
@@ -223,6 +224,10 @@ The Pages site now publishes:
 - `/` as a cumulative archive of scans across runs
 - `/latest/` as a dashboard for the most recent run
 - `/history.json` as the cumulative machine-readable scan history
+- `/reports/issues/issue-<n>/run-<run-id>/report.html` as the stable issue-specific HTML report
+- `/reports/issues/issue-<n>/run-<run-id>/report.md` as the Markdown report
+- `/reports/issues/issue-<n>/run-<run-id>/report.csv` as the page summary CSV
+- `/reports/issues/issue-<n>/run-<run-id>/report.json` as the per-run JSON summary
 
 Each new successful run merges into the published archive so the site can scale beyond a single scan result.
 

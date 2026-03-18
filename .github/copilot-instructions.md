@@ -5,7 +5,7 @@
 This is a small Node.js 24+ repository for scanning public sites for design-system adoption, currently focused on USWDS. It has two main surfaces:
 
 - a CLI scanner that fetches pages, scores component/template “tells,” and optionally crawls same-origin URLs
-- a GitHub Actions + GitHub Pages reporting pipeline that publishes an archive, latest dashboard, and per-run dashboards
+- a GitHub Actions + GitHub Pages reporting pipeline that publishes an archive, latest dashboard, and stable issue/run report files
 
 Tech/runtime:
 
@@ -90,8 +90,8 @@ Core source:
 
 Published Pages UI:
 
-- `src/archive.js`: multi-run archive page at `/`, issue-linked archive rows, stable row anchors
-- `src/dashboard.js`: dashboard page for `/latest/` and `/runs/<run-id>/`
+- `src/archive.js`: multi-run archive page at `/` plus stable published report files under `reports/...`
+- `src/dashboard.js`: dashboard page for `/latest/`
 
 Tests:
 
@@ -112,7 +112,10 @@ Important behavior:
 - Pages publishes:
   - `/` archive
   - `/latest/` newest run
-  - `/runs/<run-id>/` immutable run page
+  - `/reports/issues/issue-<n>/run-<run-id>/report.html`
+  - `/reports/issues/issue-<n>/run-<run-id>/report.md`
+  - `/reports/issues/issue-<n>/run-<run-id>/report.csv`
+  - `/reports/issues/issue-<n>/run-<run-id>/report.json`
 
 Before finishing a change:
 
