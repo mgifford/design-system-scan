@@ -72,10 +72,10 @@ jobs:
         env:
           EVENT_NAME: ${{ github.event_name }}
           EVENT_SCHEDULE: ${{ github.event.schedule }}
-          INPUT_URL: ${{ inputs.url }}
-          INPUT_SYSTEM: ${{ inputs.system }}
-          INPUT_CRAWL: ${{ inputs.crawl }}
-          INPUT_MAX_PAGES: ${{ inputs.max_pages }}
+          INPUT_URL: ${{ github.event.inputs.url }}
+          INPUT_SYSTEM: ${{ github.event.inputs.system }}
+          INPUT_CRAWL: ${{ github.event.inputs.crawl }}
+          INPUT_MAX_PAGES: ${{ github.event.inputs.max_pages }}
           ISSUE_TITLE: ${{ github.event.issue.title }}
           ISSUE_BODY: ${{ github.event.issue.body }}
         run: |
