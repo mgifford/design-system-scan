@@ -200,10 +200,12 @@ test("archive site writes stable per-issue report files", async () => {
   assert.match(rootIndex, /VA\.gov/);
   assert.match(rootIndex, /CMS Design System/);
   assert.match(rootIndex, /GOV\.UK/);
+  assert.match(rootIndex, /NL Design System/);
   assert.match(rootIndex, /href="\.\/systems\/uswds\/"/);
   assert.match(rootIndex, /href="\.\/systems\/va\/"/);
   assert.match(rootIndex, /href="\.\/systems\/cms\/"/);
   assert.match(rootIndex, /href="\.\/systems\/govuk\/"/);
+  assert.match(rootIndex, /href="\.\/systems\/nlds\/"/);
   assert.match(rootIndex, /href="\.\/comparison\/"/);
   assert.match(rootIndex, /Design System Comparison/);
   assert.match(rootIndex, /Join the community on GitHub/);
@@ -235,6 +237,11 @@ test("archive site writes stable per-issue report files", async () => {
   assert.match(systemPage, /What it does/);
   assert.match(systemPage, /Accordion/);
   assert.match(systemPage, /https:\/\/designsystem\.digital\.gov\/components\/accordion\//);
+
+  const nldsPage = await fs.readFile(path.join(outputDir, "systems/nlds/index.html"), "utf8");
+  assert.match(nldsPage, /NL Design System/);
+  assert.match(nldsPage, /Indexed components/);
+  assert.match(nldsPage, /Button/);
 
   const comparisonPage = await fs.readFile(path.join(outputDir, "comparison/index.html"), "utf8");
   assert.match(comparisonPage, /Design system comparison/);

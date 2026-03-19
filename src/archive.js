@@ -212,6 +212,12 @@ function buildReportsLandingHtml() {
               <p>GOV.UK detection provides a starter footprint for the GOV.UK Design System and its frontend conventions.</p>
             </div>
           </a>
+          <a class="card-link" href="./systems/nlds/">
+            <div class="card">
+              <h3>NL Design System</h3>
+              <p>NL Design System detection provides starter support for the Netherlands government design-system family and its official component inventory.</p>
+            </div>
+          </a>
           <a class="card-link" href="./comparison/">
             <div class="card">
               <h3>Design System Comparison</h3>

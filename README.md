@@ -2,7 +2,7 @@
 
 `design-system-scan` is a rules-driven scanner for checking how closely a site appears to implement a design system.
 
-It now includes starter definitions for the [U.S. Web Design System](https://designsystem.digital.gov/), the [VA.gov Design System](https://design.va.gov/), the [CMS Design System](https://design.cms.gov/), and the [GOV.UK Design System](https://design-system.service.gov.uk/), with auto-detection to determine which one better matches a submitted URL.
+It now includes starter definitions for the [U.S. Web Design System](https://designsystem.digital.gov/), the [VA.gov Design System](https://design.va.gov/), the [CMS Design System](https://design.cms.gov/), the [GOV.UK Design System](https://design-system.service.gov.uk/), and the [NL Design System](https://nldesignsystem.nl/), with auto-detection to determine which one better matches a submitted URL.
 
 The scanner is built to answer questions like:
 
@@ -65,6 +65,12 @@ Target the GOV.UK Design System explicitly:
 
 ```bash
 npm run scan:govuk -- https://design-system.service.gov.uk/
+```
+
+Target the NL Design System explicitly:
+
+```bash
+npm run scan:nlds -- https://nldesignsystem.nl/
 ```
 
 Use a file of newline-delimited URLs:
@@ -132,6 +138,7 @@ https://example.gov/
 - [`src/systems/va.js`](/Users/mike.gifford/design-system-scan/src/systems/va.js): starter VA rule definition
 - [`src/systems/cms.js`](/Users/mike.gifford/design-system-scan/src/systems/cms.js): starter CMS Design System rule definition with child-theme detection
 - [`src/systems/govuk.js`](/Users/mike.gifford/design-system-scan/src/systems/govuk.js): starter GOV.UK Design System rule definition
+- [`src/systems/nlds.js`](/Users/mike.gifford/design-system-scan/src/systems/nlds.js): starter NL Design System rule definition
 
 ## Maintaining the design system knowledge base
 

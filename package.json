@@ -10,6 +10,7 @@
     "scan": "node ./src/cli.js",
     "scan:cms": "node ./src/cli.js --system cms",
     "scan:govuk": "node ./src/cli.js --system govuk",
+    "scan:nlds": "node ./src/cli.js --system nlds",
     "scan:uswds": "node ./src/cli.js --system uswds",
     "scan:va": "node ./src/cli.js --system va",
     "test": "node --test",

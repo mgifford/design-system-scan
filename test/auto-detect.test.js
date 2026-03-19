@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 
 import { cms } from "../src/systems/cms.js";
 import { govuk } from "../src/systems/govuk.js";
+import { nlds } from "../src/systems/nlds.js";
 import { evaluateHtml, selectBestSystemReport } from "../src/scanner.js";
 import { uswds } from "../src/systems/uswds.js";
 import { va } from "../src/systems/va.js";
@@ -109,4 +110,24 @@ test("auto detection prefers GOV.UK on govuk frontend markup", () => {
   ]);
 
   assert.equal(selection.selected.system.id, "govuk");
+});
+
+test("auto detection prefers NL Design System on nl-design-system markup", () => {
+  const html = `
+    <link rel="stylesheet" href="https://cdn.example.nl/@nl-design-system-candidate/button-css/button.css" />
+    <header class="nl-page-header"></header>
+    <a class="nl-skip-link" href="#main">Ga direct naar de inhoud</a>
+    <button class="nl-button">Verder</button>
+    <div class="nl-page-footer"></div>
+  `;
+
+  const selection = selectBestSystemReport([
+    wrapReport(uswds, evaluateHtml("https://example.nl/", html, uswds)),
+    wrapReport(va, evaluateHtml("https://example.nl/", html, va)),
+    wrapReport(cms, evaluateHtml("https://example.nl/", html, cms)),
+    wrapReport(govuk, evaluateHtml("https://example.nl/", html, govuk)),
+    wrapReport(nlds, evaluateHtml("https://example.nl/", html, nlds)),
+  ]);
+
+  assert.equal(selection.selected.system.id, "nlds");
 });

@@ -2,7 +2,7 @@
 
 ## Project overview
 
-`design-system-scan` is a Node.js CLI and GitHub Actions workflow for scanning sites for design-system adoption across USWDS, VA.gov, the CMS Design System, and GOV.UK.
+`design-system-scan` is a Node.js CLI and GitHub Actions workflow for scanning sites for design-system adoption across USWDS, VA.gov, the CMS Design System, GOV.UK, and the NL Design System.
 
 The repo includes:
 
@@ -12,6 +12,7 @@ The repo includes:
 - VA rules in [`src/systems/va.js`](/Users/mike.gifford/design-system-scan/src/systems/va.js)
 - CMS rules in [`src/systems/cms.js`](/Users/mike.gifford/design-system-scan/src/systems/cms.js)
 - GOV.UK rules in [`src/systems/govuk.js`](/Users/mike.gifford/design-system-scan/src/systems/govuk.js)
+- NL Design System rules in [`src/systems/nlds.js`](/Users/mike.gifford/design-system-scan/src/systems/nlds.js)
 - GitHub Pages report renderers in [`src/archive.js`](/Users/mike.gifford/design-system-scan/src/archive.js) and [`src/dashboard.js`](/Users/mike.gifford/design-system-scan/src/dashboard.js)
 - workflow automation in [`.github/workflows/scan.yml`](/Users/mike.gifford/design-system-scan/.github/workflows/scan.yml)
 
@@ -31,6 +32,7 @@ Read these first when working here:
 - Run tests: `npm test`
 - Run a sample auto-detect scan: `npm run scan -- https://designsystem.digital.gov/`
 - Run a sample USWDS scan: `npm run scan:uswds -- https://designsystem.digital.gov/`
+- Run a sample NL Design System scan: `npm run scan:nlds -- https://nldesignsystem.nl/`
 - Scan with crawling: `node src/cli.js --system uswds --crawl --max-pages 20 https://example.gov/`
 - Emit JSON only: `node src/cli.js --system uswds --json https://example.gov/`
 - Validate live design-system inventories: `npm run validate:inventories`

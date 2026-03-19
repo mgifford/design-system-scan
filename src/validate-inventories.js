@@ -46,6 +46,19 @@ const SYSTEMS = [
       return extractSlugSet(html, /\/components\/([a-z0-9-]+)\//giu);
     },
   },
+  {
+    id: "nlds",
+    name: "NL Design System",
+    inventoryFile: "nlds.json",
+    sourceUrl: "https://nldesignsystem.nl/componenten/",
+    inventoryKey: "officialComponents",
+    extractIds(html) {
+      return extractSlugSet(
+        html,
+        /href=["'](?:https:\/\/nldesignsystem\.nl)?\/([a-z0-9-]+)\/["'][^>]*>\s*Bekijk [^<]* component/giu
+      );
+    },
+  },
 ];
 
 function extractSlugSet(html, pattern) {
