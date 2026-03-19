@@ -31,6 +31,10 @@ test("dashboard includes accessible dark mode support", () => {
   assert.match(html, /prefers-color-scheme: dark/);
   assert.match(html, /forced-colors: active/);
   assert.match(html, /localStorage\.setItem\('theme'/);
+  assert.match(html, /Project home/);
+  assert.match(html, /Reports/);
+  assert.match(html, /Latest report/);
+  assert.match(html, /Archives/);
 });
 
 test("dashboard uses modal dialogs for page details", () => {
@@ -89,6 +93,7 @@ test("dashboard uses modal dialogs for page details", () => {
   assert.match(html, /<strong>Date<\/strong>2026-03-19T15:30:00.000Z/);
   assert.match(html, /<strong>Trigger<\/strong><a href="https:\/\/github\.com\/mgifford\/design-system-scan\/issues\/7">Issue 7<\/a>/);
   assert.match(html, /<strong>Proposed version<\/strong>3\.0\.0/);
+  assert.match(html, /Join the community on GitHub/);
   assert.doesNotMatch(html, /<details>/);
   assert.doesNotMatch(html, /<summary>Details<\/summary>/);
 });

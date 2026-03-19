@@ -25,6 +25,28 @@ function renderTrigger(trigger, repository) {
   return escapeHtml(value);
 }
 
+function renderSiteNav() {
+  return `
+    <nav class="dashboard-nav" aria-label="Site">
+      <ul>
+        <li><a href="../../">Project home</a></li>
+        <li><a href="../">Reports</a></li>
+        <li><a href="./">Latest report</a></li>
+        <li><a href="../../archives/">Archives</a></li>
+      </ul>
+    </nav>
+  `;
+}
+
+function renderProjectFooter() {
+  return `
+      <section>
+        <h2>Project</h2>
+        <p class="footer-note">This site is part of the open source <a href="https://github.com/mgifford/design-system-scan">design-system-scan</a> project. Join the community on GitHub to improve scanner coverage, review results, and help grow the shared public-sector design system knowledge base.</p>
+      </section>
+  `;
+}
+
 function statusBadge(status) {
   const tone = {
     full: "full",
@@ -346,6 +368,8 @@ export function buildDashboardHtml(report, metadata) {
         }
       }
 
+      .dashboard-nav { max-width: 88rem; margin: 0 auto; padding: 1rem 1rem 0; }
+      .dashboard-nav ul { list-style: none; padding: 0; margin: 0; display: flex; gap: 1rem; flex-wrap: wrap; }
       body { margin: 0; font-family: ui-sans-serif, system-ui, sans-serif; color: var(--color-text); background: linear-gradient(180deg, var(--color-background) 0%, var(--color-background-accent) 100%); }
       main { max-width: 92rem; margin: 0 auto; padding: 2rem 1rem 4rem; }
       .hero { background: var(--color-surface); border: 1px solid var(--color-border); box-shadow: 0 12px 32px var(--color-shadow); padding: 1.5rem; margin-bottom: 1.5rem; }
@@ -459,6 +483,7 @@ export function buildDashboardHtml(report, metadata) {
     </style>
   </head>
   <body>
+    ${renderSiteNav()}
     <main>
       <section class="hero">
         <div class="hero-header">
@@ -531,6 +556,7 @@ export function buildDashboardHtml(report, metadata) {
           </table>
         </div>
       </section>
+      ${renderProjectFooter()}
     </main>
     <script>
       const themeToggle = document.getElementById('theme-toggle');

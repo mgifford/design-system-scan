@@ -103,6 +103,28 @@ function toArchiveRelativePath(value) {
   return pathname.startsWith(prefix) ? pathname.slice(prefix.length) : pathname;
 }
 
+function renderSiteNav(homeHref, reportsHref, latestHref, archivesHref = null, navClass = "site-nav") {
+  return `
+    <nav class="${escapeHtml(navClass)}" aria-label="Site">
+      <ul>
+        <li><a href="${escapeHtml(homeHref)}">Project home</a></li>
+        <li><a href="${escapeHtml(reportsHref)}">Reports</a></li>
+        <li><a href="${escapeHtml(latestHref)}">Latest report</a></li>
+        ${archivesHref ? `<li><a href="${escapeHtml(archivesHref)}">Archives</a></li>` : ""}
+      </ul>
+    </nav>
+  `;
+}
+
+function renderProjectFooter() {
+  return `
+      <section>
+        <h2>Project</h2>
+        <p class="footer-note">This site is part of the open source <a href="https://github.com/mgifford/design-system-scan">design-system-scan</a> project. Join the community on GitHub to improve scanner coverage, review results, and help grow the shared public-sector design system knowledge base.</p>
+      </section>
+  `;
+}
+
 function buildReportsLandingHtml() {
   return `<!doctype html>
 <html lang="en">
@@ -112,6 +134,8 @@ function buildReportsLandingHtml() {
     <title>Design System Scan Reports</title>
     <style>
       body { margin: 0; font-family: ui-sans-serif, system-ui, sans-serif; color: #112e51; background: linear-gradient(180deg, #eef5fb 0%, #f7f7f2 100%); }
+      .landing-nav { max-width: 60rem; margin: 0 auto; padding: 1rem 1rem 0; }
+      .landing-nav ul { list-style: none; padding: 0; margin: 0; display: flex; gap: 1rem; flex-wrap: wrap; }
       main { max-width: 60rem; margin: 0 auto; padding: 3rem 1rem 4rem; }
       section { background: #fff; border: 1px solid #d0d7de; box-shadow: 0 12px 32px rgba(17, 46, 81, .08); padding: 1.25rem 1.5rem; margin-bottom: 1rem; }
       .actions { display: flex; gap: .75rem; flex-wrap: wrap; margin-top: 1rem; }
@@ -129,6 +153,7 @@ function buildReportsLandingHtml() {
     </style>
   </head>
   <body>
+    ${renderSiteNav("./", "./reports/", "./reports/latest/", "./archives/", "landing-nav")}
     <main>
       <section>
         <h1>Design System Scan Reports</h1>
@@ -202,6 +227,7 @@ function buildReportsLandingHtml() {
         <p>Organizations are developing and publishing design patterns to solve real internal needs, but it is often unclear how broadly those patterns have been adopted, whether teams are using the official components or local variations, and whether there is a feedback loop between documented guidance and production use.</p>
         <p>This project is an attempt to make that visible. It is not a conformance checker or an accessibility certification tool. It is a way to observe adoption, compare implementations, and create better evidence about how design systems are being used in practice.</p>
       </section>
+      ${renderProjectFooter()}
     </main>
   </body>
 </html>`;
@@ -356,13 +382,7 @@ function renderDesignSystemPage(inventory) {
     </style>
   </head>
   <body>
-    <nav class="system-nav" aria-label="System">
-      <ul>
-        <li><a href="../../">Project home</a></li>
-        <li><a href="../../reports/">Current reports</a></li>
-        <li><a href="../../archives/">Archives</a></li>
-      </ul>
-    </nav>
+    ${renderSiteNav("../../", "../../reports/", "../../reports/latest/", "../../archives/", "system-nav")}
     <main>
       <section>
         <h1>${escapeHtml(inventory.name)}</h1>
@@ -405,10 +425,7 @@ function renderDesignSystemPage(inventory) {
         </div>
       </section>
 
-      <section>
-        <h2>Project</h2>
-        <p class="footer-note">This reference page is part of the open source <a href="https://github.com/mgifford/design-system-scan">design-system-scan</a> project. If you want to improve component coverage or help validate upstream definitions, you are welcome to contribute.</p>
-      </section>
+      ${renderProjectFooter()}
     </main>
   </body>
 </html>`;
@@ -574,13 +591,7 @@ function renderComparisonPage(matrix) {
     </style>
   </head>
   <body>
-    <nav class="comparison-nav" aria-label="Comparison">
-      <ul>
-        <li><a href="../">Project home</a></li>
-        <li><a href="../reports/">Current reports</a></li>
-        <li><a href="../archives/">Archives</a></li>
-      </ul>
-    </nav>
+    ${renderSiteNav("../", "../reports/", "../reports/latest/", "../archives/", "comparison-nav")}
     <main>
       <section>
         <h1>Design system comparison</h1>
@@ -661,10 +672,7 @@ function renderComparisonPage(matrix) {
         <ul>${notes}</ul>
       </section>
 
-      <section>
-        <h2>Project</h2>
-        <p class="footer-note">This comparison is part of the open source <a href="https://github.com/mgifford/design-system-scan">design-system-scan</a> project. If you want to improve component mappings or help document semantic equivalence across systems, you are welcome to contribute.</p>
-      </section>
+      ${renderProjectFooter()}
     </main>
   </body>
 </html>`;
@@ -1203,6 +1211,7 @@ export function buildArchiveIndexHtml(history) {
     </style>
   </head>
   <body>
+    ${renderSiteNav("../", "./", "./latest/", "../archives/")}
     <main>
       <section class="hero">
         <div class="hero-header">
@@ -1263,6 +1272,7 @@ export function buildArchiveIndexHtml(history) {
           </table>
         </div>
       </section>
+      ${renderProjectFooter()}
     </main>
     <script>
       const themeToggle = document.getElementById('theme-toggle');
@@ -1451,12 +1461,7 @@ export function buildArchivesIndexHtml(history, archivePackages = {}) {
     </style>
   </head>
   <body>
-    <nav class="archive-nav" aria-label="Archive">
-      <ul>
-        <li><a href="../">Project home</a></li>
-        <li><a href="../reports/">Current reports</a></li>
-      </ul>
-    </nav>
+    ${renderSiteNav("../", "../reports/", "../reports/latest/", "./", "archive-nav")}
     <main>
       <section>
         <h1>Design System Scan Archives</h1>
@@ -1488,6 +1493,7 @@ export function buildArchivesIndexHtml(history, archivePackages = {}) {
           </table>
         </div>
       </section>
+      ${renderProjectFooter()}
     </main>
   </body>
 </html>`;
@@ -1561,13 +1567,7 @@ export function buildScanReportHtml(scan) {
     </style>
   </head>
   <body>
-    <nav class="report-nav" aria-label="Report">
-      <ul>
-        <li><a href="../../../../">Project home</a></li>
-        <li><a href="../../../">Current reports</a></li>
-        <li><a href="../../../../archives/">Archives</a></li>
-      </ul>
-    </nav>
+    ${renderSiteNav("../../../../", "../../../", "../../../../reports/latest/", "../../../../archives/", "report-nav")}
     <main>
       <section>
         <h1>Design system scan report</h1>
@@ -1637,10 +1637,7 @@ export function buildScanReportHtml(scan) {
         ${renderPageSections(scan.pages)}
       </section>
 
-      <section>
-        <h2>Project</h2>
-        <p class="footer-note">This report is part of the open source <a href="https://github.com/mgifford/design-system-scan">design-system-scan</a> project. If you want to improve the scanner, add design-system coverage, or help review results, you are welcome to join and contribute.</p>
-      </section>
+      ${renderProjectFooter()}
     </main>
   </body>
 </html>`;

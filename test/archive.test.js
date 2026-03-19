@@ -110,7 +110,8 @@ test("scan report html includes page-level detail content", () => {
   assert.match(html, /<strong>Theme:<\/strong> Core/);
   assert.match(html, /<strong>Proposed version:<\/strong> 13\.1\.0/);
   assert.match(html, /<a href="\.\.\/\.\.\/\.\.\/\.\.\/">Project home<\/a>/);
-  assert.match(html, /<a href="\.\.\/\.\.\/\.\.\/">Current reports<\/a>/);
+  assert.match(html, /<a href="\.\.\/\.\.\/\.\.\/">Reports<\/a>/);
+  assert.match(html, /<a href="\.\.\/\.\.\/\.\.\/\.\.\/reports\/latest\/">Latest report<\/a>/);
   assert.match(html, /<a href="\.\.\/\.\.\/\.\.\/\.\.\/archives\/">Archives<\/a>/);
   assert.match(html, /open source <a href="https:\/\/github\.com\/mgifford\/design-system-scan">design-system-scan<\/a> project/);
   assert.match(html, /<strong>Component types identified<\/strong>1/);
@@ -184,8 +185,11 @@ test("archive site writes stable per-issue report files", async () => {
 
   assert.match(rootIndex, /Open reports/);
   assert.match(rootIndex, /Open archives/);
+  assert.match(rootIndex, /Project home/);
+  assert.match(rootIndex, /Latest report/);
   assert.match(rootIndex, /href="\.\/reports\/"/);
   assert.match(rootIndex, /href="\.\/archives\/"/);
+  assert.match(rootIndex, /href="\.\/reports\/latest\/"/);
   assert.match(rootIndex, /Why This Matters/);
   assert.match(rootIndex, /Currently Supported/);
   assert.match(rootIndex, /How To Read A Report/);
@@ -199,7 +203,10 @@ test("archive site writes stable per-issue report files", async () => {
   assert.match(rootIndex, /href="\.\/systems\/govuk\/"/);
   assert.match(rootIndex, /href="\.\/comparison\/"/);
   assert.match(rootIndex, /Design System Comparison/);
+  assert.match(rootIndex, /Join the community on GitHub/);
   assert.match(archiveIndex, /Design System Scan Reports/);
+  assert.match(archiveIndex, /Latest report/);
+  assert.match(archiveIndex, /Archives/);
   assert.match(archiveIndex, /newest report for each trigger/);
   assert.match(html, /Accepted URLs<\/strong>10/);
   assert.match(issueAlias, /Design system scan report/);
@@ -217,6 +224,7 @@ test("archive site writes stable per-issue report files", async () => {
 
   const systemPage = await fs.readFile(path.join(outputDir, "systems/uswds/index.html"), "utf8");
   assert.match(systemPage, /U\.S\. Web Design System/);
+  assert.match(systemPage, /Latest report/);
   assert.match(systemPage, /Indexed components/);
   assert.match(systemPage, /Scanner support/);
   assert.match(systemPage, /What it does/);
@@ -231,6 +239,7 @@ test("archive site writes stable per-issue report files", async () => {
   assert.match(comparisonPage, /VA\.gov Design System/);
   assert.match(comparisonPage, /CMS Design System/);
   assert.match(comparisonPage, /GOV\.UK Design System/);
+  assert.match(comparisonPage, /Latest report/);
   assert.match(comparisonPage, /Mostly converged/);
   assert.match(comparisonPage, /Direct match: breadcrumb/);
 });
