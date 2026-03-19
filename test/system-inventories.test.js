@@ -9,6 +9,7 @@ const inventoryFiles = [
   "data/design-systems/govuk.json",
   "data/design-systems/nlds.json",
   "data/design-systems/gcds.json",
+  "data/design-systems/kolibri.json",
 ];
 
 test("design system inventory JSON files are present and populated", () => {
@@ -49,4 +50,12 @@ test("GC Design System inventory indexes the full official component set current
   assert.equal(inventory.officialComponents.length, 33);
   assert.ok(inventory.officialComponents.some((component) => component.id === "breadcrumbs"));
   assert.ok(inventory.officialComponents.some((component) => component.id === "theme-and-topic-menu"));
+});
+
+test("KoliBri inventory indexes the full official component set currently tracked", () => {
+  const inventory = JSON.parse(fs.readFileSync("data/design-systems/kolibri.json", "utf8"));
+
+  assert.equal(inventory.officialComponents.length, 51);
+  assert.ok(inventory.officialComponents.some((component) => component.id === "skip-nav"));
+  assert.ok(inventory.officialComponents.some((component) => component.id === "table-stateless"));
 });

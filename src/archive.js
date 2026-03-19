@@ -225,6 +225,12 @@ function buildReportsLandingHtml() {
               <p>GC Design System detection provides starter support for the Government of Canada web components and the official GC component inventory.</p>
             </div>
           </a>
+          <a class="card-link" href="./systems/kolibri/">
+            <div class="card">
+              <h3>KoliBri</h3>
+              <p>KoliBri detection provides starter support for the German public-sector Public UI web components maintained by ITZBund.</p>
+            </div>
+          </a>
           <a class="card-link" href="./comparison/">
             <div class="card">
               <h3>Design System Comparison</h3>
@@ -307,6 +313,10 @@ function buildComponentDocUrl(systemId, componentId, inventory) {
 
   if (systemId === "gcds") {
     return `https://design-system.canada.ca/en/components/${componentId}/`;
+  }
+
+  if (systemId === "kolibri") {
+    return `https://public-ui.github.io/docs/components/${componentId}`;
   }
 
   return primaryDocsUrl;

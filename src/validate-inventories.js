@@ -69,6 +69,16 @@ const SYSTEMS = [
       return extractSlugSet(html, /\/en\/components\/([a-z0-9-]+)\/?/giu);
     },
   },
+  {
+    id: "kolibri",
+    name: "KoliBri - Public UI",
+    inventoryFile: "kolibri.json",
+    sourceUrl: "https://public-ui.github.io/docs/components",
+    inventoryKey: "officialComponents",
+    extractIds(html) {
+      return extractSlugSet(html, /\/docs\/components\/([a-z0-9-]+)(?:["/#?]|$)/giu);
+    },
+  },
 ];
 
 function extractSlugSet(html, pattern) {

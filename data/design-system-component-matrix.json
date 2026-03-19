@@ -21,6 +21,10 @@
     {
       "id": "gcds",
       "name": "GC Design System"
+    },
+    {
+      "id": "kolibri",
+      "name": "KoliBri - Public UI"
     }
   ],
   "cmsThemes": [
@@ -67,7 +71,8 @@
         "uswds": { "status": "direct", "components": ["accordion"] },
         "va": { "status": "direct", "components": ["accordion"] },
         "cms": { "status": "direct", "components": ["accordion"] },
-        "govuk": { "status": "direct", "components": ["accordion"] }
+        "govuk": { "status": "direct", "components": ["accordion"] },
+        "kolibri": { "status": "direct", "components": ["accordion"] }
       },
       "cmsThemes": {
         "core": "Y",
@@ -84,7 +89,8 @@
         "uswds": { "status": "direct", "components": ["alert", "site-alert"] },
         "va": { "status": "direct", "components": ["alert"] },
         "cms": { "status": "direct", "components": ["alert"] },
-        "govuk": { "status": "semantic", "components": ["notification-banner", "error-summary"] }
+        "govuk": { "status": "semantic", "components": ["notification-banner", "error-summary"] },
+        "kolibri": { "status": "direct", "components": ["alert"] }
       },
       "cmsThemes": {
         "core": "Y",
@@ -102,7 +108,8 @@
         "va": { "status": "direct", "components": ["button"] },
         "cms": { "status": "direct", "components": ["button"] },
         "govuk": { "status": "direct", "components": ["button"] },
-        "gcds": { "status": "direct", "components": ["button"] }
+        "gcds": { "status": "direct", "components": ["button"] },
+        "kolibri": { "status": "direct", "components": ["button"] }
       },
       "cmsThemes": {
         "core": "Y",
@@ -119,7 +126,8 @@
         "uswds": { "status": "direct", "components": ["modal"] },
         "va": { "status": "direct", "components": ["modal"] },
         "cms": { "status": "direct", "components": ["dialog"] },
-        "govuk": { "status": "semantic", "components": ["details", "notification-banner"] }
+        "govuk": { "status": "semantic", "components": ["details", "notification-banner"] },
+        "kolibri": { "status": "direct", "components": ["modal", "popover", "drawer"] }
       },
       "cmsThemes": {
         "core": "Y",
@@ -137,7 +145,8 @@
         "va": { "status": "direct", "components": ["breadcrumbs"] },
         "cms": { "status": "none", "components": [] },
         "govuk": { "status": "direct", "components": ["breadcrumbs"] },
-        "gcds": { "status": "direct", "components": ["breadcrumbs"] }
+        "gcds": { "status": "direct", "components": ["breadcrumbs"] },
+        "kolibri": { "status": "direct", "components": ["breadcrumb"] }
       },
       "cmsThemes": {
         "core": "N",
@@ -190,7 +199,8 @@
         "uswds": { "status": "direct", "components": ["tooltip"] },
         "va": { "status": "none", "components": [] },
         "cms": { "status": "direct", "components": ["tooltip"] },
-        "govuk": { "status": "none", "components": [] }
+        "govuk": { "status": "none", "components": [] },
+        "kolibri": { "status": "direct", "components": ["tooltip"] }
       },
       "cmsThemes": {
         "core": "Y",
@@ -208,7 +218,8 @@
         "va": { "status": "none", "components": [] },
         "cms": { "status": "direct", "components": ["choice"] },
         "govuk": { "status": "direct", "components": ["checkboxes", "radios"] },
-        "gcds": { "status": "direct", "components": ["checkboxes", "radio-group"] }
+        "gcds": { "status": "direct", "components": ["checkboxes", "radio-group"] },
+        "kolibri": { "status": "direct", "components": ["input-checkbox", "input-radio"] }
       },
       "cmsThemes": {
         "core": "Y",
@@ -226,7 +237,8 @@
         "va": { "status": "none", "components": [] },
         "cms": { "status": "direct", "components": ["dropdown"] },
         "govuk": { "status": "direct", "components": ["select"] },
-        "gcds": { "status": "direct", "components": ["select"] }
+        "gcds": { "status": "direct", "components": ["select"] },
+        "kolibri": { "status": "direct", "components": ["select", "single-select", "combobox"] }
       },
       "cmsThemes": {
         "core": "Y",
@@ -244,7 +256,8 @@
         "va": { "status": "none", "components": [] },
         "cms": { "status": "direct", "components": ["date-field"] },
         "govuk": { "status": "direct", "components": ["date-input"] },
-        "gcds": { "status": "direct", "components": ["date-input"] }
+        "gcds": { "status": "direct", "components": ["date-input"] },
+        "kolibri": { "status": "direct", "components": ["input-date"] }
       },
       "cmsThemes": {
         "core": "Y",

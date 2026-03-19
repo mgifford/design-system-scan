@@ -4,6 +4,7 @@ import assert from "node:assert/strict";
 import { cms } from "../src/systems/cms.js";
 import { gcds } from "../src/systems/gcds.js";
 import { govuk } from "../src/systems/govuk.js";
+import { kolibri } from "../src/systems/kolibri.js";
 import { nlds } from "../src/systems/nlds.js";
 import { evaluateHtml, selectBestSystemReport } from "../src/scanner.js";
 import { uswds } from "../src/systems/uswds.js";
@@ -151,9 +152,34 @@ test("auto detection prefers GC Design System on gcds web components", () => {
     wrapReport(govuk, evaluateHtml("https://www.canada.ca/", html, govuk)),
     wrapReport(nlds, evaluateHtml("https://www.canada.ca/", html, nlds)),
     wrapReport(gcds, evaluateHtml("https://www.canada.ca/", html, gcds)),
+    wrapReport(kolibri, evaluateHtml("https://www.canada.ca/", html, kolibri)),
   ]);
 
   assert.equal(selection.selected.system.id, "gcds");
+});
+
+test("auto detection prefers KoliBri on Public UI web components", () => {
+  const html = `
+    <script type="module">
+      import "@public-ui/components/loader";
+      import "@public-ui/components";
+    </script>
+    <kol-skip-nav _href="#main">Zum Inhalt</kol-skip-nav>
+    <kol-button _label="Weiter"></kol-button>
+    <kol-pagination></kol-pagination>
+  `;
+
+  const selection = selectBestSystemReport([
+    wrapReport(uswds, evaluateHtml("https://example.de/", html, uswds)),
+    wrapReport(va, evaluateHtml("https://example.de/", html, va)),
+    wrapReport(cms, evaluateHtml("https://example.de/", html, cms)),
+    wrapReport(govuk, evaluateHtml("https://example.de/", html, govuk)),
+    wrapReport(nlds, evaluateHtml("https://example.de/", html, nlds)),
+    wrapReport(gcds, evaluateHtml("https://example.de/", html, gcds)),
+    wrapReport(kolibri, evaluateHtml("https://example.de/", html, kolibri)),
+  ]);
+
+  assert.equal(selection.selected.system.id, "kolibri");
 });
 
 test("auto detection returns unknown when no system has clear evidence", () => {
@@ -172,6 +198,7 @@ test("auto detection returns unknown when no system has clear evidence", () => {
     wrapReport(govuk, evaluateHtml("https://example.com/", html, govuk)),
     wrapReport(nlds, evaluateHtml("https://example.com/", html, nlds)),
     wrapReport(gcds, evaluateHtml("https://example.com/", html, gcds)),
+    wrapReport(kolibri, evaluateHtml("https://example.com/", html, kolibri)),
   ]);
 
   assert.equal(selection.selected.system.id, "unknown");

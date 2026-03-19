@@ -218,6 +218,8 @@ test("archive site writes stable per-issue report files", async () => {
   assert.match(rootIndex, /Latest report/);
   assert.match(rootIndex, /href="#currently-supported"/);
   assert.match(rootIndex, /href="\.\/reports\/"/);
+  assert.match(rootIndex, /KoliBri/);
+  assert.match(rootIndex, /href="\.\/systems\/kolibri\/"/);
   assert.match(rootIndex, /href="\.\/archives\/"/);
   assert.match(rootIndex, /href="\.\/reports\/latest\/"/);
   assert.match(rootIndex, /Why This Matters/);

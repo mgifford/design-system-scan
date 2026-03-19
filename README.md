@@ -2,12 +2,12 @@
 
 `design-system-scan` is a rules-driven scanner for checking how closely a site appears to implement a design system.
 
-It now includes starter definitions for the [U.S. Web Design System](https://designsystem.digital.gov/), the [VA.gov Design System](https://design.va.gov/), the [CMS Design System](https://design.cms.gov/), the [GOV.UK Design System](https://design-system.service.gov.uk/), the [NL Design System](https://nldesignsystem.nl/), and the [GC Design System](https://design-system.canada.ca/), with auto-detection to determine which one better matches a submitted URL.
+It now includes starter definitions for the [U.S. Web Design System](https://designsystem.digital.gov/), the [VA.gov Design System](https://design.va.gov/), the [CMS Design System](https://design.cms.gov/), the [GOV.UK Design System](https://design-system.service.gov.uk/), the [NL Design System](https://nldesignsystem.nl/), the [GC Design System](https://design-system.canada.ca/), and [KoliBri - Public UI](https://public-ui.github.io/), with auto-detection to determine which one better matches a submitted URL.
 
 The scanner is built to answer questions like:
 
 - Is USWDS present at all?
-- Is the site more likely using USWDS, VA, CMS, GOV.UK, NLDS, or GCDS?
+- Is the site more likely using USWDS, VA, CMS, GOV.UK, NLDS, GCDS, or KoliBri?
 - Which components look fully implemented vs partially implemented?
 - Which external tells support that conclusion?
 - Are there visible clues about which USWDS version is in use?
@@ -79,6 +79,12 @@ Target the GC Design System explicitly:
 npm run scan:gcds -- https://design-system.canada.ca/
 ```
 
+Target KoliBri - Public UI explicitly:
+
+```bash
+npm run scan:kolibri -- https://public-ui.github.io/
+```
+
 Use a file of newline-delimited URLs:
 
 ```bash
@@ -146,6 +152,7 @@ https://example.gov/
 - [`src/systems/govuk.js`](/Users/mike.gifford/design-system-scan/src/systems/govuk.js): starter GOV.UK Design System rule definition
 - [`src/systems/nlds.js`](/Users/mike.gifford/design-system-scan/src/systems/nlds.js): starter NL Design System rule definition
 - [`src/systems/gcds.js`](/Users/mike.gifford/design-system-scan/src/systems/gcds.js): starter GC Design System rule definition
+- [`src/systems/kolibri.js`](/Users/mike.gifford/design-system-scan/src/systems/kolibri.js): starter KoliBri - Public UI rule definition
 
 ## Maintaining the design system knowledge base
 
@@ -199,6 +206,7 @@ It checks the inventory JSON files under [`data/design-systems/`](/Users/mike.gi
 - GOV.UK
 - NL Design System
 - GC Design System
+- KoliBri - Public UI
 
 You can run the same check locally with:
 

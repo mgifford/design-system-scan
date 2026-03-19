@@ -1,11 +1,12 @@
 import { cms } from "./cms.js";
 import { gcds } from "./gcds.js";
 import { govuk } from "./govuk.js";
+import { kolibri } from "./kolibri.js";
 import { nlds } from "./nlds.js";
 import { uswds } from "./uswds.js";
 import { va } from "./va.js";
 
-const DETECTABLE_SYSTEMS = [uswds, va, cms, govuk, nlds, gcds];
+const DETECTABLE_SYSTEMS = [uswds, va, cms, govuk, nlds, gcds, kolibri];
 const AUTO_SYSTEM = {
   id: "auto",
   name: "Auto-detect design system",

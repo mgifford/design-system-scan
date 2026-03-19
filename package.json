@@ -11,6 +11,7 @@
     "scan:cms": "node ./src/cli.js --system cms",
     "scan:gcds": "node ./src/cli.js --system gcds",
     "scan:govuk": "node ./src/cli.js --system govuk",
+    "scan:kolibri": "node ./src/cli.js --system kolibri",
     "scan:nlds": "node ./src/cli.js --system nlds",
     "scan:uswds": "node ./src/cli.js --system uswds",
     "scan:va": "node ./src/cli.js --system va",
