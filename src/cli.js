@@ -25,6 +25,7 @@ Options:
   --file <path>         Read newline-delimited URLs from a file
   --crawl               Discover same-origin pages from the seed URLs
   --max-pages <n>       Max pages to scan when crawling. Default: 25
+  --crawl-delay <ms>    Pause between page fetches when crawling. Default: 0
   --json                Emit raw JSON instead of the text report
   --no-assets           Skip fetching linked CSS/JS assets
   --asset-limit <n>     Max CSS and JS assets to fetch per page. Default: 8
@@ -43,6 +44,7 @@ function parseArgs(argv) {
     assetLimit: 8,
     crawl: false,
     maxPages: 25,
+    crawlDelayMs: 0,
     timeoutMs: 15000,
     json: false,
     listSystems: false,
@@ -75,6 +77,12 @@ function parseArgs(argv) {
 
     if (arg === "--max-pages") {
       options.maxPages = Number.parseInt(argv[index + 1], 10);
+      index += 1;
+      continue;
+    }
+
+    if (arg === "--crawl-delay") {
+      options.crawlDelayMs = Number.parseInt(argv[index + 1], 10);
       index += 1;
       continue;
     }
