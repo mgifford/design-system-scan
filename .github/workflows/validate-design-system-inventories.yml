@@ -1,0 +1,40 @@
+name: Validate design system inventories
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "17 14 1 * *"
+
+permissions:
+  contents: read
+
+jobs:
+  validate-inventories:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v6
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: "24"
+
+      - name: Run inventory validator
+        run: |
+          mkdir -p artifacts/inventory-validation
+          npm run validate:inventories -- --output artifacts/inventory-validation | tee artifacts/inventory-validation/inventory-validation.txt
+
+      - name: Publish step summary
+        if: always()
+        run: |
+          if [ -f artifacts/inventory-validation/inventory-validation.md ]; then
+            cat artifacts/inventory-validation/inventory-validation.md >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+      - name: Upload validation artifacts
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: design-system-inventory-validation-${{ github.run_number }}
+          path: artifacts/inventory-validation/

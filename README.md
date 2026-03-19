@@ -159,6 +159,7 @@ It supports:
 - a separate `Scan submitted URLs` workflow to process already-open `SCAN:` issues
 - weekday scheduled scans of `https://designsystem.digital.gov/`
 - a weekly deeper scheduled scan of `https://designsystem.digital.gov/`
+- a monthly `Validate design system inventories` workflow that compares the tracked design-system component inventories in this repo against the live upstream component overview pages
 - `npm test` before the scan job runs
 - uploaded artifacts containing both `scan.json` and a text `report.txt`
 - publishing the latest run to GitHub Pages
@@ -170,6 +171,25 @@ Once that workflow is pushed to GitHub, runs should appear at:
 - [Actions](https://github.com/mgifford/design-system-scan/actions)
 
 The first scheduled run depends on GitHub's scheduler, but you can trigger one immediately from the Actions tab after the workflow is on `main`.
+
+### Monthly inventory validation
+
+The repo also includes [`.github/workflows/validate-design-system-inventories.yml`](/Users/mike.gifford/design-system-scan/.github/workflows/validate-design-system-inventories.yml), which runs monthly and can also be triggered manually.
+
+It checks the inventory JSON files under [`data/design-systems/`](/Users/mike.gifford/design-system-scan/data/design-systems) against the live component overview pages for:
+
+- USWDS
+- VA.gov
+- CMS Design System
+- GOV.UK
+
+You can run the same check locally with:
+
+```bash
+npm run validate:inventories
+```
+
+The workflow uploads JSON and Markdown artifacts so definition drift can be reviewed and updated in this repo.
 
 ### SCAN issue convention
 

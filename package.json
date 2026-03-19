@@ -13,7 +13,8 @@
     "scan:uswds": "node ./src/cli.js --system uswds",
     "scan:va": "node ./src/cli.js --system va",
     "test": "node --test",
-    "test:sample": "node ./src/cli.js --system uswds https://designsystem.digital.gov/"
+    "test:sample": "node ./src/cli.js --system uswds https://designsystem.digital.gov/",
+    "validate:inventories": "node ./src/validate-inventories.js"
   },
   "engines": {
     "node": ">=24"
