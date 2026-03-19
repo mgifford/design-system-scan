@@ -47,6 +47,15 @@ function renderProjectFooter() {
   `;
 }
 
+function renderAnchoredHeading(level, text, id) {
+  return `
+    <div class="heading-anchor-group">
+      <h${level} id="${escapeHtml(id)}">${escapeHtml(text)}</h${level}>
+      <a class="heading-anchor" href="#${escapeHtml(id)}" aria-label="Copy link to ${escapeHtml(text)} section">#</a>
+    </div>
+  `;
+}
+
 function statusBadge(status) {
   const tone = {
     full: "full",
@@ -370,6 +379,9 @@ export function buildDashboardHtml(report, metadata) {
 
       .dashboard-nav { max-width: 88rem; margin: 0 auto; padding: 1rem 1rem 0; }
       .dashboard-nav ul { list-style: none; padding: 0; margin: 0; display: flex; gap: 1rem; flex-wrap: wrap; }
+      .heading-anchor-group { display: flex; align-items: baseline; gap: .5rem; }
+      .heading-anchor { opacity: 0; text-decoration: none; }
+      .heading-anchor-group:hover .heading-anchor, .heading-anchor:focus { opacity: 1; }
       body { margin: 0; font-family: ui-sans-serif, system-ui, sans-serif; color: var(--color-text); background: linear-gradient(180deg, var(--color-background) 0%, var(--color-background-accent) 100%); }
       main { max-width: 92rem; margin: 0 auto; padding: 2rem 1rem 4rem; }
       .hero { background: var(--color-surface); border: 1px solid var(--color-border); box-shadow: 0 12px 32px var(--color-shadow); padding: 1.5rem; margin-bottom: 1.5rem; }
@@ -488,7 +500,7 @@ export function buildDashboardHtml(report, metadata) {
       <section class="hero">
         <div class="hero-header">
           <div class="hero-copy">
-            <h1>Design System Scan Dashboard</h1>
+            ${renderAnchoredHeading(1, "Design System Scan Dashboard", "top")}
             <p>Compact view for scan results, with expandable details for component and template evidence.</p>
             <div class="hero-links">
               <a href="${escapeHtml(metadata.runUrl)}">View workflow run</a>
@@ -537,7 +549,7 @@ export function buildDashboardHtml(report, metadata) {
       ${renderSummaryTable("Site-wide template tells", report.siteSummary.templates, "Top template matches across all scanned pages.")}
 
       <section>
-        <h3>Scanned pages</h3>
+        ${renderAnchoredHeading(3, "Scanned pages", "scanned-pages")}
         <div class="table-wrap">
           <table>
             <thead>

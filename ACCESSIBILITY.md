@@ -14,6 +14,25 @@ Accessibility requirements are product requirements. New UI work in this repo sh
 
 ## Locked patterns
 
+### Anchor links
+
+Use the accessible anchor-link pattern described in:
+
+- [Anchor Links Accessibility Best Practices](https://mgifford.github.io/ACCESSIBILITY.md/examples/ANCHOR_LINKS_ACCESSIBILITY_BEST_PRACTICES.html)
+
+Requirements for this repo:
+
+- Heading anchors must link to real heading `id` values.
+- The anchor target must remain keyboard-focusable and visible on focus.
+- Anchor links must have an accessible name that explains what section they link to.
+- Avoid injecting anchor links that replace the heading itself or make the heading text harder to read.
+- Show anchor affordances on hover and keyboard focus rather than leaving them permanently prominent.
+
+Current implementation:
+
+- landing, reports, archives, system, comparison, and report headings in [`src/archive.js`](/Users/mike.gifford/design-system-scan/src/archive.js)
+- latest dashboard headings in [`src/dashboard.js`](/Users/mike.gifford/design-system-scan/src/dashboard.js)
+
 ### Tooltips
 
 Use the accessible tooltip pattern described in:
@@ -65,6 +84,7 @@ When changing the generated Pages UI, verify:
 - focus indicators remain visible
 - tooltip markup still uses `aria-describedby` and `role="tooltip"`
 - no new `title=`-only help patterns were introduced
+- heading anchor links still have accessible names and stable `id` targets
 - light mode remains readable
 - dark mode remains readable
 - forced-colors mode has usable borders and controls

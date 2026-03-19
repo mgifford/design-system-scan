@@ -125,6 +125,15 @@ function renderProjectFooter() {
   `;
 }
 
+function renderAnchoredHeading(level, text, id) {
+  return `
+    <div class="heading-anchor-group">
+      <h${level} id="${escapeHtml(id)}">${escapeHtml(text)}</h${level}>
+      <a class="heading-anchor" href="#${escapeHtml(id)}" aria-label="Copy link to ${escapeHtml(text)} section">#</a>
+    </div>
+  `;
+}
+
 function buildReportsLandingHtml() {
   return `<!doctype html>
 <html lang="en">
@@ -138,6 +147,9 @@ function buildReportsLandingHtml() {
       .landing-nav ul { list-style: none; padding: 0; margin: 0; display: flex; gap: 1rem; flex-wrap: wrap; }
       main { max-width: 60rem; margin: 0 auto; padding: 3rem 1rem 4rem; }
       section { background: #fff; border: 1px solid #d0d7de; box-shadow: 0 12px 32px rgba(17, 46, 81, .08); padding: 1.25rem 1.5rem; margin-bottom: 1rem; }
+      .heading-anchor-group { display: flex; align-items: baseline; gap: .5rem; }
+      .heading-anchor { opacity: 0; text-decoration: none; }
+      .heading-anchor-group:hover .heading-anchor, .heading-anchor:focus { opacity: 1; }
       .actions { display: flex; gap: .75rem; flex-wrap: wrap; margin-top: 1rem; }
       .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr)); gap: 1rem; }
       .card-link { color: inherit; text-decoration: none; }
@@ -156,7 +168,7 @@ function buildReportsLandingHtml() {
     ${renderSiteNav("./", "./reports/", "./reports/latest/", "./archives/", "landing-nav")}
     <main>
       <section>
-        <h1>Design System Scan Reports</h1>
+        ${renderAnchoredHeading(1, "Design System Scan Reports", "top")}
         <p>This project helps track where public-sector design systems are actually being used, and how faithfully their patterns are being implemented across real sites.</p>
         <div class="actions">
           <a class="button" href="./reports/">Open reports</a>
@@ -166,14 +178,14 @@ function buildReportsLandingHtml() {
       </section>
 
       <section>
-        <h2>Why This Matters</h2>
+        ${renderAnchoredHeading(2, "Why This Matters", "why-this-matters")}
         <p>Design systems are hard-coded organizational good practices. They package accessibility, consistency, usability, and maintainability into reusable patterns so teams do not need to solve the same problems from scratch on every page.</p>
         <p>From an accessibility point of view, this matters because tested components can encode better semantics, keyboard support, focus management, color contrast expectations, error handling, and naming patterns. But having a design system is not enough on its own. The open question is where those patterns are actually implemented, and how faithfully they are implemented in production.</p>
         <p>This scanner is meant to help answer that question. It creates a feedback loop between documented patterns and real-world adoption by surfacing which design-system tells appear on a site, which components look fully or partially aligned, and where adoption appears to be missing or drifting.</p>
       </section>
 
       <section>
-        <h2>Currently Supported</h2>
+        ${renderAnchoredHeading(2, "Currently Supported", "currently-supported")}
         <p>Each card links to a reference page with the official docs, indexed component inventory, and current scanner support. You can also compare systems side by side to see which ones define similar components and where semantic patterns appear to be converging.</p>
         <div class="grid">
           <a class="card-link" href="./systems/uswds/">
@@ -210,7 +222,7 @@ function buildReportsLandingHtml() {
       </section>
 
       <section>
-        <h2>How To Read A Report</h2>
+        ${renderAnchoredHeading(2, "How To Read A Report", "how-to-read-a-report")}
         <ul>
           <li><strong>Reports:</strong> The reports index at <code>/reports/</code> shows the latest report for each trigger from the last month.</li>
           <li><strong>Archives:</strong> The archive at <code>/archives/</code> keeps older runs available as downloadable packages organized by trigger and date.</li>
@@ -223,7 +235,7 @@ function buildReportsLandingHtml() {
       </section>
 
       <section>
-        <h2>What This Project Is Trying To Track</h2>
+        ${renderAnchoredHeading(2, "What This Project Is Trying To Track", "what-this-project-tracks")}
         <p>Organizations are developing and publishing design patterns to solve real internal needs, but it is often unclear how broadly those patterns have been adopted, whether teams are using the official components or local variations, and whether there is a feedback loop between documented guidance and production use.</p>
         <p>This project is an attempt to make that visible. It is not a conformance checker or an accessibility certification tool. It is a way to observe adoption, compare implementations, and create better evidence about how design systems are being used in practice.</p>
       </section>
@@ -369,6 +381,9 @@ function renderDesignSystemPage(inventory) {
       .system-nav ul { list-style: none; padding: 0; margin: 0; display: flex; gap: 1rem; flex-wrap: wrap; }
       main { max-width: 88rem; margin: 0 auto; padding: 1rem 1rem 4rem; }
       section { background: #fff; border: 1px solid #d0d7de; box-shadow: 0 12px 32px rgba(17, 46, 81, .08); padding: 1rem 1.25rem; margin-bottom: 1rem; }
+      .heading-anchor-group { display: flex; align-items: baseline; gap: .5rem; }
+      .heading-anchor { opacity: 0; text-decoration: none; }
+      .heading-anchor-group:hover .heading-anchor, .heading-anchor:focus { opacity: 1; }
       .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr)); gap: .75rem; }
       .stat { background: #f8fbff; border: 1px solid #d0d7de; padding: .85rem; }
       .stat strong { display: block; color: #5c6f82; font-size: .8rem; text-transform: uppercase; letter-spacing: .04em; margin-bottom: .25rem; }
@@ -385,7 +400,7 @@ function renderDesignSystemPage(inventory) {
     ${renderSiteNav("../../", "../../reports/", "../../reports/latest/", "../../archives/", "system-nav")}
     <main>
       <section>
-        <h1>${escapeHtml(inventory.name)}</h1>
+        ${renderAnchoredHeading(1, inventory.name, `${inventory.id}-top`)}
         <p><strong>Homepage:</strong> <a href="${escapeHtml(inventory.homepage)}">${escapeHtml(inventory.homepage)}</a></p>
         <p><strong>Scanner coverage:</strong> ${escapeHtml(inventory.scannerCoverage?.status ?? "unknown")}</p>
         <p><strong>Inventory date:</strong> ${escapeHtml(inventory.inventoryDate ?? "unknown")}</p>
@@ -400,14 +415,14 @@ function renderDesignSystemPage(inventory) {
       </section>
 
       <section>
-        <h2>Official documentation</h2>
+        ${renderAnchoredHeading(2, "Official documentation", "official-documentation")}
         <ul>${docsLinks}</ul>
         ${themes ? `<h3>Themes</h3><ul>${themes}</ul>` : ""}
         ${notes ? `<h3>Notes</h3><ul>${notes}</ul>` : ""}
       </section>
 
       <section>
-        <h2>Indexed components</h2>
+        ${renderAnchoredHeading(2, "Indexed components", "indexed-components")}
         <p>This list shows the components defined for this design system, whether the current scanner can search for them yet, where they are defined upstream, and a short explanation of what each component is for.</p>
         <div class="table-wrap">
           <table>
@@ -574,6 +589,9 @@ function renderComparisonPage(matrix) {
       .comparison-nav ul { list-style: none; padding: 0; margin: 0; display: flex; gap: 1rem; flex-wrap: wrap; }
       main { max-width: 96rem; margin: 0 auto; padding: 1rem 1rem 4rem; }
       section { background: #fff; border: 1px solid #d0d7de; box-shadow: 0 12px 32px rgba(17, 46, 81, .08); padding: 1rem 1.25rem; margin-bottom: 1rem; }
+      .heading-anchor-group { display: flex; align-items: baseline; gap: .5rem; }
+      .heading-anchor { opacity: 0; text-decoration: none; }
+      .heading-anchor-group:hover .heading-anchor, .heading-anchor:focus { opacity: 1; }
       .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr)); gap: .75rem; }
       .stat { background: #f8fbff; border: 1px solid #d0d7de; padding: .85rem; }
       .stat strong { display: block; color: #5c6f82; font-size: .8rem; text-transform: uppercase; letter-spacing: .04em; margin-bottom: .25rem; }
@@ -594,7 +612,7 @@ function renderComparisonPage(matrix) {
     ${renderSiteNav("../", "../reports/", "../reports/latest/", "../archives/", "comparison-nav")}
     <main>
       <section>
-        <h1>Design system comparison</h1>
+        ${renderAnchoredHeading(1, "Design system comparison", "top")}
         <p>This page compares the design systems currently modeled by the scanner. It is meant to answer practical questions like “Which systems define Breadcrumbs?” and “Where are different organizations settling on the same semantic pattern?”</p>
         <p>The comparison is organized around semantic component families rather than product-specific naming. That makes it easier to see when systems use different component IDs for essentially the same thing, and where they still diverge.</p>
       </section>
@@ -608,13 +626,13 @@ function renderComparisonPage(matrix) {
       </section>
 
       <section>
-        <h2>Example: Breadcrumbs</h2>
+        ${renderAnchoredHeading(2, "Example: Breadcrumbs", "breadcrumbs-example")}
         <p>Breadcrumbs are a good example of broad semantic convergence. The scanner currently maps them like this:</p>
         <ul>${breadcrumbSummary}</ul>
       </section>
 
       <section>
-        <h2>Semantic convergence summary</h2>
+        ${renderAnchoredHeading(2, "Semantic convergence summary", "semantic-convergence-summary")}
         <p>This table shows how many systems have a direct component mapping for each family, and how many only have a semantic equivalent. Families with more direct mappings are stronger candidates for shared pattern expectations across systems.</p>
         <div class="table-wrap">
           <table>
@@ -632,7 +650,7 @@ function renderComparisonPage(matrix) {
       </section>
 
       <section>
-        <h2>Systems at a glance</h2>
+        ${renderAnchoredHeading(2, "Systems at a glance", "systems-at-a-glance")}
         <p>This summarizes how many semantic families each design system currently maps directly or semantically in the scanner.</p>
         <div class="table-wrap">
           <table>
@@ -650,7 +668,7 @@ function renderComparisonPage(matrix) {
       </section>
 
       <section>
-        <h2>Component family matrix</h2>
+        ${renderAnchoredHeading(2, "Component family matrix", "component-family-matrix")}
         <p>Each row is a semantic family. “Direct” means the system defines a closely matching component. “Semantic” means the system appears to cover the same need with a different pattern or naming convention. The CMS theme column shows whether the family is present across Core, CMS.gov, HealthCare.gov, and Medicare.gov.</p>
         <div class="table-wrap">
           <table>
@@ -668,7 +686,7 @@ function renderComparisonPage(matrix) {
       </section>
 
       <section>
-        <h2>Notes</h2>
+        ${renderAnchoredHeading(2, "Notes", "notes")}
         <ul>${notes}</ul>
       </section>
 
@@ -1126,6 +1144,9 @@ export function buildArchiveIndexHtml(history) {
       body { margin: 0; font-family: ui-sans-serif, system-ui, sans-serif; color: var(--color-text); background: linear-gradient(180deg, var(--color-background) 0%, var(--color-background-accent) 100%); }
       main { max-width: 96rem; margin: 0 auto; padding: 2rem 1rem 4rem; }
       .hero, section { background: var(--color-surface); border: 1px solid var(--color-border); box-shadow: 0 12px 32px var(--color-shadow); padding: 1rem 1.25rem; margin-bottom: 1rem; }
+      .heading-anchor-group { display: flex; align-items: baseline; gap: .5rem; }
+      .heading-anchor { opacity: 0; text-decoration: none; }
+      .heading-anchor-group:hover .heading-anchor, .heading-anchor:focus { opacity: 1; }
       .hero-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 1rem; flex-wrap: wrap; }
       .hero-copy { min-width: min(22rem, 100%); flex: 1 1 28rem; }
       .hero-actions { display: flex; align-items: center; gap: .75rem; flex-wrap: wrap; }
@@ -1216,7 +1237,7 @@ export function buildArchiveIndexHtml(history) {
       <section class="hero">
         <div class="hero-header">
           <div class="hero-copy">
-            <h1>Design System Scan Reports</h1>
+            ${renderAnchoredHeading(1, "Design System Scan Reports", "top")}
             <p>Current reports from the last month, showing only the latest published scan for each trigger issue or workflow source.</p>
           </div>
           <div class="hero-actions">
@@ -1248,7 +1269,7 @@ export function buildArchiveIndexHtml(history) {
       </section>
 
       <section>
-        <h2>Reports</h2>
+        ${renderAnchoredHeading(2, "Reports", "reports")}
         <p class="muted">Filter by URL, system, or trigger. This view keeps only the newest report for each trigger from the last month. “Pages with DS fingerprint” counts pages where the scanner found enough design-system evidence to classify the page as using the selected system. Use “Details” to open the stable per-run report page.</p>
         <input id="scan-filter" type="search" placeholder="Filter scans">
         <div class="table-wrap">
@@ -1448,6 +1469,9 @@ export function buildArchivesIndexHtml(history, archivePackages = {}) {
       section { background: #fff; border: 1px solid #d0d7de; box-shadow: 0 12px 32px rgba(17, 46, 81, .08); padding: 1rem 1.25rem; margin-bottom: 1rem; }
       .archive-nav { max-width: 96rem; margin: 0 auto; padding: 1rem 1rem 0; }
       .archive-nav ul { list-style: none; padding: 0; margin: 0; display: flex; gap: 1rem; flex-wrap: wrap; }
+      .heading-anchor-group { display: flex; align-items: baseline; gap: .5rem; }
+      .heading-anchor { opacity: 0; text-decoration: none; }
+      .heading-anchor-group:hover .heading-anchor, .heading-anchor:focus { opacity: 1; }
       .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr)); gap: .75rem; }
       .stat { background: #f8fbff; border: 1px solid #d0d7de; padding: .85rem; }
       .stat strong { display: block; color: #5c6f82; font-size: .8rem; text-transform: uppercase; letter-spacing: .04em; margin-bottom: .25rem; }
@@ -1464,7 +1488,7 @@ export function buildArchivesIndexHtml(history, archivePackages = {}) {
     ${renderSiteNav("../", "../reports/", "../reports/latest/", "./", "archive-nav")}
     <main>
       <section>
-        <h1>Design System Scan Archives</h1>
+        ${renderAnchoredHeading(1, "Design System Scan Archives", "top")}
         <p>This archive keeps older report runs available as downloadable ZIP packages organized by trigger and date. The current reports view only shows the newest report for each trigger in the last month.</p>
       </section>
       <section>
@@ -1474,7 +1498,7 @@ export function buildArchivesIndexHtml(history, archivePackages = {}) {
         </div>
       </section>
       <section>
-        <h2>Archive packages</h2>
+        ${renderAnchoredHeading(2, "Archive packages", "archive-packages")}
         <p class="muted">Each package includes the stable HTML, Markdown, CSV, and JSON outputs for a specific run.</p>
         <div class="table-wrap">
           <table>
@@ -1547,6 +1571,9 @@ export function buildScanReportHtml(scan) {
       .report-nav { max-width: 88rem; margin: 0 auto; padding: 1rem 1rem 0; }
       .report-nav ul { list-style: none; padding: 0; margin: 0; display: flex; gap: 1rem; flex-wrap: wrap; }
       section { background: #fff; border: 1px solid #d0d7de; box-shadow: 0 12px 32px rgba(17, 46, 81, .08); padding: 1rem 1.25rem; margin-bottom: 1rem; }
+      .heading-anchor-group { display: flex; align-items: baseline; gap: .5rem; }
+      .heading-anchor { opacity: 0; text-decoration: none; }
+      .heading-anchor-group:hover .heading-anchor, .heading-anchor:focus { opacity: 1; }
       .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(11rem, 1fr)); gap: .75rem; }
       .stat { background: #f8fbff; border: 1px solid #d0d7de; padding: .85rem; }
       .stat strong { display: block; color: #5c6f82; font-size: .8rem; text-transform: uppercase; letter-spacing: .04em; margin-bottom: .25rem; }
@@ -1570,7 +1597,7 @@ export function buildScanReportHtml(scan) {
     ${renderSiteNav("../../../../", "../../../", "../../../../reports/latest/", "../../../../archives/", "report-nav")}
     <main>
       <section>
-        <h1>Design system scan report</h1>
+        ${renderAnchoredHeading(1, "Design system scan report", "top")}
         <p><strong>Seed URL:</strong> <a href="${escapeHtml(scan.seedUrl)}">${escapeHtml(scan.seedUrl)}</a></p>
         <p><strong>System:</strong> ${escapeHtml(scan.systemInfo?.name ?? scan.system)}</p>
         ${proposedVersion ? `<p><strong>Proposed version:</strong> ${escapeHtml(proposedVersion)}</p>` : ""}
@@ -1591,7 +1618,7 @@ export function buildScanReportHtml(scan) {
       </section>
 
       <section>
-        <h2>Published files</h2>
+        ${renderAnchoredHeading(2, "Published files", "published-files")}
         <ul>
           <li><a href="./report.md">Markdown report</a></li>
           <li><a href="./report.csv">CSV export</a></li>
@@ -1602,7 +1629,7 @@ export function buildScanReportHtml(scan) {
       </section>
 
       <section>
-        <h2>Top signals</h2>
+        ${renderAnchoredHeading(2, "Top signals", "top-signals")}
         <p class="muted">These are the strongest matches across all scanned pages.</p>
         <p><strong>Components:</strong> ${escapeHtml(componentSnapshot || "None")}</p>
         <p><strong>Templates:</strong> ${escapeHtml(templateSnapshot || "None")}</p>
@@ -1610,7 +1637,7 @@ export function buildScanReportHtml(scan) {
       </section>
 
       <section>
-        <h2>Page summary</h2>
+        ${renderAnchoredHeading(2, "Page summary", "page-summary")}
         <div class="table-wrap">
           <table>
             <thead>
@@ -1632,7 +1659,7 @@ export function buildScanReportHtml(scan) {
       </section>
 
       <section>
-        <h2>Page details</h2>
+        ${renderAnchoredHeading(2, "Page details", "page-details")}
         <p class="muted">Each scanned page includes the detected design-system fingerprint, component evidence, template evidence, and any asset fetch issues.</p>
         ${renderPageSections(scan.pages)}
       </section>

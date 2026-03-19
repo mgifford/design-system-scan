@@ -39,6 +39,8 @@ test("archive dates use accessible tooltip markup instead of title attributes", 
 
   assert.match(html, /role="tooltip"/);
   assert.match(html, /aria-describedby="tooltip-scan-date-23253601700"/);
+  assert.match(html, /href="#reports"/);
+  assert.match(html, /aria-label="Copy link to Reports section"/);
   assert.match(html, />Issue 6</);
   assert.match(html, /issues\/issue-6\/run-23253601700\/report\.html/);
   assert.doesNotMatch(html, /title=/);
@@ -115,7 +117,7 @@ test("scan report html includes page-level detail content", () => {
   assert.match(html, /<a href="\.\.\/\.\.\/\.\.\/\.\.\/archives\/">Archives<\/a>/);
   assert.match(html, /open source <a href="https:\/\/github\.com\/mgifford\/design-system-scan">design-system-scan<\/a> project/);
   assert.match(html, /<strong>Component types identified<\/strong>1/);
-  assert.match(html, /<h2>Page details<\/h2>/);
+  assert.match(html, /<h2 id="page-details">Page details<\/h2>/);
   assert.match(html, /Each scanned page includes the detected design-system fingerprint/);
   assert.match(html, /<h3><a href="https:\/\/design\.cms\.gov\/">https:\/\/design\.cms\.gov\/<\/a><\/h3>/);
   assert.match(html, /Accordion/);
@@ -187,6 +189,7 @@ test("archive site writes stable per-issue report files", async () => {
   assert.match(rootIndex, /Open archives/);
   assert.match(rootIndex, /Project home/);
   assert.match(rootIndex, /Latest report/);
+  assert.match(rootIndex, /href="#currently-supported"/);
   assert.match(rootIndex, /href="\.\/reports\/"/);
   assert.match(rootIndex, /href="\.\/archives\/"/);
   assert.match(rootIndex, /href="\.\/reports\/latest\/"/);
@@ -225,6 +228,7 @@ test("archive site writes stable per-issue report files", async () => {
   const systemPage = await fs.readFile(path.join(outputDir, "systems/uswds/index.html"), "utf8");
   assert.match(systemPage, /U\.S\. Web Design System/);
   assert.match(systemPage, /Latest report/);
+  assert.match(systemPage, /href="#indexed-components"/);
   assert.match(systemPage, /Indexed components/);
   assert.match(systemPage, /Scanner support/);
   assert.match(systemPage, /What it does/);
@@ -240,6 +244,7 @@ test("archive site writes stable per-issue report files", async () => {
   assert.match(comparisonPage, /CMS Design System/);
   assert.match(comparisonPage, /GOV\.UK Design System/);
   assert.match(comparisonPage, /Latest report/);
+  assert.match(comparisonPage, /href="#component-family-matrix"/);
   assert.match(comparisonPage, /Mostly converged/);
   assert.match(comparisonPage, /Direct match: breadcrumb/);
 });

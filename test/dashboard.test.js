@@ -35,6 +35,8 @@ test("dashboard includes accessible dark mode support", () => {
   assert.match(html, /Reports/);
   assert.match(html, /Latest report/);
   assert.match(html, /Archives/);
+  assert.match(html, /href="#scanned-pages"/);
+  assert.match(html, /aria-label="Copy link to Scanned pages section"/);
 });
 
 test("dashboard uses modal dialogs for page details", () => {
