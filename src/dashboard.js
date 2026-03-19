@@ -124,6 +124,40 @@ function renderMatchList(title, items) {
   `;
 }
 
+function renderSummaryCountButton(label, modalId, count) {
+  if (!count) {
+    return "0";
+  }
+
+  return `<button type="button" class="count-link" data-open-modal="${escapeHtml(modalId)}" aria-label="${escapeHtml(label)}">${count}</button>`;
+}
+
+function renderSummaryInstancesModal(modalId, title, pages) {
+  const listItems = (pages ?? [])
+    .map((page) => {
+      const versionText = page.versions?.length ? ` (${page.versions.join(", ")})` : "";
+      return `<li><a href="${escapeHtml(page.url)}">${escapeHtml(page.url)}</a>${escapeHtml(versionText)}</li>`;
+    })
+    .join("");
+
+  return `
+    <dialog id="${escapeHtml(modalId)}" class="page-modal" aria-label="${escapeHtml(title)}">
+      <div class="page-modal__content">
+        <div class="modal-actions">
+          <div>
+            <h4>${escapeHtml(title)}</h4>
+            <p class="muted">${pages.length} page${pages.length === 1 ? "" : "s"}</p>
+          </div>
+          <form method="dialog">
+            <button type="submit" class="button-link button-link--secondary">Close</button>
+          </form>
+        </div>
+        <ul>${listItems || "<li>No matching pages.</li>"}</ul>
+      </div>
+    </dialog>
+  `;
+}
+
 function renderPageRow(page) {
   const pageUrl = escapeHtml(page.url);
   const versions = page.versions?.length ? page.versions.join(", ") : "none";
@@ -179,22 +213,42 @@ function renderPageRow(page) {
   `;
 }
 
-function renderSummaryTable(title, items, countLabel) {
+function renderSummaryTable(title, items, countLabel, options = {}) {
   if (!items?.length) {
     return "";
   }
 
+  const systemId = options.systemId ?? "";
+  const systemBaseHref = systemId ? `../../systems/${systemId}/` : "";
   const rows = items
     .slice(0, 20)
-    .map(
-      (item) => `
+    .map((item) => {
+      const fullPages = (options.pages ?? []).filter((page) =>
+        (page.components ?? []).some((component) => component.id === item.id && component.status === "full")
+      );
+      const partialPages = (options.pages ?? []).filter((page) =>
+        (page.components ?? []).some((component) => component.id === item.id && component.status === "partial")
+      );
+      const fullModalId = `summary-modal-${item.id}-full`;
+      const partialModalId = `summary-modal-${item.id}-partial`;
+      const nameCell = systemBaseHref
+        ? `<a href="${escapeHtml(`${systemBaseHref}#component-${item.id}`)}">${escapeHtml(item.name)}</a>`
+        : escapeHtml(item.name);
+
+      return `
         <tr>
-          <td>${escapeHtml(item.name)}</td>
-          <td>${item.full}</td>
-          <td>${item.partial}</td>
+          <td>${nameCell}</td>
+          <td>
+            ${renderSummaryCountButton(`Show pages with full ${item.name} matches`, fullModalId, item.full)}
+            ${renderSummaryInstancesModal(fullModalId, `${item.name}: full matches`, fullPages)}
+          </td>
+          <td>
+            ${renderSummaryCountButton(`Show pages with partial ${item.name} matches`, partialModalId, item.partial)}
+            ${renderSummaryInstancesModal(partialModalId, `${item.name}: partial matches`, partialPages)}
+          </td>
         </tr>
       `
-    )
+    })
     .join("");
 
   return `
@@ -425,6 +479,17 @@ export function buildDashboardHtml(report, metadata) {
         cursor: pointer;
       }
       .button-link:hover { background: var(--color-button-hover); border-color: var(--color-button-hover); }
+      .count-link {
+        appearance: none;
+        border: 0;
+        background: transparent;
+        color: var(--color-link);
+        cursor: pointer;
+        font: inherit;
+        padding: 0;
+        text-decoration: underline;
+      }
+      .count-link:hover { color: var(--color-link-hover); }
       .button-link--secondary {
         background: var(--color-surface);
         color: var(--color-link);
@@ -545,7 +610,7 @@ export function buildDashboardHtml(report, metadata) {
       </section>
 
       ${renderSummaryTable("Site-wide theme tells", report.siteSummary.themes ?? [], "Top theme matches across all scanned pages.")}
-      ${renderSummaryTable("Site-wide component tells", report.siteSummary.components, "Top signals across all scanned pages.")}
+      ${renderSummaryTable("Site-wide component tells", report.siteSummary.components, "Top signals across all scanned pages.", { systemId: report.system?.id ?? metadata.system, pages: report.pages })}
       ${renderSummaryTable("Site-wide template tells", report.siteSummary.templates, "Top template matches across all scanned pages.")}
 
       <section>

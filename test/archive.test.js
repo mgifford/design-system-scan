@@ -229,6 +229,7 @@ test("archive site writes stable per-issue report files", async () => {
   assert.match(systemPage, /U\.S\. Web Design System/);
   assert.match(systemPage, /Latest report/);
   assert.match(systemPage, /href="#indexed-components"/);
+  assert.match(systemPage, /id="component-accordion"/);
   assert.match(systemPage, /Indexed components/);
   assert.match(systemPage, /Scanner support/);
   assert.match(systemPage, /What it does/);

@@ -42,12 +42,12 @@ test("dashboard includes accessible dark mode support", () => {
 test("dashboard uses modal dialogs for page details", () => {
   const html = buildDashboardHtml(
     {
-      system: { name: "U.S. Web Design System" },
+      system: { id: "uswds", name: "U.S. Web Design System" },
       siteSummary: {
         successfulPageCount: 1,
         pageCount: 1,
         fingerprintedPageCount: 1,
-        components: [],
+        components: [{ id: "button", name: "Button", full: 1, partial: 0 }],
         templates: [],
         primaryTheme: null,
       },
@@ -65,10 +65,11 @@ test("dashboard uses modal dialogs for page details", () => {
           versions: ["3.0.0"],
           components: [
             {
-              name: "Banner",
+              id: "button",
+              name: "Button",
               status: "full",
               coverage: 1,
-              matchedSignals: [{ value: "usa-banner" }],
+              matchedSignals: [{ value: "usa-button" }],
               missingSignals: [],
             },
           ],
@@ -95,6 +96,9 @@ test("dashboard uses modal dialogs for page details", () => {
   assert.match(html, /<strong>Date<\/strong>2026-03-19T15:30:00.000Z/);
   assert.match(html, /<strong>Trigger<\/strong><a href="https:\/\/github\.com\/mgifford\/design-system-scan\/issues\/7">Issue 7<\/a>/);
   assert.match(html, /<strong>Proposed version<\/strong>3\.0\.0/);
+  assert.match(html, /href="\.\.\/\.\.\/systems\/uswds\/#component-button">Button<\/a>/);
+  assert.match(html, /summary-modal-button-full/);
+  assert.match(html, /Button: full matches/);
   assert.match(html, /Join the community on GitHub/);
   assert.doesNotMatch(html, /<details>/);
   assert.doesNotMatch(html, /<summary>Details<\/summary>/);

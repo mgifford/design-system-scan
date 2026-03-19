@@ -346,7 +346,7 @@ function renderDesignSystemPage(inventory) {
     .map((component) => {
       const docUrl = buildComponentDocUrl(inventory.id, component.id, inventory);
       return `
-        <tr>
+        <tr id="component-${escapeHtml(component.id)}">
           <td>${escapeHtml(component.name)}</td>
           <td>${escapeHtml(component.id)}</td>
           <td>${indexedIds.has(component.id) ? "Yes" : "Not yet"}</td>
