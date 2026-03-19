@@ -338,7 +338,8 @@ test("archive site writes stable per-issue report files", async () => {
   const comparisonPage = await fs.readFile(path.join(outputDir, "comparison/index.html"), "utf8");
   assert.match(comparisonPage, /Design system comparison/);
   assert.match(comparisonPage, /Choose systems to compare/);
-  assert.match(comparisonPage, /Select between 2 and 5 systems/);
+  assert.match(comparisonPage, /Select between 2 and 6 systems/);
+  assert.match(comparisonPage, /<strong>Tracked systems<\/strong><span id="tracked-system-count">6<\/span>/);
   assert.match(comparisonPage, /data-system-checkbox/);
   assert.match(comparisonPage, /comparison-filter-status/);
   assert.match(comparisonPage, /data-system-column="uswds"/);
@@ -346,7 +347,8 @@ test("archive site writes stable per-issue report files", async () => {
   assert.match(comparisonPage, /data-system-row="cms"/);
   assert.match(comparisonPage, /data-system-item="govuk"/);
   assert.match(comparisonPage, /const minSelected = Math\.min\(2, checkboxes\.length\);/);
-  assert.match(comparisonPage, /const maxSelected = Math\.min\(5, checkboxes\.length\);/);
+  assert.match(comparisonPage, /const maxSelected = checkboxes\.length;/);
+  assert.match(comparisonPage, /Showing 5 of 6 tracked systems/);
   assert.match(comparisonPage, /Please keep between/);
   assert.match(comparisonPage, /Example: Breadcrumbs/);
   assert.match(comparisonPage, /Breadcrumbs/);

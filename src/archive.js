@@ -1096,14 +1096,14 @@ function renderComparisonPage(matrix) {
 
       <section>
         ${renderAnchoredHeading(2, "Choose systems to compare", "choose-systems-to-compare")}
-        <p>Select between 2 and 5 systems. The comparison tables below will update immediately so it is easier to focus on the systems you care about.</p>
+        <p>Select between 2 and ${systems.length} systems. The comparison tables below will update immediately so it is easier to focus on the systems you care about.</p>
         <fieldset>
           <legend class="muted">Design systems included in this comparison</legend>
           <div class="system-filter-grid">
             ${systemSelector}
           </div>
         </fieldset>
-        <p id="comparison-filter-status" class="filter-status" aria-live="polite">Showing ${defaultSelectedIds.length} systems.</p>
+        <p id="comparison-filter-status" class="filter-status" aria-live="polite">Showing ${defaultSelectedIds.length} of ${systems.length} tracked systems.</p>
       </section>
 
       <section>
@@ -1177,9 +1177,8 @@ function renderComparisonPage(matrix) {
       (() => {
         const checkboxes = Array.from(document.querySelectorAll('[data-system-checkbox]'));
         const minSelected = Math.min(2, checkboxes.length);
-        const maxSelected = Math.min(5, checkboxes.length);
+        const maxSelected = checkboxes.length;
         const status = document.getElementById('comparison-filter-status');
-        const trackedCount = document.getElementById('tracked-system-count');
         const columnCells = Array.from(document.querySelectorAll('[data-system-column], [data-system-cell]'));
         const systemRows = Array.from(document.querySelectorAll('[data-system-row]'));
         const systemItems = Array.from(document.querySelectorAll('[data-system-item]'));
@@ -1204,12 +1203,8 @@ function renderComparisonPage(matrix) {
             item.hidden = !selectedIds.has(item.getAttribute('data-system-item'));
           }
 
-          if (trackedCount) {
-            trackedCount.textContent = String(selectedIds.size);
-          }
-
           if (status) {
-            status.textContent = 'Showing ' + selectedIds.size + ' systems. Select between ' + minSelected + ' and ' + maxSelected + ' systems.';
+            status.textContent = 'Showing ' + selectedIds.size + ' of ' + checkboxes.length + ' tracked systems. Select between ' + minSelected + ' and ' + maxSelected + ' systems.';
           }
         }
 
