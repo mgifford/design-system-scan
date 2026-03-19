@@ -23,7 +23,7 @@ on:
       max_pages:
         description: "Maximum number of pages to scan"
         required: false
-        default: "10"
+        default: "100"
   issues:
     types:
       - opened
@@ -121,7 +121,7 @@ jobs:
             echo "url=https://designsystem.digital.gov/" >> "$GITHUB_OUTPUT"
             echo "system=auto" >> "$GITHUB_OUTPUT"
             echo "crawl=true" >> "$GITHUB_OUTPUT"
-            echo "max_pages=20" >> "$GITHUB_OUTPUT"
+            echo "max_pages=250" >> "$GITHUB_OUTPUT"
             echo "trigger=weekly" >> "$GITHUB_OUTPUT"
             echo "issue_number=" >> "$GITHUB_OUTPUT"
             echo "url_count=1" >> "$GITHUB_OUTPUT"
@@ -129,13 +129,14 @@ jobs:
             echo "url=https://designsystem.digital.gov/" >> "$GITHUB_OUTPUT"
             echo "system=auto" >> "$GITHUB_OUTPUT"
             echo "crawl=true" >> "$GITHUB_OUTPUT"
-            echo "max_pages=10" >> "$GITHUB_OUTPUT"
+            echo "max_pages=100" >> "$GITHUB_OUTPUT"
             echo "trigger=weekday" >> "$GITHUB_OUTPUT"
             echo "issue_number=" >> "$GITHUB_OUTPUT"
             echo "url_count=1" >> "$GITHUB_OUTPUT"
           elif [ "$EVENT_NAME" = "issues" ]; then
             collect_issue_urls "$ISSUE_TITLE" "$ISSUE_BODY" > artifacts/scan-urls.txt
             URL=$(head -n 1 artifacts/scan-urls.txt || true)
+            URL_COUNT=$(wc -l < artifacts/scan-urls.txt | tr -d ' ')
             SYSTEM=$(printf '%s\n' "$ISSUE_BODY" | sed -n 's/^system:[[:space:]]*//p' | head -n 1)
             CRAWL=$(printf '%s\n' "$ISSUE_BODY" | sed -n 's/^crawl:[[:space:]]*//p' | head -n 1)
             MAX_PAGES=$(printf '%s\n' "$ISSUE_BODY" | awk 'BEGIN{IGNORECASE=1} /^(max_pages|pages|number):[[:space:]]*/ { sub(/^[^:]+:[[:space:]]*/, "", $0); print; exit }')
@@ -154,7 +155,11 @@ jobs:
             fi
 
             if [ -z "$MAX_PAGES" ]; then
-              MAX_PAGES="10"
+              if [ "$URL_COUNT" -gt 100 ]; then
+                MAX_PAGES="$URL_COUNT"
+              else
+                MAX_PAGES="100"
+              fi
             fi
 
             echo "url=$URL" >> "$GITHUB_OUTPUT"
@@ -163,7 +168,7 @@ jobs:
             echo "max_pages=$MAX_PAGES" >> "$GITHUB_OUTPUT"
             echo "trigger=issue-${{ github.event.issue.number }}" >> "$GITHUB_OUTPUT"
             echo "issue_number=${{ github.event.issue.number }}" >> "$GITHUB_OUTPUT"
-            echo "url_count=$(wc -l < artifacts/scan-urls.txt | tr -d ' ')" >> "$GITHUB_OUTPUT"
+            echo "url_count=$URL_COUNT" >> "$GITHUB_OUTPUT"
           elif [ -n "$INPUT_ISSUE_NUMBER" ]; then
             ISSUE_JSON=$(curl -fsSL \
               -H "Authorization: Bearer $GITHUB_TOKEN" \
@@ -173,6 +178,7 @@ jobs:
             ISSUE_BODY=$(printf '%s' "$ISSUE_JSON" | node -e 'let data=""; process.stdin.on("data", c => data += c); process.stdin.on("end", () => { const issue = JSON.parse(data); process.stdout.write(issue.body || ""); });')
             collect_issue_urls "$ISSUE_TITLE" "$ISSUE_BODY" > artifacts/scan-urls.txt
             URL=$(head -n 1 artifacts/scan-urls.txt || true)
+            URL_COUNT=$(wc -l < artifacts/scan-urls.txt | tr -d ' ')
             SYSTEM=$(printf '%s\n' "$ISSUE_BODY" | sed -n 's/^system:[[:space:]]*//p' | head -n 1)
             CRAWL=$(printf '%s\n' "$ISSUE_BODY" | sed -n 's/^crawl:[[:space:]]*//p' | head -n 1)
             MAX_PAGES=$(printf '%s\n' "$ISSUE_BODY" | awk 'BEGIN{IGNORECASE=1} /^(max_pages|pages|number):[[:space:]]*/ { sub(/^[^:]+:[[:space:]]*/, "", $0); print; exit }')
@@ -191,7 +197,11 @@ jobs:
             fi
 
             if [ -z "$MAX_PAGES" ]; then
-              MAX_PAGES="10"
+              if [ "$URL_COUNT" -gt 100 ]; then
+                MAX_PAGES="$URL_COUNT"
+              else
+                MAX_PAGES="100"
+              fi
             fi
 
             echo "url=$URL" >> "$GITHUB_OUTPUT"
@@ -200,7 +210,7 @@ jobs:
             echo "max_pages=$MAX_PAGES" >> "$GITHUB_OUTPUT"
             echo "trigger=issue-$INPUT_ISSUE_NUMBER" >> "$GITHUB_OUTPUT"
             echo "issue_number=$INPUT_ISSUE_NUMBER" >> "$GITHUB_OUTPUT"
-            echo "url_count=$(wc -l < artifacts/scan-urls.txt | tr -d ' ')" >> "$GITHUB_OUTPUT"
+            echo "url_count=$URL_COUNT" >> "$GITHUB_OUTPUT"
           else
             echo "url=${INPUT_URL}" >> "$GITHUB_OUTPUT"
             echo "system=${INPUT_SYSTEM}" >> "$GITHUB_OUTPUT"

@@ -183,7 +183,7 @@ Title: SCAN: https://example.gov/
 Body:
 system: uswds
 crawl: true
-max_pages: 10
+max_pages: 100
 ```
 
 Notes:
@@ -191,7 +191,8 @@ Notes:
 - The issue-triggered workflow scans all URLs it finds in the title and body.
 - `system` defaults to `auto`.
 - `crawl` defaults to `true`.
-- `max_pages` defaults to `10`.
+- `max_pages` defaults to `100` for workflow-triggered scans.
+- If an issue contains more than `100` accepted URLs and no explicit page limit is provided, the workflow uses the accepted URL count as the fallback cap instead of `100`.
 - `pages:` and `number:` are also accepted as aliases for `max_pages:`.
 - Non-`SCAN:` issues do not trigger the scan job.
 - Already-open `SCAN:` issues can be dispatched by the separate `Scan submitted URLs` workflow.

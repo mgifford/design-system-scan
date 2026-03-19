@@ -65,7 +65,7 @@ jobs:
                   url: "",
                   system: "auto",
                   crawl: "true",
-                  max_pages: "10",
+                  max_pages: "100",
                 },
               });
 
