@@ -141,7 +141,45 @@ function renderAnchoredHeading(level, text, id) {
   `;
 }
 
-function buildReportsLandingHtml() {
+function buildLandingCardSummary(inventory) {
+  const componentCount = getInventoryComponents(inventory).length;
+  const indexedCount = inventory.scannerCoverage?.indexedComponentIds?.length ?? 0;
+  const coverage = inventory.scannerCoverage?.status ?? "unknown";
+  const themeCount = inventory.themes?.length ?? 0;
+  const themeText = themeCount > 0 ? ` Includes ${themeCount} documented themes.` : "";
+
+  return `${inventory.name} currently has ${componentCount} indexed components, with ${indexedCount} modeled in scanner rules today. Scanner coverage is ${coverage}.${themeText}`;
+}
+
+function renderSupportedSystemCards(inventories) {
+  const cards = [...(inventories ?? [])]
+    .sort((left, right) => String(left.name).localeCompare(String(right.name)))
+    .map((inventory) => {
+      const componentCount = getInventoryComponents(inventory).length;
+      const indexedCount = inventory.scannerCoverage?.indexedComponentIds?.length ?? 0;
+
+      return `
+          <a class="card-link" href="./systems/${escapeHtml(inventory.id)}/">
+            <div class="card">
+              <h3>${escapeHtml(inventory.name)}</h3>
+              <p>${escapeHtml(buildLandingCardSummary(inventory))}</p>
+              <p><strong>Defined components:</strong> ${componentCount}<br><strong>Indexed for scanning:</strong> ${indexedCount}</p>
+            </div>
+          </a>
+      `;
+    })
+    .join("");
+
+  return `${cards}
+          <a class="card-link" href="./comparison/">
+            <div class="card">
+              <h3>Design System Comparison</h3>
+              <p>Compare component families across all tracked systems, including where Breadcrumbs and other patterns appear to be semantically aligned.</p>
+            </div>
+          </a>`;
+}
+
+function buildReportsLandingHtml(inventories = []) {
   return `<!doctype html>
 <html lang="en">
   <head>
@@ -193,56 +231,9 @@ function buildReportsLandingHtml() {
 
       <section>
         ${renderAnchoredHeading(2, "Currently Supported", "currently-supported")}
-        <p>Each card links to a reference page with the official docs, indexed component inventory, and current scanner support. You can also compare systems side by side to see which ones define similar components and where semantic patterns appear to be converging.</p>
+        <p>Each supported design system below is generated from the tracked inventory files in this project, so newly added systems are described here automatically. Each card links to a reference page with the official docs, indexed component inventory, and current scanner support. You can also compare systems side by side to see which ones define similar components and where semantic patterns appear to be converging.</p>
         <div class="grid">
-          <a class="card-link" href="./systems/uswds/">
-            <div class="card">
-              <h3>USWDS</h3>
-              <p>U.S. Web Design System support is the most mature and includes broad component coverage plus full/partial detection.</p>
-            </div>
-          </a>
-          <a class="card-link" href="./systems/va/">
-            <div class="card">
-              <h3>VA.gov</h3>
-              <p>VA detection focuses on the VA Design System and its Web Components-based patterns.</p>
-            </div>
-          </a>
-          <a class="card-link" href="./systems/cms/">
-            <div class="card">
-              <h3>CMS Design System</h3>
-              <p>CMS detection includes the shared CMS design-system family and theme identification for Core, CMS.gov, HealthCare.gov, and Medicare.gov.</p>
-            </div>
-          </a>
-          <a class="card-link" href="./systems/govuk/">
-            <div class="card">
-              <h3>GOV.UK</h3>
-              <p>GOV.UK detection provides a starter footprint for the GOV.UK Design System and its frontend conventions.</p>
-            </div>
-          </a>
-          <a class="card-link" href="./systems/nlds/">
-            <div class="card">
-              <h3>NL Design System</h3>
-              <p>NL Design System detection provides starter support for the Netherlands government design-system family and its official component inventory.</p>
-            </div>
-          </a>
-          <a class="card-link" href="./systems/gcds/">
-            <div class="card">
-              <h3>GC Design System</h3>
-              <p>GC Design System detection provides starter support for the Government of Canada web components and the official GC component inventory.</p>
-            </div>
-          </a>
-          <a class="card-link" href="./systems/kolibri/">
-            <div class="card">
-              <h3>KoliBri</h3>
-              <p>KoliBri detection provides starter support for the German public-sector Public UI web components maintained by ITZBund.</p>
-            </div>
-          </a>
-          <a class="card-link" href="./comparison/">
-            <div class="card">
-              <h3>Design System Comparison</h3>
-              <p>Compare component families across all tracked systems, including where Breadcrumbs and other patterns appear to be semantically aligned.</p>
-            </div>
-          </a>
+          ${renderSupportedSystemCards(inventories)}
         </div>
       </section>
 
@@ -2094,7 +2085,7 @@ export async function writeArchiveSite(outputDir, history) {
     listDetectableSystemDefinitions().map((definition) => [definition.id, definition])
   );
   await fs.mkdir(outputDir, { recursive: true });
-  await fs.writeFile(path.join(outputDir, "index.html"), buildReportsLandingHtml(), "utf8");
+  await fs.writeFile(path.join(outputDir, "index.html"), buildReportsLandingHtml(inventories), "utf8");
   await fs.mkdir(path.join(outputDir, REPORTS_ROOT_DIR), { recursive: true });
   await fs.mkdir(path.join(outputDir, ARCHIVES_ROOT_DIR), { recursive: true });
   await fs.writeFile(
