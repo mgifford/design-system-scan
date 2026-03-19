@@ -9,6 +9,12 @@ const DESIGN_SYSTEMS_DIR = path.join(
   "data",
   "design-systems"
 );
+const DESIGN_SYSTEM_MATRIX_PATH = path.join(
+  path.dirname(fileURLToPath(import.meta.url)),
+  "..",
+  "data",
+  "design-system-component-matrix.json"
+);
 
 function escapeHtml(value) {
   return String(value ?? "")
@@ -120,6 +126,7 @@ function buildReportsLandingHtml() {
 
       <section>
         <h2>Currently Supported</h2>
+        <p>Each card links to a reference page with the official docs, indexed component inventory, and current scanner support. You can also compare systems side by side to see which ones define similar components and where semantic patterns appear to be converging.</p>
         <div class="grid">
           <a class="card-link" href="./systems/uswds/">
             <div class="card">
@@ -143,6 +150,12 @@ function buildReportsLandingHtml() {
             <div class="card">
               <h3>GOV.UK</h3>
               <p>GOV.UK detection provides a starter footprint for the GOV.UK Design System and its frontend conventions.</p>
+            </div>
+          </a>
+          <a class="card-link" href="./comparison/">
+            <div class="card">
+              <h3>Design System Comparison</h3>
+              <p>Compare component families across all tracked systems, including where Breadcrumbs and other patterns appear to be semantically aligned.</p>
             </div>
           </a>
         </div>
@@ -387,6 +400,248 @@ async function loadDesignSystemInventories() {
   }
 
   return inventories;
+}
+
+async function loadDesignSystemComparisonMatrix() {
+  const content = await fs.readFile(DESIGN_SYSTEM_MATRIX_PATH, "utf8");
+  return JSON.parse(content);
+}
+
+function summarizeStatus(status, components) {
+  const values = components?.length ? components.join(", ") : "none";
+
+  if (status === "direct") {
+    return `Direct match: ${values}`;
+  }
+
+  if (status === "semantic") {
+    return `Semantic equivalent: ${values}`;
+  }
+
+  return "Not currently mapped";
+}
+
+function renderComparisonStatusCell(entry) {
+  if (!entry || entry.status === "none") {
+    return `<span class="muted">No mapped component</span>`;
+  }
+
+  const badgeTone = entry.status === "semantic" ? "partial" : "full";
+  const label = entry.status === "semantic" ? "semantic" : "direct";
+  const componentList = entry.components.map(escapeHtml).join(", ");
+
+  return `
+    <span class="badge badge--${badgeTone}">${escapeHtml(label)}</span>
+    <div>${componentList}</div>
+  `;
+}
+
+function renderCmsThemeSummary(themes) {
+  const labels = Object.entries(themes ?? {})
+    .filter(([, value]) => value === "Y")
+    .map(([key]) => key);
+
+  if (!labels.length) {
+    return '<span class="muted">No current theme match</span>';
+  }
+
+  return escapeHtml(labels.join(", "));
+}
+
+function renderComparisonPage(matrix) {
+  const systems = matrix.systems ?? [];
+  const semanticFamilies = matrix.semanticFamilies ?? [];
+  const systemHeaderCells = systems
+    .map((system) => `<th>${escapeHtml(system.name)}</th>`)
+    .join("");
+  const familyRows = semanticFamilies
+    .map((family) => {
+      const systemCells = systems
+        .map((system) => `<td>${renderComparisonStatusCell(family.systems?.[system.id])}</td>`)
+        .join("");
+
+      return `
+        <tr id="family-${escapeHtml(family.id)}">
+          <td>
+            <strong>${escapeHtml(family.name)}</strong>
+            <div class="muted">${escapeHtml(family.id)}</div>
+          </td>
+          <td>${escapeHtml(family.pattern ?? "Unknown")}</td>
+          ${systemCells}
+          <td>${renderCmsThemeSummary(family.cmsThemes)}</td>
+        </tr>
+      `;
+    })
+    .join("");
+
+  const notes = (matrix.notes ?? [])
+    .map((note) => `<li>${escapeHtml(note)}</li>`)
+    .join("");
+
+  const semanticSummaryRows = semanticFamilies
+    .map((family) => {
+      const directCount = systems.filter((system) => family.systems?.[system.id]?.status === "direct").length;
+      const semanticCount = systems.filter((system) => family.systems?.[system.id]?.status === "semantic").length;
+
+      return `
+        <tr>
+          <td>${escapeHtml(family.name)}</td>
+          <td>${escapeHtml(family.pattern ?? "Unknown")}</td>
+          <td>${directCount}</td>
+          <td>${semanticCount}</td>
+        </tr>
+      `;
+    })
+    .join("");
+
+  const systemSummaryRows = systems
+    .map((system) => {
+      const directFamilies = semanticFamilies.filter((family) => family.systems?.[system.id]?.status === "direct");
+      const semanticFamiliesForSystem = semanticFamilies.filter(
+        (family) => family.systems?.[system.id]?.status === "semantic"
+      );
+
+      return `
+        <tr>
+          <td>${escapeHtml(system.name)}</td>
+          <td>${directFamilies.length}</td>
+          <td>${semanticFamiliesForSystem.length}</td>
+          <td>${escapeHtml(directFamilies.map((family) => family.name).join(", ") || "None")}</td>
+        </tr>
+      `;
+    })
+    .join("");
+
+  const breadcrumbFamily = semanticFamilies.find((family) => family.id === "breadcrumb");
+  const breadcrumbSummary = systems
+    .map((system) => {
+      const entry = breadcrumbFamily?.systems?.[system.id];
+      return `<li><strong>${escapeHtml(system.name)}:</strong> ${escapeHtml(summarizeStatus(entry?.status, entry?.components))}</li>`;
+    })
+    .join("");
+
+  return `<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Design System Comparison</title>
+    <style>
+      body { margin: 0; font-family: ui-sans-serif, system-ui, sans-serif; color: #112e51; background: #eef5fb; }
+      .comparison-nav { max-width: 96rem; margin: 0 auto; padding: 1rem 1rem 0; }
+      .comparison-nav ul { list-style: none; padding: 0; margin: 0; display: flex; gap: 1rem; flex-wrap: wrap; }
+      main { max-width: 96rem; margin: 0 auto; padding: 1rem 1rem 4rem; }
+      section { background: #fff; border: 1px solid #d0d7de; box-shadow: 0 12px 32px rgba(17, 46, 81, .08); padding: 1rem 1.25rem; margin-bottom: 1rem; }
+      .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr)); gap: .75rem; }
+      .stat { background: #f8fbff; border: 1px solid #d0d7de; padding: .85rem; }
+      .stat strong { display: block; color: #5c6f82; font-size: .8rem; text-transform: uppercase; letter-spacing: .04em; margin-bottom: .25rem; }
+      table { width: 100%; border-collapse: collapse; }
+      th, td { text-align: left; vertical-align: top; padding: .65rem .5rem; border-bottom: 1px solid #d0d7de; }
+      th { font-size: .8rem; text-transform: uppercase; letter-spacing: .04em; color: #5c6f82; }
+      .table-wrap { overflow-x: auto; }
+      a { color: #005ea2; }
+      ul { margin: .25rem 0 0 1.25rem; }
+      .badge { display: inline-block; padding: .15rem .45rem; border-radius: 999px; font-size: .8rem; font-weight: 700; text-transform: uppercase; margin-bottom: .3rem; }
+      .badge--full { background: #dff6dd; color: #17603a; }
+      .badge--partial { background: #fff4cc; color: #7a5300; }
+      .muted { color: #5c6f82; }
+      .footer-note { font-size: .95rem; }
+    </style>
+  </head>
+  <body>
+    <nav class="comparison-nav" aria-label="Comparison">
+      <ul>
+        <li><a href="../">Project home</a></li>
+        <li><a href="../reports/">Reports archive</a></li>
+      </ul>
+    </nav>
+    <main>
+      <section>
+        <h1>Design system comparison</h1>
+        <p>This page compares the design systems currently modeled by the scanner. It is meant to answer practical questions like “Which systems define Breadcrumbs?” and “Where are different organizations settling on the same semantic pattern?”</p>
+        <p>The comparison is organized around semantic component families rather than product-specific naming. That makes it easier to see when systems use different component IDs for essentially the same thing, and where they still diverge.</p>
+      </section>
+
+      <section>
+        <div class="stats">
+          <div class="stat"><strong>Tracked systems</strong>${systems.length}</div>
+          <div class="stat"><strong>Semantic families</strong>${semanticFamilies.length}</div>
+          <div class="stat"><strong>Matrix version</strong>${escapeHtml(matrix.version ?? "unknown")}</div>
+        </div>
+      </section>
+
+      <section>
+        <h2>Example: Breadcrumbs</h2>
+        <p>Breadcrumbs are a good example of broad semantic convergence. The scanner currently maps them like this:</p>
+        <ul>${breadcrumbSummary}</ul>
+      </section>
+
+      <section>
+        <h2>Semantic convergence summary</h2>
+        <p>This table shows how many systems have a direct component mapping for each family, and how many only have a semantic equivalent. Families with more direct mappings are stronger candidates for shared pattern expectations across systems.</p>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Component family</th>
+                <th>Pattern</th>
+                <th>Direct mappings</th>
+                <th>Semantic equivalents</th>
+              </tr>
+            </thead>
+            <tbody>${semanticSummaryRows}</tbody>
+          </table>
+        </div>
+      </section>
+
+      <section>
+        <h2>Systems at a glance</h2>
+        <p>This summarizes how many semantic families each design system currently maps directly or semantically in the scanner.</p>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>System</th>
+                <th>Direct families</th>
+                <th>Semantic-only families</th>
+                <th>Directly mapped families</th>
+              </tr>
+            </thead>
+            <tbody>${systemSummaryRows}</tbody>
+          </table>
+        </div>
+      </section>
+
+      <section>
+        <h2>Component family matrix</h2>
+        <p>Each row is a semantic family. “Direct” means the system defines a closely matching component. “Semantic” means the system appears to cover the same need with a different pattern or naming convention. The CMS theme column shows whether the family is present across Core, CMS.gov, HealthCare.gov, and Medicare.gov.</p>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Component family</th>
+                <th>Convergence</th>
+                ${systemHeaderCells}
+                <th>CMS themes</th>
+              </tr>
+            </thead>
+            <tbody>${familyRows}</tbody>
+          </table>
+        </div>
+      </section>
+
+      <section>
+        <h2>Notes</h2>
+        <ul>${notes}</ul>
+      </section>
+
+      <section>
+        <h2>Project</h2>
+        <p class="footer-note">This comparison is part of the open source <a href="https://github.com/mgifford/design-system-scan">design-system-scan</a> project. If you want to improve component mappings or help document semantic equivalence across systems, you are welcome to contribute.</p>
+      </section>
+    </main>
+  </body>
+</html>`;
 }
 
 function renderDateCell(value, id) {
@@ -1319,6 +1574,7 @@ export function buildScanReportCsv(scan) {
 
 export async function writeArchiveSite(outputDir, history) {
   const inventories = await loadDesignSystemInventories();
+  const comparisonMatrix = await loadDesignSystemComparisonMatrix();
   await fs.mkdir(outputDir, { recursive: true });
   await fs.writeFile(path.join(outputDir, "index.html"), buildReportsLandingHtml(), "utf8");
   await fs.mkdir(path.join(outputDir, REPORTS_ROOT_DIR), { recursive: true });
@@ -1369,4 +1625,12 @@ export async function writeArchiveSite(outputDir, history) {
     await fs.mkdir(systemDir, { recursive: true });
     await fs.writeFile(path.join(systemDir, "index.html"), renderDesignSystemPage(inventory), "utf8");
   }
+
+  const comparisonDir = path.join(outputDir, "comparison");
+  await fs.mkdir(comparisonDir, { recursive: true });
+  await fs.writeFile(
+    path.join(comparisonDir, "index.html"),
+    renderComparisonPage(comparisonMatrix),
+    "utf8"
+  );
 }

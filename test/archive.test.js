@@ -194,6 +194,8 @@ test("archive site writes stable per-issue report files", async () => {
   assert.match(rootIndex, /href="\.\/systems\/va\/"/);
   assert.match(rootIndex, /href="\.\/systems\/cms\/"/);
   assert.match(rootIndex, /href="\.\/systems\/govuk\/"/);
+  assert.match(rootIndex, /href="\.\/comparison\/"/);
+  assert.match(rootIndex, /Design System Comparison/);
   assert.match(archiveIndex, /Design System Scan Archive/);
   assert.match(html, /Accepted URLs<\/strong>10/);
   assert.match(issueAlias, /Design system scan report/);
@@ -210,4 +212,15 @@ test("archive site writes stable per-issue report files", async () => {
   assert.match(systemPage, /What it does/);
   assert.match(systemPage, /Accordion/);
   assert.match(systemPage, /https:\/\/designsystem\.digital\.gov\/components\/accordion\//);
+
+  const comparisonPage = await fs.readFile(path.join(outputDir, "comparison/index.html"), "utf8");
+  assert.match(comparisonPage, /Design system comparison/);
+  assert.match(comparisonPage, /Example: Breadcrumbs/);
+  assert.match(comparisonPage, /Breadcrumbs/);
+  assert.match(comparisonPage, /U\.S\. Web Design System/);
+  assert.match(comparisonPage, /VA\.gov Design System/);
+  assert.match(comparisonPage, /CMS Design System/);
+  assert.match(comparisonPage, /GOV\.UK Design System/);
+  assert.match(comparisonPage, /Mostly converged/);
+  assert.match(comparisonPage, /Direct match: breadcrumb/);
 });
