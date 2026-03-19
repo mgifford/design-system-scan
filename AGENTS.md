@@ -24,6 +24,12 @@ Read these first when working here:
 - [`README.md`](/Users/mike.gifford/design-system-scan/README.md)
 - [`ACCESSIBILITY.md`](/Users/mike.gifford/design-system-scan/ACCESSIBILITY.md)
 
+AI disclosure is required in this project:
+
+- Keep the AI disclosure section in [`README.md`](/Users/mike.gifford/design-system-scan/README.md) accurate and up to date.
+- Only disclose AI tools or LLMs that are actually known to have been used.
+- When AI meaningfully contributes to implementation, documentation, workflow logic, or generated project artifacts, update the README disclosure accordingly.
+
 ## Setup commands
 
 - Use Node.js 24 or newer.

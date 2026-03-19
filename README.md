@@ -121,6 +121,31 @@ Compare against an earlier snapshot:
 node src/cli.js --system uswds --crawl --max-pages 20 --save snapshots/current.json --compare snapshots/previous.json https://example.gov/
 ```
 
+## AI disclosure
+
+Disclosure of AI use is important to this project.
+
+### LLMs known to have been used
+
+- OpenAI Codex / GPT-5-family coding agent
+  - Used during project development to help design and implement code, workflows, tests, report UI changes, documentation, and structured design-system data maintained in this repository.
+
+### AI use in the application at runtime
+
+- No LLM is required to run `design-system-scan`.
+- The scanner itself runs as deterministic Node.js code plus GitHub Actions workflow automation.
+- Scan results are produced from rules, crawled content, and heuristic matching logic in this repository, not from a live model inference step.
+
+### Browser-based or embedded AI
+
+- No browser-based AI is enabled as part of the scanner or the published Pages reports.
+- The GitHub Pages UI is static HTML, CSS, and JavaScript generated from repository code and scan artifacts.
+
+### Scope note
+
+- This section should list only AI tools that are known to have been used.
+- AI tools that are not known to have been used should not be added speculatively.
+
 ## Example output
 
 ```text
