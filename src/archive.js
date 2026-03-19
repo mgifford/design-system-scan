@@ -1098,14 +1098,19 @@ function renderAssetErrorTable(items) {
   `;
 }
 
+function buildPageDetailId(index) {
+  return `page-detail-${index + 1}`;
+}
+
 function renderPageSections(pages) {
   return (pages ?? [])
-    .map((page) => {
+    .map((page, index) => {
       const versions = (page.versions ?? []).length ? page.versions.join(", ") : "none";
       const assetErrors = renderAssetErrorTable(page.assetErrors ?? []);
+      const detailId = buildPageDetailId(index);
 
       return `
-        <section class="page-section">
+        <section class="page-section" id="${escapeHtml(detailId)}">
           <h3><a href="${escapeHtml(page.url)}">${escapeHtml(page.url)}</a></h3>
           ${
             page.error
@@ -1730,9 +1735,10 @@ export async function loadArchiveHistory(pathname) {
 
 function renderFlatPageRows(scan) {
   return (scan.pages ?? [])
-    .map((page) => {
+    .map((page, index) => {
       const versions = (page.versions ?? []).join(", ");
       const url = escapeHtml(page.url);
+      const detailId = buildPageDetailId(index);
       return `
         <tr>
           <td><a href="${url}">${url}</a></td>
@@ -1742,6 +1748,12 @@ function renderFlatPageRows(scan) {
           <td>${page.summary?.partialComponentCount ?? 0}</td>
           <td>${page.summary?.matchedTemplateCount ?? 0}</td>
           <td>${escapeHtml(versions || "none")}</td>
+          <td>
+            <a href="#${escapeHtml(detailId)}">
+              Details
+              <span class="sr-only"> for ${url} in the Page details section</span>
+            </a>
+          </td>
         </tr>
       `;
     })
@@ -1787,6 +1799,17 @@ export function buildScanReportHtml(scan) {
       .page-section:first-of-type { border-top: 0; padding-top: 0; margin-top: 0; }
       .footer-note { font-size: .95rem; }
       ul { margin: .25rem 0 0 1.25rem; }
+      .sr-only {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        padding: 0;
+        margin: -1px;
+        overflow: hidden;
+        clip: rect(0, 0, 0, 0);
+        white-space: nowrap;
+        border: 0;
+      }
     </style>
   </head>
   <body>
@@ -1845,6 +1868,7 @@ export function buildScanReportHtml(scan) {
                 <th>Partial components</th>
                 <th>Templates</th>
                 <th>Version clues</th>
+                <th>Details</th>
               </tr>
             </thead>
             <tbody>

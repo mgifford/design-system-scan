@@ -139,6 +139,9 @@ test("scan report html includes page-level detail content", () => {
   assert.match(html, /<strong>Component types identified<\/strong>1/);
   assert.match(html, /<h2 id="page-details">Page details<\/h2>/);
   assert.match(html, /Each scanned page includes the detected design-system fingerprint/);
+  assert.match(html, /<th>Details<\/th>/);
+  assert.match(html, /<a href="#page-detail-1">\s*Details\s*<span class="sr-only"> for https:\/\/design\.cms\.gov\/ in the Page details section<\/span>/);
+  assert.match(html, /<section class="page-section" id="page-detail-1">/);
   assert.match(html, /<h3><a href="https:\/\/design\.cms\.gov\/">https:\/\/design\.cms\.gov\/<\/a><\/h3>/);
   assert.match(html, /Accordion/);
   assert.match(html, /Asset fetch issues/);
