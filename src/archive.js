@@ -524,13 +524,35 @@ function renderCmsThemeSummary(themes) {
 function renderComparisonPage(matrix) {
   const systems = matrix.systems ?? [];
   const semanticFamilies = matrix.semanticFamilies ?? [];
+  const defaultSelectedIds = systems.slice(0, Math.min(5, systems.length)).map((system) => system.id);
+  const systemSelector = systems
+    .map((system) => {
+      const checked = defaultSelectedIds.includes(system.id) ? " checked" : "";
+      return `
+        <label class="system-filter-option">
+          <input
+            type="checkbox"
+            class="system-filter-checkbox"
+            data-system-checkbox
+            value="${escapeHtml(system.id)}"${checked}
+          >
+          <span>${escapeHtml(system.name)}</span>
+        </label>
+      `;
+    })
+    .join("");
   const systemHeaderCells = systems
-    .map((system) => `<th>${escapeHtml(system.name)}</th>`)
+    .map(
+      (system) => `<th data-system-column="${escapeHtml(system.id)}">${escapeHtml(system.name)}</th>`
+    )
     .join("");
   const familyRows = semanticFamilies
     .map((family) => {
       const systemCells = systems
-        .map((system) => `<td>${renderComparisonStatusCell(family.systems?.[system.id])}</td>`)
+        .map(
+          (system) =>
+            `<td data-system-cell="${escapeHtml(system.id)}">${renderComparisonStatusCell(family.systems?.[system.id])}</td>`
+        )
         .join("");
 
       return `
@@ -575,7 +597,7 @@ function renderComparisonPage(matrix) {
       );
 
       return `
-        <tr>
+        <tr data-system-row="${escapeHtml(system.id)}">
           <td>${escapeHtml(system.name)}</td>
           <td>${directFamilies.length}</td>
           <td>${semanticFamiliesForSystem.length}</td>
@@ -589,7 +611,7 @@ function renderComparisonPage(matrix) {
   const breadcrumbSummary = systems
     .map((system) => {
       const entry = breadcrumbFamily?.systems?.[system.id];
-      return `<li><strong>${escapeHtml(system.name)}:</strong> ${escapeHtml(summarizeStatus(entry?.status, entry?.components))}</li>`;
+      return `<li data-system-item="${escapeHtml(system.id)}"><strong>${escapeHtml(system.name)}:</strong> ${escapeHtml(summarizeStatus(entry?.status, entry?.components))}</li>`;
     })
     .join("");
 
@@ -621,6 +643,10 @@ function renderComparisonPage(matrix) {
       .badge--full { background: #dff6dd; color: #17603a; }
       .badge--partial { background: #fff4cc; color: #7a5300; }
       .muted { color: #5c6f82; }
+      .system-filter-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr)); gap: .75rem; }
+      .system-filter-option { display: flex; align-items: center; gap: .6rem; border: 1px solid #d0d7de; background: #f8fbff; padding: .75rem .9rem; border-radius: .5rem; }
+      .system-filter-checkbox { width: 1rem; height: 1rem; }
+      .filter-status { margin-top: .75rem; color: #5c6f82; }
       .footer-note { font-size: .95rem; }
     </style>
   </head>
@@ -635,10 +661,22 @@ function renderComparisonPage(matrix) {
 
       <section>
         <div class="stats">
-          <div class="stat"><strong>Tracked systems</strong>${systems.length}</div>
+          <div class="stat"><strong>Tracked systems</strong><span id="tracked-system-count">${systems.length}</span></div>
           <div class="stat"><strong>Semantic families</strong>${semanticFamilies.length}</div>
           <div class="stat"><strong>Matrix version</strong>${escapeHtml(matrix.version ?? "unknown")}</div>
         </div>
+      </section>
+
+      <section>
+        ${renderAnchoredHeading(2, "Choose systems to compare", "choose-systems-to-compare")}
+        <p>Select between 2 and 5 systems. The comparison tables below will update immediately so it is easier to focus on the systems you care about.</p>
+        <fieldset>
+          <legend class="muted">Design systems included in this comparison</legend>
+          <div class="system-filter-grid">
+            ${systemSelector}
+          </div>
+        </fieldset>
+        <p id="comparison-filter-status" class="filter-status" aria-live="polite">Showing ${defaultSelectedIds.length} systems.</p>
       </section>
 
       <section>
@@ -708,6 +746,65 @@ function renderComparisonPage(matrix) {
 
       ${renderProjectFooter()}
     </main>
+    <script>
+      (() => {
+        const checkboxes = Array.from(document.querySelectorAll('[data-system-checkbox]'));
+        const minSelected = Math.min(2, checkboxes.length);
+        const maxSelected = Math.min(5, checkboxes.length);
+        const status = document.getElementById('comparison-filter-status');
+        const trackedCount = document.getElementById('tracked-system-count');
+        const columnCells = Array.from(document.querySelectorAll('[data-system-column], [data-system-cell]'));
+        const systemRows = Array.from(document.querySelectorAll('[data-system-row]'));
+        const systemItems = Array.from(document.querySelectorAll('[data-system-item]'));
+
+        function getSelectedIds() {
+          return checkboxes.filter((checkbox) => checkbox.checked).map((checkbox) => checkbox.value);
+        }
+
+        function applySelection() {
+          const selectedIds = new Set(getSelectedIds());
+
+          for (const cell of columnCells) {
+            const systemId = cell.getAttribute('data-system-column') || cell.getAttribute('data-system-cell');
+            cell.hidden = !selectedIds.has(systemId);
+          }
+
+          for (const row of systemRows) {
+            row.hidden = !selectedIds.has(row.getAttribute('data-system-row'));
+          }
+
+          for (const item of systemItems) {
+            item.hidden = !selectedIds.has(item.getAttribute('data-system-item'));
+          }
+
+          if (trackedCount) {
+            trackedCount.textContent = String(selectedIds.size);
+          }
+
+          if (status) {
+            status.textContent = 'Showing ' + selectedIds.size + ' systems. Select between ' + minSelected + ' and ' + maxSelected + ' systems.';
+          }
+        }
+
+        for (const checkbox of checkboxes) {
+          checkbox.addEventListener('change', () => {
+            const selectedCount = getSelectedIds().length;
+
+            if (selectedCount < minSelected || selectedCount > maxSelected) {
+              checkbox.checked = !checkbox.checked;
+              if (status) {
+                status.textContent = 'Please keep between ' + minSelected + ' and ' + maxSelected + ' systems selected.';
+              }
+              return;
+            }
+
+            applySelection();
+          });
+        }
+
+        applySelection();
+      })();
+    </script>
   </body>
 </html>`;
 }
