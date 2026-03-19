@@ -186,9 +186,20 @@ function renderSummaryTable(title, items, countLabel) {
   `;
 }
 
+function getProposedVersion(report) {
+  for (const page of report.pages ?? []) {
+    if (page?.versions?.length) {
+      return page.versions[0];
+    }
+  }
+
+  return "";
+}
+
 export function buildDashboardHtml(report, metadata) {
   const pageRows = report.pages.map(renderPageRow).join("");
   const scannedAt = report.pages[0]?.scannedAt ?? metadata.scannedAt ?? "";
+  const proposedVersion = getProposedVersion(report);
 
   return `<!doctype html>
 <html lang="en">
@@ -488,6 +499,7 @@ export function buildDashboardHtml(report, metadata) {
           <div class="meta-card"><strong>Trigger</strong>${renderTrigger(metadata.trigger, metadata.repository)}</div>
           <div class="meta-card"><strong>Seed URL</strong>${escapeHtml(metadata.url)}</div>
           <div class="meta-card"><strong>System</strong>${escapeHtml(report.system?.name ?? metadata.system ?? "Unknown")}</div>
+          <div class="meta-card"><strong>Proposed version</strong>${escapeHtml(proposedVersion || "None detected")}</div>
           <div class="meta-card"><strong>Theme</strong>${escapeHtml(report.siteSummary.primaryTheme?.name ?? "None detected")}</div>
           <div class="meta-card"><strong>Pages scanned</strong>${report.siteSummary.successfulPageCount}/${report.siteSummary.pageCount}</div>
           <div class="meta-card"><strong>Fingerprint pages</strong>${report.siteSummary.fingerprintedPageCount}</div>

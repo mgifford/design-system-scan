@@ -88,6 +88,7 @@ test("dashboard uses modal dialogs for page details", () => {
   assert.match(html, /showModal\(\)/);
   assert.match(html, /<strong>Date<\/strong>2026-03-19T15:30:00.000Z/);
   assert.match(html, /<strong>Trigger<\/strong><a href="https:\/\/github\.com\/mgifford\/design-system-scan\/issues\/7">Issue 7<\/a>/);
+  assert.match(html, /<strong>Proposed version<\/strong>3\.0\.0/);
   assert.doesNotMatch(html, /<details>/);
   assert.doesNotMatch(html, /<summary>Details<\/summary>/);
 });
