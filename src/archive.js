@@ -2169,7 +2169,13 @@ function renderFlatPageRows(scan) {
       const url = escapeHtml(page.url);
       const detailId = buildPageDetailId(index);
       return `
-        <tr>
+        <tr
+          data-sort-page="${url.toLowerCase()}"
+          data-sort-coverage="${Number(page.fingerprint?.coverage ?? 0)}"
+          data-sort-full="${Number(page.summary?.fullComponentCount ?? 0)}"
+          data-sort-partial="${Number(page.summary?.partialComponentCount ?? 0)}"
+          data-sort-templates="${Number(page.summary?.matchedTemplateCount ?? 0)}"
+        >
           <td><a href="${url}">${url}</a></td>
           <td>${statusBadge(page.fingerprint?.status ?? "absent")}</td>
           <td>${formatPercent(page.fingerprint?.coverage ?? 0)}</td>
@@ -2228,6 +2234,20 @@ export function buildScanReportHtml(scan) {
       .page-section:first-of-type { border-top: 0; padding-top: 0; margin-top: 0; }
       .footer-note { font-size: .95rem; }
       ul { margin: .25rem 0 0 1.25rem; }
+      .table-notes { margin: 0 0 1rem 1.25rem; }
+      .sort-button {
+        appearance: none;
+        border: 0;
+        background: transparent;
+        color: inherit;
+        cursor: pointer;
+        font: inherit;
+        font-weight: 700;
+        letter-spacing: inherit;
+        padding: 0;
+        text-transform: inherit;
+      }
+      .sort-button:hover, .sort-button:focus { color: #005ea2; text-decoration: underline; }
       .sr-only {
         position: absolute;
         width: 1px;
@@ -2286,16 +2306,25 @@ export function buildScanReportHtml(scan) {
 
       <section>
         ${renderAnchoredHeading(2, "Page summary", "page-summary")}
+        <p class="muted">You can sort this table by page, coverage, full components, partial components, or templates.</p>
+        <ul class="table-notes">
+          <li><strong>Fingerprint:</strong> whether the page shows enough site-level evidence to match the detected design system.</li>
+          <li><strong>Coverage:</strong> the strength of the page-level match based on the scanner’s weighted tells.</li>
+          <li><strong>Full components:</strong> component types with strong evidence that the documented pattern is substantially implemented.</li>
+          <li><strong>Partial components:</strong> component types where some tells were found, but the documented pattern appears incomplete.</li>
+          <li><strong>Templates:</strong> template-level matches inferred from combinations of components. Some design systems may not define templates, so this can remain 0.</li>
+          <li><strong>Version clues:</strong> version strings or asset-path hints the scanner found. Many pages will legitimately show none.</li>
+        </ul>
         <div class="table-wrap">
-          <table>
+          <table id="page-summary-table">
             <thead>
               <tr>
-                <th>Page</th>
+                <th><button type="button" class="sort-button" data-sort-key="page">Page</button></th>
                 <th>Fingerprint</th>
-                <th>Coverage</th>
-                <th>Full components</th>
-                <th>Partial components</th>
-                <th>Templates</th>
+                <th><button type="button" class="sort-button" data-sort-key="coverage">Coverage</button></th>
+                <th><button type="button" class="sort-button" data-sort-key="full">Full components</button></th>
+                <th><button type="button" class="sort-button" data-sort-key="partial">Partial components</button></th>
+                <th><button type="button" class="sort-button" data-sort-key="templates">Templates</button></th>
                 <th>Version clues</th>
                 <th>Details</th>
               </tr>
@@ -2315,6 +2344,59 @@ export function buildScanReportHtml(scan) {
 
       ${renderProjectFooter()}
     </main>
+    <script>
+      (() => {
+        const table = document.getElementById('page-summary-table');
+        if (!table) return;
+
+        const tbody = table.querySelector('tbody');
+        const buttons = Array.from(table.querySelectorAll('[data-sort-key]'));
+        let activeKey = null;
+        let activeDirection = 'desc';
+
+        function compareRows(left, right, key, direction) {
+          const leftValue = left.getAttribute('data-sort-' + key) ?? '';
+          const rightValue = right.getAttribute('data-sort-' + key) ?? '';
+
+          let comparison = 0;
+          if (key === 'page') {
+            comparison = leftValue.localeCompare(rightValue);
+          } else {
+            comparison = Number(leftValue) - Number(rightValue);
+          }
+
+          return direction === 'asc' ? comparison : -comparison;
+        }
+
+        for (const button of buttons) {
+          button.addEventListener('click', () => {
+            const key = button.getAttribute('data-sort-key');
+            const direction = activeKey === key && activeDirection === 'desc' ? 'asc' : 'desc';
+            const rows = Array.from(tbody.querySelectorAll('tr'));
+
+            rows.sort((left, right) => compareRows(left, right, key, direction));
+            tbody.replaceChildren(...rows);
+
+            activeKey = key;
+            activeDirection = direction;
+
+            for (const candidate of buttons) {
+              const candidateKey = candidate.getAttribute('data-sort-key');
+              const isActive = candidateKey === activeKey;
+              candidate.setAttribute(
+                'aria-label',
+                candidate.textContent.trim() +
+                  (isActive
+                    ? ', sorted ' + activeDirection
+                    : ', activate to sort')
+              );
+            }
+          });
+
+          button.setAttribute('aria-label', button.textContent.trim() + ', activate to sort');
+        }
+      })();
+    </script>
   </body>
 </html>`;
 }
