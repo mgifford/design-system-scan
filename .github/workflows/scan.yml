@@ -318,8 +318,12 @@ jobs:
           mkdir -p site
           node --input-type=module <<'EOF'
             import fs from "node:fs/promises";
+            import path from "node:path";
+            import { execFileSync } from "node:child_process";
             import {
+              buildArchivesIndexHtml,
               createArchiveEntry,
+              getScanArchivePaths,
               loadArchiveHistory,
               mergeArchiveHistory,
               writeArchiveSite,
@@ -353,6 +357,25 @@ jobs:
             await fs.mkdir(`site/reports/runs/${process.env.RUN_ID}`, { recursive: true });
             await writeDashboardSite(`site/reports/runs/${process.env.RUN_ID}`, report, metadata);
 
+            const archivePackages = {};
+            for (const scanEntry of mergedHistory.scans ?? []) {
+              const reportPaths = scanEntry.reportPaths;
+              const archivePaths = scanEntry.archivePaths ?? getScanArchivePaths(scanEntry);
+              const sourceDir = path.resolve(`site/${reportPaths.relativeDir}`);
+              const zipPath = path.resolve(`site/${archivePaths.zip}`);
+              await fs.mkdir(path.dirname(zipPath), { recursive: true });
+              execFileSync("zip", ["-rq", zipPath, "."], { cwd: sourceDir });
+              const stats = await fs.stat(zipPath);
+              archivePackages[archivePaths.zip] = { sizeBytes: stats.size };
+            }
+
+            await fs.writeFile(
+              "site/archives/index.html",
+              buildArchivesIndexHtml(mergedHistory, archivePackages),
+              "utf8"
+            );
+            await fs.writeFile("site/archives/manifest.json", JSON.stringify(archivePackages, null, 2), "utf8");
+
             await fs.writeFile("site/report.txt", reportText, "utf8");
             await fs.writeFile("site/scan.json", JSON.stringify(report, null, 2), "utf8");
           EOF
@@ -376,6 +399,8 @@ jobs:
             "site/reports/history.json",
             "site/reports/latest/index.html",
             `site/reports/runs/${runId}/index.html`,
+            "site/archives/index.html",
+            "site/archives/manifest.json",
             "site/report.txt",
             "site/scan.json",
           ];
@@ -468,6 +493,7 @@ jobs:
               ? pageUrl.replace(/\/?$/, '/')
               : null;
             const reportsBase = pageBase ? `${pageBase}reports/` : null;
+            const archivesBase = pageBase ? `${pageBase}archives/` : null;
             const archiveEntryUrl = reportsBase ? `${reportsBase}#scan-${context.runId}` : 'GitHub Pages deployment pending';
             const reportBase = reportsBase
               ? `${reportsBase}issues/issue-${issueNumber}/run-${context.runId}/`
@@ -477,6 +503,7 @@ jobs:
             const reportCsvUrl = reportBase ? `${reportBase}report.csv` : 'GitHub Pages deployment pending';
             const reportJsonUrl = reportBase ? `${reportBase}report.json` : 'GitHub Pages deployment pending';
             const latestUrl = reportsBase ? `${reportsBase}latest/` : 'GitHub Pages deployment pending';
+            const archivesUrl = archivesBase || 'GitHub Pages deployment pending';
             const artifactsUrl = `${runUrl}#artifacts`;
             const bodyLines = [
               `Scan complete for ${scanLabel}.`,
@@ -486,6 +513,8 @@ jobs:
               `- Markdown (Pages): ${reportMarkdownUrl}`,
               `- CSV (Pages): ${reportCsvUrl}`,
               `- JSON (Pages): ${reportJsonUrl}`,
+              `- Current reports index: ${reportsBase || 'GitHub Pages deployment pending'}`,
+              `- Archives index: ${archivesUrl}`,
               `- Archive entry: ${archiveEntryUrl}`,
               `- Workflow run: ${runUrl}`,
               `- Artifacts: ${artifactsUrl}`,

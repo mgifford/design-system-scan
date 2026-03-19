@@ -3,6 +3,8 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 const REPORTS_ROOT_DIR = "reports";
+const ARCHIVES_ROOT_DIR = "archives";
+const CURRENT_REPORT_WINDOW_DAYS = 31;
 const DESIGN_SYSTEMS_DIR = path.join(
   path.dirname(fileURLToPath(import.meta.url)),
   "..",
@@ -75,6 +77,26 @@ export function getScanReportPaths(scan) {
   };
 }
 
+export function getScanArchiveRelativeDir(scan) {
+  const issueNumber = extractIssueNumber(scan);
+  const dateSlug = formatScanDateSlug(scan.scannedAt);
+
+  if (issueNumber) {
+    return `${ARCHIVES_ROOT_DIR}/issues/issue-${issueNumber}/${dateSlug}`;
+  }
+
+  return `${ARCHIVES_ROOT_DIR}/triggers/${slugify(scan.trigger)}/${dateSlug}`;
+}
+
+export function getScanArchivePaths(scan) {
+  const relativeDir = getScanArchiveRelativeDir(scan);
+
+  return {
+    relativeDir,
+    zip: `${relativeDir}/report-package.zip`,
+  };
+}
+
 function toArchiveRelativePath(value) {
   const pathname = String(value ?? "");
   const prefix = `${REPORTS_ROOT_DIR}/`;
@@ -112,7 +134,8 @@ function buildReportsLandingHtml() {
         <h1>Design System Scan Reports</h1>
         <p>This project helps track where public-sector design systems are actually being used, and how faithfully their patterns are being implemented across real sites.</p>
         <div class="actions">
-          <a class="button" href="./reports/">Open archive</a>
+          <a class="button" href="./reports/">Open reports</a>
+          <a class="button secondary" href="./archives/">Open archives</a>
           <a class="button secondary" href="./reports/latest/">Open latest scan</a>
         </div>
       </section>
@@ -164,7 +187,8 @@ function buildReportsLandingHtml() {
       <section>
         <h2>How To Read A Report</h2>
         <ul>
-          <li><strong>Archive:</strong> The archive at <code>/reports/</code> is the main index of scans over time.</li>
+          <li><strong>Reports:</strong> The reports index at <code>/reports/</code> shows the latest report for each trigger from the last month.</li>
+          <li><strong>Archives:</strong> The archive at <code>/archives/</code> keeps older runs available as downloadable packages organized by trigger and date.</li>
           <li><strong>Latest:</strong> The latest dashboard shows the newest run in a more focused single-run view.</li>
           <li><strong>Detected system:</strong> This is the design system the scanner thinks best matches the submitted site.</li>
           <li><strong>Pages with design system fingerprint:</strong> These are pages where the scanner found enough evidence to treat the design system as present.</li>
@@ -335,7 +359,8 @@ function renderDesignSystemPage(inventory) {
     <nav class="system-nav" aria-label="System">
       <ul>
         <li><a href="../../">Project home</a></li>
-        <li><a href="../../reports/">Reports archive</a></li>
+        <li><a href="../../reports/">Current reports</a></li>
+        <li><a href="../../archives/">Archives</a></li>
       </ul>
     </nav>
     <main>
@@ -552,7 +577,8 @@ function renderComparisonPage(matrix) {
     <nav class="comparison-nav" aria-label="Comparison">
       <ul>
         <li><a href="../">Project home</a></li>
-        <li><a href="../reports/">Reports archive</a></li>
+        <li><a href="../reports/">Current reports</a></li>
+        <li><a href="../archives/">Archives</a></li>
       </ul>
     </nav>
     <main>
@@ -795,6 +821,7 @@ export function createArchiveEntry(report, metadata) {
   return {
     ...baseEntry,
     reportPaths: getScanReportPaths(baseEntry),
+    archivePaths: getScanArchivePaths(baseEntry),
   };
 }
 
@@ -907,8 +934,34 @@ function renderArchiveRows(scans) {
     .join("");
 }
 
+function getCurrentReportScans(history) {
+  const scans = [...(history.scans ?? [])];
+  const now = new Date(history.updatedAt ?? Date.now());
+  const threshold = new Date(now.getTime() - CURRENT_REPORT_WINDOW_DAYS * 24 * 60 * 60 * 1000);
+  const latestByTrigger = new Map();
+
+  for (const scan of scans) {
+    const scannedAt = new Date(scan.scannedAt ?? 0);
+    if (Number.isNaN(scannedAt.getTime()) || scannedAt < threshold) {
+      continue;
+    }
+
+    const issueNumber = extractIssueNumber(scan);
+    const key = issueNumber ? `issue-${issueNumber}` : String(scan.trigger ?? "unknown");
+    const current = latestByTrigger.get(key);
+
+    if (!current || String(scan.scannedAt).localeCompare(String(current.scannedAt)) > 0) {
+      latestByTrigger.set(key, scan);
+    }
+  }
+
+  return [...latestByTrigger.values()].sort((left, right) =>
+    String(right.scannedAt).localeCompare(String(left.scannedAt))
+  );
+}
+
 export function buildArchiveIndexHtml(history) {
-  const scans = history.scans ?? [];
+  const scans = getCurrentReportScans(history);
   const uniqueSites = new Set(scans.map((scan) => {
     try {
       return new URL(scan.seedUrl).hostname;
@@ -922,7 +975,7 @@ export function buildArchiveIndexHtml(history) {
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Design System Scan Archive</title>
+    <title>Design System Scan Reports</title>
     <script>
       (() => {
         try {
@@ -1154,8 +1207,8 @@ export function buildArchiveIndexHtml(history) {
       <section class="hero">
         <div class="hero-header">
           <div class="hero-copy">
-            <h1>Design System Scan Archive</h1>
-            <p>Compact history of scans across sites, with a table-first index and direct links to stable per-run reports.</p>
+            <h1>Design System Scan Reports</h1>
+            <p>Current reports from the last month, showing only the latest published scan for each trigger issue or workflow source.</p>
           </div>
           <div class="hero-actions">
             <button id="theme-toggle" class="theme-toggle" type="button" aria-label="Switch to dark mode">
@@ -1179,15 +1232,15 @@ export function buildArchiveIndexHtml(history) {
           </div>
         </div>
         <div class="stats">
-          <div class="stat"><strong>Total scans</strong>${scans.length}</div>
+          <div class="stat"><strong>Current reports</strong>${scans.length}</div>
           <div class="stat"><strong>Unique sites</strong>${uniqueSites}</div>
           <div class="stat"><strong>Latest update</strong>${renderDateCell(history.updatedAt ?? "unknown", "latest-update")}</div>
         </div>
       </section>
 
       <section>
-        <h2>Scans</h2>
-        <p class="muted">Filter by URL, system, or trigger. “Pages with DS fingerprint” counts pages where the scanner found enough design-system evidence to classify the page as using the selected system. Use “Details” to open the stable per-run report page.</p>
+        <h2>Reports</h2>
+        <p class="muted">Filter by URL, system, or trigger. This view keeps only the newest report for each trigger from the last month. “Pages with DS fingerprint” counts pages where the scanner found enough design-system evidence to classify the page as using the selected system. Use “Details” to open the stable per-run report page.</p>
         <input id="scan-filter" type="search" placeholder="Filter scans">
         <div class="table-wrap">
           <table>
@@ -1346,6 +1399,100 @@ export function buildArchiveIndexHtml(history) {
 </html>`;
 }
 
+export function buildArchivesIndexHtml(history, archivePackages = {}) {
+  const scans = [...(history.scans ?? [])].sort((left, right) =>
+    String(right.scannedAt).localeCompare(String(left.scannedAt))
+  );
+
+  const rows = scans
+    .map((scan) => {
+      const archivePaths = scan.archivePaths ?? getScanArchivePaths(scan);
+      const packageMeta = archivePackages[archivePaths.zip] ?? {};
+      const sizeLabel = packageMeta.sizeBytes
+        ? `${(packageMeta.sizeBytes / 1024).toFixed(1)} KB`
+        : "Pending";
+
+      return `
+        <tr>
+          <td>${renderDateCell(scan.scannedAt, `archive-date-${escapeHtml(scan.id)}`)}</td>
+          <td>${renderTrigger(scan.trigger, scan.repository)}</td>
+          <td><a href="${escapeHtml(scan.seedUrl)}">${escapeHtml(scan.seedUrl)}</a></td>
+          <td>${escapeHtml(scan.systemInfo?.name ?? scan.system)}</td>
+          <td>${scan.siteSummary?.pageCount ?? 0}</td>
+          <td>${escapeHtml(sizeLabel)}</td>
+          <td><a class="button-link" href="../${escapeHtml(archivePaths.zip)}">ZIP package</a></td>
+        </tr>
+      `;
+    })
+    .join("");
+
+  return `<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Design System Scan Archives</title>
+    <style>
+      body { margin: 0; font-family: ui-sans-serif, system-ui, sans-serif; color: #112e51; background: #eef5fb; }
+      main { max-width: 96rem; margin: 0 auto; padding: 2rem 1rem 4rem; }
+      section { background: #fff; border: 1px solid #d0d7de; box-shadow: 0 12px 32px rgba(17, 46, 81, .08); padding: 1rem 1.25rem; margin-bottom: 1rem; }
+      .archive-nav { max-width: 96rem; margin: 0 auto; padding: 1rem 1rem 0; }
+      .archive-nav ul { list-style: none; padding: 0; margin: 0; display: flex; gap: 1rem; flex-wrap: wrap; }
+      .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr)); gap: .75rem; }
+      .stat { background: #f8fbff; border: 1px solid #d0d7de; padding: .85rem; }
+      .stat strong { display: block; color: #5c6f82; font-size: .8rem; text-transform: uppercase; letter-spacing: .04em; margin-bottom: .25rem; }
+      .table-wrap { overflow-x: auto; }
+      table { width: 100%; border-collapse: collapse; }
+      th, td { text-align: left; vertical-align: top; padding: .65rem .5rem; border-bottom: 1px solid #d0d7de; }
+      th { font-size: .8rem; text-transform: uppercase; letter-spacing: .04em; color: #5c6f82; }
+      a { color: #005ea2; }
+      .button-link { display: inline-block; border: 1px solid #005ea2; background: #005ea2; color: #fff; border-radius: .3rem; padding: .45rem .75rem; text-decoration: none; }
+      .muted { color: #5c6f82; }
+    </style>
+  </head>
+  <body>
+    <nav class="archive-nav" aria-label="Archive">
+      <ul>
+        <li><a href="../">Project home</a></li>
+        <li><a href="../reports/">Current reports</a></li>
+      </ul>
+    </nav>
+    <main>
+      <section>
+        <h1>Design System Scan Archives</h1>
+        <p>This archive keeps older report runs available as downloadable ZIP packages organized by trigger and date. The current reports view only shows the newest report for each trigger in the last month.</p>
+      </section>
+      <section>
+        <div class="stats">
+          <div class="stat"><strong>Archived runs</strong>${scans.length}</div>
+          <div class="stat"><strong>Latest update</strong>${renderDateCell(history.updatedAt ?? "unknown", "archives-latest-update")}</div>
+        </div>
+      </section>
+      <section>
+        <h2>Archive packages</h2>
+        <p class="muted">Each package includes the stable HTML, Markdown, CSV, and JSON outputs for a specific run.</p>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Date</th>
+                <th>Trigger</th>
+                <th>Seed URL</th>
+                <th>System</th>
+                <th>Pages crawled</th>
+                <th>Package size</th>
+                <th>Download</th>
+              </tr>
+            </thead>
+            <tbody>${rows}</tbody>
+          </table>
+        </div>
+      </section>
+    </main>
+  </body>
+</html>`;
+}
+
 export async function loadArchiveHistory(pathname) {
   try {
     const content = await fs.readFile(pathname, "utf8");
@@ -1417,7 +1564,8 @@ export function buildScanReportHtml(scan) {
     <nav class="report-nav" aria-label="Report">
       <ul>
         <li><a href="../../../../">Project home</a></li>
-        <li><a href="../../../">Reports archive</a></li>
+        <li><a href="../../../">Current reports</a></li>
+        <li><a href="../../../../archives/">Archives</a></li>
       </ul>
     </nav>
     <main>
@@ -1448,7 +1596,8 @@ export function buildScanReportHtml(scan) {
           <li><a href="./report.md">Markdown report</a></li>
           <li><a href="./report.csv">CSV export</a></li>
           <li><a href="./report.json">JSON data</a></li>
-          <li><a href="../../../">Archive index</a></li>
+          <li><a href="../../../">Current reports index</a></li>
+          <li><a href="../../../../${escapeHtml((scan.archivePaths ?? getScanArchivePaths(scan)).zip)}">Archive ZIP package</a></li>
         </ul>
       </section>
 
@@ -1578,9 +1727,15 @@ export async function writeArchiveSite(outputDir, history) {
   await fs.mkdir(outputDir, { recursive: true });
   await fs.writeFile(path.join(outputDir, "index.html"), buildReportsLandingHtml(), "utf8");
   await fs.mkdir(path.join(outputDir, REPORTS_ROOT_DIR), { recursive: true });
+  await fs.mkdir(path.join(outputDir, ARCHIVES_ROOT_DIR), { recursive: true });
   await fs.writeFile(
     path.join(outputDir, REPORTS_ROOT_DIR, "index.html"),
     buildArchiveIndexHtml(history),
+    "utf8"
+  );
+  await fs.writeFile(
+    path.join(outputDir, ARCHIVES_ROOT_DIR, "index.html"),
+    buildArchivesIndexHtml(history),
     "utf8"
   );
   await fs.writeFile(

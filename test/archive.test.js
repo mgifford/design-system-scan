@@ -110,7 +110,8 @@ test("scan report html includes page-level detail content", () => {
   assert.match(html, /<strong>Theme:<\/strong> Core/);
   assert.match(html, /<strong>Proposed version:<\/strong> 13\.1\.0/);
   assert.match(html, /<a href="\.\.\/\.\.\/\.\.\/\.\.\/">Project home<\/a>/);
-  assert.match(html, /<a href="\.\.\/\.\.\/\.\.\/">Reports archive<\/a>/);
+  assert.match(html, /<a href="\.\.\/\.\.\/\.\.\/">Current reports<\/a>/);
+  assert.match(html, /<a href="\.\.\/\.\.\/\.\.\/\.\.\/archives\/">Archives<\/a>/);
   assert.match(html, /open source <a href="https:\/\/github\.com\/mgifford\/design-system-scan">design-system-scan<\/a> project/);
   assert.match(html, /<strong>Component types identified<\/strong>1/);
   assert.match(html, /<h2>Page details<\/h2>/);
@@ -181,8 +182,10 @@ test("archive site writes stable per-issue report files", async () => {
     "utf8"
   );
 
-  assert.match(rootIndex, /Open archive/);
+  assert.match(rootIndex, /Open reports/);
+  assert.match(rootIndex, /Open archives/);
   assert.match(rootIndex, /href="\.\/reports\/"/);
+  assert.match(rootIndex, /href="\.\/archives\/"/);
   assert.match(rootIndex, /Why This Matters/);
   assert.match(rootIndex, /Currently Supported/);
   assert.match(rootIndex, /How To Read A Report/);
@@ -196,14 +199,21 @@ test("archive site writes stable per-issue report files", async () => {
   assert.match(rootIndex, /href="\.\/systems\/govuk\/"/);
   assert.match(rootIndex, /href="\.\/comparison\/"/);
   assert.match(rootIndex, /Design System Comparison/);
-  assert.match(archiveIndex, /Design System Scan Archive/);
+  assert.match(archiveIndex, /Design System Scan Reports/);
+  assert.match(archiveIndex, /newest report for each trigger/);
   assert.match(html, /Accepted URLs<\/strong>10/);
   assert.match(issueAlias, /Design system scan report/);
   assert.match(issueDateAlias, /Design system scan report/);
   assert.match(html, /<a href="\.\/report\.md">Markdown report<\/a>/);
-  assert.match(html, /<a href="\.\.\/\.\.\/\.\.\/">Archive index<\/a>/);
+  assert.match(html, /<a href="\.\.\/\.\.\/\.\.\/">Current reports index<\/a>/);
+  assert.match(html, /Archive ZIP package/);
   assert.match(markdown, /Accepted URLs: 10/);
   assert.match(csv, /page_url,fingerprint_status/);
+
+  const archivesIndex = await fs.readFile(path.join(outputDir, "archives/index.html"), "utf8");
+  assert.match(archivesIndex, /Design System Scan Archives/);
+  assert.match(archivesIndex, /downloadable ZIP packages/);
+  assert.match(archivesIndex, /Pages crawled/);
 
   const systemPage = await fs.readFile(path.join(outputDir, "systems/uswds/index.html"), "utf8");
   assert.match(systemPage, /U\.S\. Web Design System/);
