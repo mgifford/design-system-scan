@@ -122,7 +122,9 @@ test("scan report html includes page-level detail content", () => {
           },
         ],
         templates: [],
-        assetErrors: [],
+        assetErrors: [
+          "https://cms.gov/sites/default/files/css/css_XC2gqxRc7jTWjbnqIsk9A6D8tDe_0HrfT_5uZA0Xv18.css?delta=0&language=en&theme=cms_evo: HTTP 400",
+        ],
       },
     ],
   });
@@ -139,6 +141,10 @@ test("scan report html includes page-level detail content", () => {
   assert.match(html, /Each scanned page includes the detected design-system fingerprint/);
   assert.match(html, /<h3><a href="https:\/\/design\.cms\.gov\/">https:\/\/design\.cms\.gov\/<\/a><\/h3>/);
   assert.match(html, /Accordion/);
+  assert.match(html, /Asset fetch issues/);
+  assert.match(html, /css_XC2gqxRc7jTWjbnqIsk9A6D8tDe_0HrfT_5uZA0Xv18\.css/);
+  assert.match(html, /HTTP 400/);
+  assert.match(html, /<a href="https:\/\/cms\.gov\/sites\/default\/files\/css\/css_XC2gqxRc7jTWjbnqIsk9A6D8tDe_0HrfT_5uZA0Xv18\.css\?delta=0&amp;language=en&amp;theme=cms_evo">css_XC2gqxRc7jTWjbnqIsk9A6D8tDe_0HrfT_5uZA0Xv18\.css<\/a>/);
 });
 
 test("archive site writes stable per-issue report files", async () => {

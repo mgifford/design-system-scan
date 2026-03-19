@@ -1035,13 +1035,74 @@ function renderEvidenceTable(title, items) {
   `;
 }
 
+function parseAssetError(item) {
+  const value = String(item ?? "");
+  const match = /^(https?:\/\/\S+):\s*(.+)$/u.exec(value);
+  const url = match ? match[1] : "";
+  const message = match ? match[2] : value;
+
+  let filename = value;
+  if (url) {
+    try {
+      const parsed = new URL(url);
+      const segments = parsed.pathname.split("/").filter(Boolean);
+      filename = segments.at(-1) ?? parsed.hostname;
+    } catch {
+      filename = url;
+    }
+  }
+
+  return {
+    url,
+    filename,
+    message,
+  };
+}
+
+function renderAssetErrorTable(items) {
+  if (!items?.length) {
+    return "";
+  }
+
+  const rows = items
+    .map((item) => {
+      const asset = parseAssetError(item);
+      const fileCell = asset.url
+        ? `<a href="${escapeHtml(asset.url)}">${escapeHtml(asset.filename)}</a>`
+        : escapeHtml(asset.filename);
+
+      return `
+        <tr>
+          <td>${fileCell}</td>
+          <td>${escapeHtml(asset.message)}</td>
+        </tr>
+      `;
+    })
+    .join("");
+
+  return `
+    <section>
+      <h4>Asset fetch issues</h4>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Asset</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody>${rows}</tbody>
+        </table>
+      </div>
+    </section>
+  `;
+}
+
 function renderPageSections(pages) {
   return (pages ?? [])
     .map((page) => {
       const versions = (page.versions ?? []).length ? page.versions.join(", ") : "none";
-      const assetErrors = (page.assetErrors ?? [])
-        .map((item) => `<li>${escapeHtml(item)}</li>`)
-        .join("");
+      const assetErrors = renderAssetErrorTable(page.assetErrors ?? []);
 
       return `
         <section class="page-section">
@@ -1055,7 +1116,7 @@ function renderPageSections(pages) {
                 <p><strong>Version clues:</strong> ${escapeHtml(versions)}</p>
                 ${renderEvidenceTable("Components", page.components ?? [])}
                 ${renderEvidenceTable("Templates", page.templates ?? [])}
-                ${assetErrors ? `<section><h4>Asset fetch issues</h4><ul>${assetErrors}</ul></section>` : ""}
+                ${assetErrors}
               `
           }
         </section>
