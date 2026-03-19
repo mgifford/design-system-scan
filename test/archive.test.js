@@ -204,6 +204,7 @@ test("archive site writes stable per-issue report files", async () => {
   const archiveIndex = await fs.readFile(path.join(outputDir, "reports/index.html"), "utf8");
   const rootIndex = await fs.readFile(path.join(outputDir, "index.html"), "utf8");
   const yamlSpec = await fs.readFile(path.join(outputDir, "specs/uswds.yaml"), "utf8");
+  const demoPage = await fs.readFile(path.join(outputDir, "demos/uswds/index.html"), "utf8");
   const markdown = await fs.readFile(
     path.join(outputDir, "reports/issues/issue-6/run-23253601700/report.md"),
     "utf8"
@@ -274,6 +275,7 @@ test("archive site writes stable per-issue report files", async () => {
   assert.match(systemPage, /Compiled USWDS stylesheet/);
   assert.match(systemPage, /uswds\.min\.css/);
   assert.match(systemPage, /<strong>YAML spec:<\/strong> <a href="\.\.\/\.\.\/specs\/uswds\.yaml">\.\.\/\.\.\/specs\/uswds\.yaml<\/a>/);
+  assert.match(systemPage, /<strong>Demo page:<\/strong> <a href="\.\.\/\.\.\/demos\/uswds\/">\.\.\/\.\.\/demos\/uswds\/<\/a>/);
   assert.match(systemPage, /Semantic YAML spec/);
   assert.match(systemPage, /\.\.\/\.\.\/specs\/uswds\.yaml/);
   assert.match(systemPage, /USWDS class prefix/);
@@ -303,6 +305,7 @@ test("archive site writes stable per-issue report files", async () => {
   const kolibriPage = await fs.readFile(path.join(outputDir, "systems/kolibri/index.html"), "utf8");
   assert.match(kolibriPage, /KoliBri - Public UI/);
   assert.match(kolibriPage, /<strong>YAML spec:<\/strong> <a href="\.\.\/\.\.\/specs\/kolibri\.yaml">\.\.\/\.\.\/specs\/kolibri\.yaml<\/a>/);
+  assert.match(kolibriPage, /<strong>Demo page:<\/strong> <a href="\.\.\/\.\.\/demos\/kolibri\/">\.\.\/\.\.\/demos\/kolibri\/<\/a>/);
   assert.match(kolibriPage, /Semantic YAML spec/);
   assert.match(kolibriPage, /How this system is identified/);
   assert.match(kolibriPage, /@public-ui\/components/);
@@ -311,6 +314,12 @@ test("archive site writes stable per-issue report files", async () => {
   assert.match(yamlSpec, /^system:/m);
   assert.match(yamlSpec, /^components:/m);
   assert.match(yamlSpec, /^  id: uswds/m);
+  assert.match(demoPage, /U\.S\. Web Design System demo/);
+  assert.match(demoPage, /semantic demo page generated from the focused YAML spec/);
+  assert.match(demoPage, /\.\.\/\.\.\/systems\/uswds\//);
+  assert.match(demoPage, /\.\.\/\.\.\/specs\/uswds\.yaml/);
+  assert.match(demoPage, /Component examples/);
+  assert.match(demoPage, /Example markup/);
 
   const comparisonPage = await fs.readFile(path.join(outputDir, "comparison/index.html"), "utf8");
   assert.match(comparisonPage, /Design system comparison/);

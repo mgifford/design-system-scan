@@ -5,6 +5,7 @@ import { listDetectableSystemDefinitions } from "./systems/index.js";
 
 const REPORTS_ROOT_DIR = "reports";
 const ARCHIVES_ROOT_DIR = "archives";
+const DEMOS_ROOT_DIR = "demos";
 const CURRENT_REPORT_WINDOW_DAYS = 31;
 const DESIGN_SYSTEMS_DIR = path.join(
   path.dirname(fileURLToPath(import.meta.url)),
@@ -141,6 +142,10 @@ function renderAnchoredHeading(level, text, id) {
   `;
 }
 
+function escapeAttribute(value) {
+  return escapeHtml(value).replaceAll('"', "&quot;");
+}
+
 function buildLandingCardSummary(inventory) {
   const componentCount = getInventoryComponents(inventory).length;
   const indexedCount = inventory.scannerCoverage?.indexedComponentIds?.length ?? 0;
@@ -177,6 +182,307 @@ function renderSupportedSystemCards(inventories) {
               <p>Compare component families across all tracked systems, including where Breadcrumbs and other patterns appear to be semantically aligned.</p>
             </div>
           </a>`;
+}
+
+function parseSemanticSpec(content) {
+  const lines = String(content ?? "").split(/\r?\n/u);
+  const spec = {
+    system: {},
+    demoFocus: [],
+    components: [],
+  };
+
+  let section = null;
+  let currentComponent = null;
+  let currentComponentList = null;
+  let currentSystemList = null;
+
+  for (const line of lines) {
+    if (!line.trim()) {
+      continue;
+    }
+
+    if (/^system:\s*$/u.test(line)) {
+      section = "system";
+      currentComponent = null;
+      currentComponentList = null;
+      currentSystemList = null;
+      continue;
+    }
+
+    if (/^components:\s*$/u.test(line)) {
+      section = "components";
+      currentComponent = null;
+      currentComponentList = null;
+      currentSystemList = null;
+      continue;
+    }
+
+    if (section === "system") {
+      const arrayHeaderMatch = /^  ([a-z_]+):\s*$/u.exec(line);
+      if (arrayHeaderMatch) {
+        if (arrayHeaderMatch[1] === "demo_focus") {
+          currentSystemList = "demoFocus";
+        } else {
+          currentSystemList = arrayHeaderMatch[1];
+          spec.system[currentSystemList] = [];
+        }
+        continue;
+      }
+
+      const scalarMatch = /^  ([a-z_]+):\s*(.+)\s*$/u.exec(line);
+      if (scalarMatch) {
+        spec.system[scalarMatch[1]] = scalarMatch[2];
+        currentSystemList = null;
+        continue;
+      }
+
+      const arrayItemMatch = /^    -\s+(.+)\s*$/u.exec(line);
+      if (arrayItemMatch && currentSystemList) {
+        if (currentSystemList === "demoFocus") {
+          spec.demoFocus.push(arrayItemMatch[1]);
+        } else {
+          spec.system[currentSystemList].push(arrayItemMatch[1]);
+        }
+      }
+
+      continue;
+    }
+
+    if (section === "components") {
+      const componentStartMatch = /^  - id:\s*(.+)\s*$/u.exec(line);
+      if (componentStartMatch) {
+        currentComponent = { id: componentStartMatch[1] };
+        spec.components.push(currentComponent);
+        currentComponentList = null;
+        continue;
+      }
+
+      if (!currentComponent) {
+        continue;
+      }
+
+      const listHeaderMatch = /^    ([a-z_]+):\s*$/u.exec(line);
+      if (listHeaderMatch) {
+        currentComponentList = listHeaderMatch[1];
+        currentComponent[currentComponentList] = [];
+        continue;
+      }
+
+      const componentScalarMatch = /^    ([a-z_]+):\s*(.+)\s*$/u.exec(line);
+      if (componentScalarMatch) {
+        currentComponent[componentScalarMatch[1]] = componentScalarMatch[2];
+        currentComponentList = null;
+        continue;
+      }
+
+      const componentListItemMatch = /^      -\s+(.+)\s*$/u.exec(line);
+      if (componentListItemMatch && currentComponentList) {
+        currentComponent[currentComponentList].push(componentListItemMatch[1]);
+      }
+    }
+  }
+
+  return spec;
+}
+
+async function loadSemanticSpecs() {
+  try {
+    const entries = (await fs.readdir(DESIGN_SYSTEM_SPECS_DIR))
+      .filter((entry) => entry.endsWith(".yaml"))
+      .sort();
+    const specs = [];
+
+    for (const entry of entries) {
+      const content = await fs.readFile(path.join(DESIGN_SYSTEM_SPECS_DIR, entry), "utf8");
+      specs.push({
+        id: entry.replace(/\.yaml$/u, ""),
+        raw: content,
+        parsed: parseSemanticSpec(content),
+      });
+    }
+
+    return specs;
+  } catch {
+    return [];
+  }
+}
+
+function renderCanonicalPatterns(component) {
+  const patterns = component.canonical_patterns ?? [];
+  if (!patterns.length) {
+    return "<span class=\"muted\">No canonical pattern listed</span>";
+  }
+
+  return `<ul>${patterns.map((pattern) => `<li><code>${escapeHtml(pattern)}</code></li>`).join("")}</ul>`;
+}
+
+function buildDemoMarkup(component) {
+  const id = String(component.id ?? "").toLowerCase();
+  const name = String(component.name ?? "").toLowerCase();
+  const fieldId = `${id}-example`;
+
+  if (id.includes("skip") || name.includes("skip")) {
+    return `<a href="#main-content">Skip to main content</a>`;
+  }
+
+  if (id.includes("breadcrumb") || name.includes("breadcrumb")) {
+    return `<nav aria-label="Breadcrumb"><ol><li><a href="#">Home</a></li><li><a href="#">Section</a></li><li aria-current="page">Current page</li></ol></nav>`;
+  }
+
+  if (id.includes("alert") || name.includes("alert") || id.includes("error-summary")) {
+    return `<div role="status" aria-live="polite"><strong>Status:</strong> Example message shown to the user.</div>`;
+  }
+
+  if (id.includes("checkbox") || name.includes("checkbox")) {
+    return `<div><input id="${escapeAttribute(fieldId)}" type="checkbox"><label for="${escapeAttribute(fieldId)}">Example option</label></div>`;
+  }
+
+  if (id.includes("radio") || name.includes("radio")) {
+    return `<fieldset><legend>Choose one option</legend><div><input id="${escapeAttribute(fieldId)}-1" name="${escapeAttribute(fieldId)}" type="radio"><label for="${escapeAttribute(fieldId)}-1">Option one</label></div><div><input id="${escapeAttribute(fieldId)}-2" name="${escapeAttribute(fieldId)}" type="radio"><label for="${escapeAttribute(fieldId)}-2">Option two</label></div></fieldset>`;
+  }
+
+  if (id.includes("select") || name.includes("select") || id.includes("dropdown") || name.includes("dropdown")) {
+    return `<label for="${escapeAttribute(fieldId)}">Example select</label><select id="${escapeAttribute(fieldId)}"><option>Choose one</option><option>Option A</option><option>Option B</option></select>`;
+  }
+
+  if (id.includes("date")) {
+    return `<label for="${escapeAttribute(fieldId)}">Example date</label><input id="${escapeAttribute(fieldId)}" type="date">`;
+  }
+
+  if (id.includes("text") || name.includes("text") || id.includes("input") || name.includes("input")) {
+    return `<label for="${escapeAttribute(fieldId)}">Example field</label><input id="${escapeAttribute(fieldId)}" type="text">`;
+  }
+
+  if (id.includes("textarea") || name.includes("textarea")) {
+    return `<label for="${escapeAttribute(fieldId)}">Example message</label><textarea id="${escapeAttribute(fieldId)}" rows="4"></textarea>`;
+  }
+
+  if (id.includes("button") || name.includes("button")) {
+    return `<button type="button">Continue</button>`;
+  }
+
+  if (id.includes("modal") || id.includes("dialog") || name.includes("modal") || name.includes("dialog")) {
+    return `<section aria-labelledby="${escapeAttribute(fieldId)}-title" role="dialog"><h4 id="${escapeAttribute(fieldId)}-title">Example dialog</h4><p>This is a static dialog example for semantic review.</p><button type="button">Close</button></section>`;
+  }
+
+  if (id.includes("header") || name.includes("header")) {
+    return `<header><h4>Service name</h4><nav aria-label="Primary"><a href="#">Home</a> <a href="#">Services</a> <a href="#">Help</a></nav></header>`;
+  }
+
+  if (id.includes("footer") || name.includes("footer")) {
+    return `<footer><nav aria-label="Footer"><a href="#">Contact</a> <a href="#">Privacy</a> <a href="#">Accessibility</a></nav></footer>`;
+  }
+
+  if (id.includes("tabs") || name.includes("tabs")) {
+    return `<div><div role="tablist" aria-label="Example tabs"><button aria-selected="true" role="tab">Overview</button><button aria-selected="false" role="tab">Details</button></div><section role="tabpanel"><p>Example tab panel content.</p></section></div>`;
+  }
+
+  if (id.includes("table") || name.includes("table")) {
+    return `<table><thead><tr><th>Name</th><th>Status</th></tr></thead><tbody><tr><td>Example</td><td>Active</td></tr></tbody></table>`;
+  }
+
+  if (id.includes("pagination") || name.includes("pagination")) {
+    return `<nav aria-label="Pagination"><a href="#">Previous</a> <span aria-current="page">2</span> <a href="#">Next</a></nav>`;
+  }
+
+  return `<div><strong>${escapeHtml(component.name ?? component.id ?? "Component")}</strong><p>Example placeholder for semantic review.</p></div>`;
+}
+
+function buildDemoCode(component) {
+  return escapeHtml(buildDemoMarkup(component));
+}
+
+function renderDemoPage(spec) {
+  const system = spec.parsed.system ?? {};
+  const components = spec.parsed.components ?? [];
+  const demoFocus = spec.parsed.demoFocus ?? [];
+  const topExamples = components.slice(0, 8);
+
+  const exampleCards = topExamples
+    .map(
+      (component) => `
+        <article class="demo-card" id="demo-${escapeHtml(component.id)}">
+          <h3>${escapeHtml(component.name ?? component.id)}</h3>
+          <p>${escapeHtml(component.purpose ?? "No purpose documented.")}</p>
+          <div class="demo-preview">${buildDemoMarkup(component)}</div>
+          <h4>Canonical patterns</h4>
+          ${renderCanonicalPatterns(component)}
+          <h4>Example markup</h4>
+          <pre><code>${buildDemoCode(component)}</code></pre>
+        </article>
+      `
+    )
+    .join("");
+
+  const componentLinks = topExamples
+    .map((component) => `<li><a href="#demo-${escapeHtml(component.id)}">${escapeHtml(component.name ?? component.id)}</a></li>`)
+    .join("");
+
+  return `<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>${escapeHtml(system.name ?? spec.id)} demo</title>
+    <style>
+      body { margin: 0; font-family: ui-sans-serif, system-ui, sans-serif; color: #112e51; background: #eef5fb; }
+      .demo-nav { max-width: 88rem; margin: 0 auto; padding: 1rem 1rem 0; }
+      .demo-nav ul { list-style: none; padding: 0; margin: 0; display: flex; gap: 1rem; flex-wrap: wrap; }
+      main { max-width: 88rem; margin: 0 auto; padding: 1rem 1rem 4rem; }
+      section { background: #fff; border: 1px solid #d0d7de; box-shadow: 0 12px 32px rgba(17, 46, 81, .08); padding: 1rem 1.25rem; margin-bottom: 1rem; }
+      .demo-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(20rem, 1fr)); gap: 1rem; }
+      .demo-card { background: #f8fbff; border: 1px solid #d0d7de; padding: 1rem; }
+      .demo-preview { background: #fff; border: 1px dashed #a9bcd0; padding: 1rem; margin: 1rem 0; }
+      .heading-anchor-group { display: flex; align-items: baseline; gap: .5rem; }
+      .heading-anchor { opacity: 0; text-decoration: none; }
+      .heading-anchor-group:hover .heading-anchor, .heading-anchor:focus { opacity: 1; }
+      .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr)); gap: .75rem; }
+      .stat { background: #f8fbff; border: 1px solid #d0d7de; padding: .85rem; }
+      .stat strong { display: block; color: #5c6f82; font-size: .8rem; text-transform: uppercase; letter-spacing: .04em; margin-bottom: .25rem; }
+      pre { overflow-x: auto; background: #0f1720; color: #f8fafc; padding: .85rem; border-radius: .4rem; }
+      code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
+      ul { margin: .25rem 0 0 1.25rem; }
+      a { color: #005ea2; }
+      .muted { color: #5c6f82; }
+      .footer-note { font-size: .95rem; }
+    </style>
+  </head>
+  <body>
+    ${renderSiteNav("../../", "../../reports/", "../../reports/latest/", "../../archives/", "demo-nav")}
+    <main>
+      <section>
+        ${renderAnchoredHeading(1, `${system.name ?? spec.id} demo`, `${escapeHtml(spec.id)}-demo-top`)}
+        <p>This is a semantic demo page generated from the focused YAML spec for this design system. It is meant for review, testing, and AI-assisted interpretation of the documented component structure. It is not an official upstream implementation or visual reproduction.</p>
+        <p><strong>System page:</strong> <a href="../../systems/${escapeHtml(spec.id)}/">../../systems/${escapeHtml(spec.id)}/</a></p>
+        <p><strong>YAML spec:</strong> <a href="../../specs/${escapeHtml(spec.id)}.yaml">../../specs/${escapeHtml(spec.id)}.yaml</a></p>
+        <p><strong>Official homepage:</strong> <a href="${escapeHtml(system.homepage ?? "#")}">${escapeHtml(system.homepage ?? "Not documented")}</a></p>
+      </section>
+
+      <section>
+        <div class="stats">
+          <div class="stat"><strong>Demo focus areas</strong>${demoFocus.length}</div>
+          <div class="stat"><strong>Example components shown</strong>${topExamples.length}</div>
+          <div class="stat"><strong>Spec source</strong>YAML</div>
+        </div>
+      </section>
+
+      <section>
+        ${renderAnchoredHeading(2, "How to use this demo", "how-to-use-this-demo")}
+        <p>Use this page to review how the project currently understands the structure and semantics of the design system. The examples below prioritize common form and navigation patterns because those are the most useful for testing scanner rules and AI-assisted generation.</p>
+        <p><strong>Demo focus:</strong> ${escapeHtml(demoFocus.join(", ") || "No demo focus listed")}</p>
+        <ul>${componentLinks}</ul>
+      </section>
+
+      <section>
+        ${renderAnchoredHeading(2, "Component examples", "component-examples")}
+        <div class="demo-grid">${exampleCards}</div>
+      </section>
+
+      ${renderProjectFooter()}
+    </main>
+  </body>
+</html>`;
 }
 
 function buildReportsLandingHtml(inventories = []) {
@@ -448,6 +754,7 @@ function renderDesignSystemPage(inventory, definition = null, hasSemanticSpec = 
   const components = getInventoryComponents(inventory);
   const indexedIds = new Set(inventory.scannerCoverage?.indexedComponentIds ?? []);
   const semanticSpecHref = `../../specs/${inventory.id}.yaml`;
+  const demoPageHref = `../../${DEMOS_ROOT_DIR}/${inventory.id}/`;
   const componentRows = components
     .map((component) => {
       const docUrl = buildComponentDocUrl(inventory.id, component.id, inventory);
@@ -511,6 +818,11 @@ function renderDesignSystemPage(inventory, definition = null, hasSemanticSpec = 
         ${
           hasSemanticSpec
             ? `<p><strong>YAML spec:</strong> <a href="${escapeHtml(semanticSpecHref)}">${escapeHtml(semanticSpecHref)}</a></p>`
+            : ""
+        }
+        ${
+          hasSemanticSpec
+            ? `<p><strong>Demo page:</strong> <a href="${escapeHtml(demoPageHref)}">${escapeHtml(demoPageHref)}</a></p>`
             : ""
         }
         <p><strong>Scanner coverage:</strong> ${escapeHtml(inventory.scannerCoverage?.status ?? "unknown")}</p>
@@ -2086,6 +2398,7 @@ export async function writeArchiveSite(outputDir, history) {
   const inventories = await loadDesignSystemInventories();
   const comparisonMatrix = await loadDesignSystemComparisonMatrix();
   const semanticSpecIds = await loadSemanticSpecIds();
+  const semanticSpecs = await loadSemanticSpecs();
   const definitions = new Map(
     listDetectableSystemDefinitions().map((definition) => [definition.id, definition])
   );
@@ -2162,6 +2475,15 @@ export async function writeArchiveSite(outputDir, history) {
     const destinationPath = path.join(specsOutputDir, `${specId}.yaml`);
     const content = await fs.readFile(sourcePath, "utf8");
     await fs.writeFile(destinationPath, content, "utf8");
+  }
+
+  const demosOutputDir = path.join(outputDir, DEMOS_ROOT_DIR);
+  await fs.mkdir(demosOutputDir, { recursive: true });
+
+  for (const spec of semanticSpecs) {
+    const demoDir = path.join(demosOutputDir, spec.id);
+    await fs.mkdir(demoDir, { recursive: true });
+    await fs.writeFile(path.join(demoDir, "index.html"), renderDemoPage(spec), "utf8");
   }
 
   const comparisonDir = path.join(outputDir, "comparison");

@@ -263,6 +263,7 @@ They currently focus on demo-critical structure:
 - accessibility expectations
 
 The generated Pages site publishes these raw specs under `/specs/<system-id>.yaml`, and each system page links to its spec directly.
+It also now publishes starter demo pages under `/demos/<system-id>/`, generated from those YAML specs for semantic review and testing.
 
 ### SCAN issue convention
 
