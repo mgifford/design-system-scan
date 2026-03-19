@@ -30,6 +30,15 @@ function extractIssueNumber(scan) {
   return match?.[1] ?? null;
 }
 
+function formatScanDateSlug(value) {
+  const parsed = new Date(value ?? "");
+  if (Number.isNaN(parsed.getTime())) {
+    return slugify(value ?? "unknown-date");
+  }
+
+  return parsed.toISOString().replaceAll(":", "-").replaceAll(".", "-");
+}
+
 export function getScanReportRelativeDir(scan) {
   const issueNumber = extractIssueNumber(scan);
 
@@ -142,6 +151,24 @@ function buildReportsLandingHtml() {
     </main>
   </body>
 </html>`;
+}
+
+function buildIssueAliasPath(scan) {
+  const issueNumber = extractIssueNumber(scan);
+  if (!issueNumber) {
+    return null;
+  }
+
+  return `${REPORTS_ROOT_DIR}/${issueNumber}/index.html`;
+}
+
+function buildIssueDateAliasPath(scan) {
+  const issueNumber = extractIssueNumber(scan);
+  if (!issueNumber) {
+    return null;
+  }
+
+  return `${REPORTS_ROOT_DIR}/${issueNumber}/${formatScanDateSlug(scan.scannedAt)}/index.html`;
 }
 
 function renderDateCell(value, id) {
@@ -1085,6 +1112,20 @@ export async function writeArchiveSite(outputDir, history) {
       const aliasPath = path.join(outputDir, reportPaths.latestAlias);
       await fs.mkdir(path.dirname(aliasPath), { recursive: true });
       await fs.writeFile(aliasPath, buildScanReportHtml(scan), "utf8");
+    }
+
+    const issueAliasPath = buildIssueAliasPath(scan);
+    if (issueAliasPath) {
+      const absoluteIssueAliasPath = path.join(outputDir, issueAliasPath);
+      await fs.mkdir(path.dirname(absoluteIssueAliasPath), { recursive: true });
+      await fs.writeFile(absoluteIssueAliasPath, buildScanReportHtml(scan), "utf8");
+    }
+
+    const issueDateAliasPath = buildIssueDateAliasPath(scan);
+    if (issueDateAliasPath) {
+      const absoluteIssueDateAliasPath = path.join(outputDir, issueDateAliasPath);
+      await fs.mkdir(path.dirname(absoluteIssueDateAliasPath), { recursive: true });
+      await fs.writeFile(absoluteIssueDateAliasPath, buildScanReportHtml(scan), "utf8");
     }
   }
 }

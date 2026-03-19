@@ -161,6 +161,11 @@ test("archive site writes stable per-issue report files", async () => {
     path.join(outputDir, "reports/issues/issue-6/run-23253601700/report.html"),
     "utf8"
   );
+  const issueAlias = await fs.readFile(path.join(outputDir, "reports/6/index.html"), "utf8");
+  const issueDateAlias = await fs.readFile(
+    path.join(outputDir, "reports/6/2026-03-18T18-54-17-707Z/index.html"),
+    "utf8"
+  );
   const archiveIndex = await fs.readFile(path.join(outputDir, "reports/index.html"), "utf8");
   const rootIndex = await fs.readFile(path.join(outputDir, "index.html"), "utf8");
   const markdown = await fs.readFile(
@@ -183,6 +188,8 @@ test("archive site writes stable per-issue report files", async () => {
   assert.match(rootIndex, /GOV\.UK/);
   assert.match(archiveIndex, /Design System Scan Archive/);
   assert.match(html, /Accepted URLs<\/strong>10/);
+  assert.match(issueAlias, /Design system scan report/);
+  assert.match(issueDateAlias, /Design system scan report/);
   assert.match(html, /<a href="\.\/report\.md">Markdown report<\/a>/);
   assert.match(html, /<a href="\.\.\/\.\.\/\.\.\/">Archive index<\/a>/);
   assert.match(markdown, /Accepted URLs: 10/);
