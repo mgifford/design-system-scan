@@ -17,6 +17,19 @@ function uniq(values) {
   return [...new Set(values)];
 }
 
+function sleep(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+const RETRYABLE_STATUSES = new Set([429, 503]);
+const MAX_FETCH_RETRIES = 3;
+const FETCH_HEADERS = {
+  accept: "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+  "accept-language": "en-US,en;q=0.5",
+  "user-agent":
+    "design-system-scan/0.1 (+https://github.com/mgifford/design-system-scan)",
+};
+
 function normalizeWhitespace(value) {
   return value.replace(/\s+/gu, " ").trim();
 }
@@ -31,24 +44,46 @@ function createTimeoutSignal(timeoutMs) {
 }
 
 async function fetchText(url, timeoutMs) {
-  const timeout = createTimeoutSignal(timeoutMs);
+  for (let attempt = 0; attempt <= MAX_FETCH_RETRIES; attempt++) {
+    const timeout = createTimeoutSignal(timeoutMs);
 
-  try {
-    const response = await fetch(url, {
-      signal: timeout.signal,
-      headers: {
-        "user-agent": "design-system-scan/0.1",
-      },
-    });
+    try {
+      const response = await fetch(url, {
+        signal: timeout.signal,
+        headers: FETCH_HEADERS,
+      });
 
-    if (!response.ok) {
-      throw new Error(`HTTP ${response.status}`);
+      if (RETRYABLE_STATUSES.has(response.status) && attempt < MAX_FETCH_RETRIES) {
+        const retryAfterHeader = response.headers.get("retry-after");
+        let delayMs;
+        if (retryAfterHeader) {
+          const seconds = Number(retryAfterHeader);
+          if (Number.isFinite(seconds)) {
+            delayMs = Math.min(seconds * 1000, 30000);
+          } else {
+            const retryDate = Date.parse(retryAfterHeader);
+            delayMs = Number.isNaN(retryDate)
+              ? Math.min(1000 * 2 ** attempt, 8000)
+              : Math.min(Math.max(retryDate - Date.now(), 0), 30000);
+          }
+        } else {
+          delayMs = Math.min(1000 * 2 ** attempt, 8000);
+        }
+        await sleep(delayMs);
+        continue;
+      }
+
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}`);
+      }
+
+      return await response.text();
+    } finally {
+      timeout.clear();
     }
-
-    return await response.text();
-  } finally {
-    timeout.clear();
   }
+
+  throw new Error("Max retries exceeded");
 }
 
 function resolveUrl(baseUrl, candidate) {
@@ -671,6 +706,10 @@ export async function discoverUrls(seedUrls, options) {
       if (!seen.has(nextUrl) && queue.length + discovered.length < options.maxPages * 4) {
         queue.push(nextUrl);
       }
+    }
+
+    if (options.crawlDelayMs > 0 && queue.length > 0 && discovered.length < options.maxPages) {
+      await sleep(options.crawlDelayMs);
     }
   }
 
