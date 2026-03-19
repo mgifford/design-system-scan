@@ -868,6 +868,24 @@ function summarizeTopItems(items, limit = 6) {
     .join("; ");
 }
 
+function getDetectedSystemName(scan) {
+  return scan.systemInfo?.name ?? scan.system;
+}
+
+function renderDetectedSystemCell(scan) {
+  const systemName = getDetectedSystemName(scan);
+  const proposedVersion = getProposedVersion(scan);
+
+  if (!proposedVersion) {
+    return escapeHtml(systemName);
+  }
+
+  return `
+    <div>${escapeHtml(systemName)}</div>
+    <div class="muted">v${escapeHtml(proposedVersion)}</div>
+  `;
+}
+
 function statusBadge(status) {
   const tone = {
     full: "full",
@@ -1053,12 +1071,16 @@ function renderArchiveRows(scans) {
       const templateSnapshot = summarizeTopItems(scan.siteSummary?.templates, 4);
       const reportPaths = scan.reportPaths ?? getScanReportPaths(scan);
       const dateId = `scan-date-${escapeHtml(scan.id)}`;
+      const systemFilterText = [getDetectedSystemName(scan), getProposedVersion(scan) ?? ""]
+        .join(" ")
+        .trim()
+        .toLowerCase();
 
       return `
-        <tr data-filter="${escapeHtml([scan.seedUrl, scan.system, scan.trigger].join(" ").toLowerCase())}" id="scan-${escapeHtml(scan.id)}">
+        <tr data-filter="${escapeHtml([scan.seedUrl, systemFilterText, scan.trigger].join(" ").toLowerCase())}" id="scan-${escapeHtml(scan.id)}">
           <td>${renderDateCell(scan.scannedAt, dateId)}</td>
           <td><a href="${escapeHtml(scan.seedUrl)}">${escapeHtml(scan.seedUrl)}</a></td>
-          <td>${escapeHtml(scan.system)}</td>
+          <td>${renderDetectedSystemCell(scan)}</td>
           <td>${renderTrigger(scan.trigger, scan.repository)}</td>
           <td>${scan.siteSummary?.successfulPageCount ?? 0}/${scan.siteSummary?.pageCount ?? 0}</td>
           <td>${scan.siteSummary?.fingerprintedPageCount ?? 0}</td>

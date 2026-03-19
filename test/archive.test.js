@@ -25,6 +25,7 @@ test("archive dates use accessible tooltip markup instead of title attributes", 
         maxPages: 10,
         acceptedUrls: 10,
         sha: "abcdef123456",
+        systemInfo: { name: "CMS Design System" },
         siteSummary: {
           successfulPageCount: 10,
           pageCount: 10,
@@ -32,7 +33,22 @@ test("archive dates use accessible tooltip markup instead of title attributes", 
           components: [{ name: "Accordion", full: 4, partial: 1 }],
           templates: [{ name: "Documentation page", full: 1, partial: 1 }],
         },
-        pages: [],
+        pages: [
+          {
+            url: "https://design.cms.gov/",
+            fingerprint: { status: "full", coverage: 1 },
+            summary: {
+              fullComponentCount: 1,
+              partialComponentCount: 0,
+              matchedTemplateCount: 0,
+              overallCoverage: 1,
+            },
+            versions: ["13.1.0"],
+            components: [],
+            templates: [],
+            assetErrors: [],
+          },
+        ],
       },
     ],
   });
@@ -43,6 +59,8 @@ test("archive dates use accessible tooltip markup instead of title attributes", 
   assert.match(html, /aria-label="Copy link to Reports section"/);
   assert.match(html, />Issue 6</);
   assert.match(html, /issues\/issue-6\/run-23253601700\/report\.html/);
+  assert.match(html, /CMS Design System/);
+  assert.match(html, />v13\.1\.0</);
   assert.doesNotMatch(html, /title=/);
   assert.match(html, /id="theme-toggle"/);
   assert.match(html, /prefers-color-scheme: dark/);
