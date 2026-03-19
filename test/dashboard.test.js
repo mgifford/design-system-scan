@@ -16,6 +16,7 @@ test("dashboard includes accessible dark mode support", () => {
       pages: [],
     },
     {
+      repository: "mgifford/design-system-scan",
       runUrl: "https://github.com/mgifford/design-system-scan/actions/runs/1",
       trigger: "manual",
       url: "https://example.gov/",
@@ -47,6 +48,7 @@ test("dashboard uses modal dialogs for page details", () => {
       pages: [
         {
           url: "https://example.gov/",
+          scannedAt: "2026-03-19T15:30:00.000Z",
           siteFingerprint: { status: "full", coverage: 1 },
           summary: {
             fullComponentCount: 2,
@@ -70,8 +72,9 @@ test("dashboard uses modal dialogs for page details", () => {
       ],
     },
     {
+      repository: "mgifford/design-system-scan",
       runUrl: "https://github.com/mgifford/design-system-scan/actions/runs/1",
-      trigger: "manual",
+      trigger: "issue-7",
       url: "https://example.gov/",
       system: "uswds",
       maxPages: "10",
@@ -83,6 +86,8 @@ test("dashboard uses modal dialogs for page details", () => {
   assert.match(html, /<dialog id="page-modal-/);
   assert.match(html, />Details<\/button>/);
   assert.match(html, /showModal\(\)/);
+  assert.match(html, /<strong>Date<\/strong>2026-03-19T15:30:00.000Z/);
+  assert.match(html, /<strong>Trigger<\/strong><a href="https:\/\/github\.com\/mgifford\/design-system-scan\/issues\/7">Issue 7<\/a>/);
   assert.doesNotMatch(html, /<details>/);
   assert.doesNotMatch(html, /<summary>Details<\/summary>/);
 });

@@ -12,6 +12,19 @@ function formatPercent(value) {
   return `${Math.round((value ?? 0) * 100)}%`;
 }
 
+function renderTrigger(trigger, repository) {
+  const value = String(trigger ?? "");
+  const issueMatch = /^issue-(\d+)$/i.exec(value);
+
+  if (issueMatch && repository) {
+    const issueNumber = issueMatch[1];
+    const issueUrl = `https://github.com/${repository}/issues/${issueNumber}`;
+    return `<a href="${escapeHtml(issueUrl)}">Issue ${escapeHtml(issueNumber)}</a>`;
+  }
+
+  return escapeHtml(value);
+}
+
 function statusBadge(status) {
   const tone = {
     full: "full",
@@ -175,6 +188,7 @@ function renderSummaryTable(title, items, countLabel) {
 
 export function buildDashboardHtml(report, metadata) {
   const pageRows = report.pages.map(renderPageRow).join("");
+  const scannedAt = report.pages[0]?.scannedAt ?? metadata.scannedAt ?? "";
 
   return `<!doctype html>
 <html lang="en">
@@ -470,7 +484,8 @@ export function buildDashboardHtml(report, metadata) {
           </div>
         </div>
         <div class="meta">
-          <div class="meta-card"><strong>Trigger</strong>${escapeHtml(metadata.trigger)}</div>
+          <div class="meta-card"><strong>Date</strong>${escapeHtml(scannedAt || "Unknown")}</div>
+          <div class="meta-card"><strong>Trigger</strong>${renderTrigger(metadata.trigger, metadata.repository)}</div>
           <div class="meta-card"><strong>Seed URL</strong>${escapeHtml(metadata.url)}</div>
           <div class="meta-card"><strong>System</strong>${escapeHtml(report.system?.name ?? metadata.system ?? "Unknown")}</div>
           <div class="meta-card"><strong>Theme</strong>${escapeHtml(report.siteSummary.primaryTheme?.name ?? "None detected")}</div>
