@@ -1343,6 +1343,8 @@ export function buildArchiveIndexHtml(history) {
       }
 
       body { margin: 0; font-family: ui-sans-serif, system-ui, sans-serif; color: var(--color-text); background: linear-gradient(180deg, var(--color-background) 0%, var(--color-background-accent) 100%); }
+      .site-nav { max-width: 96rem; margin: 0 auto; padding: 1rem 1rem 0; }
+      .site-nav ul { list-style: none; padding: 0; margin: 0; display: flex; gap: 1rem; flex-wrap: wrap; }
       main { max-width: 96rem; margin: 0 auto; padding: 2rem 1rem 4rem; }
       .hero, section { background: var(--color-surface); border: 1px solid var(--color-border); box-shadow: 0 12px 32px var(--color-shadow); padding: 1rem 1.25rem; margin-bottom: 1rem; }
       .heading-anchor-group { display: flex; align-items: baseline; gap: .5rem; }

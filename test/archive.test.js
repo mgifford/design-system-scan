@@ -239,6 +239,9 @@ test("archive site writes stable per-issue report files", async () => {
   assert.match(rootIndex, /Design System Comparison/);
   assert.match(rootIndex, /Join the community on GitHub/);
   assert.match(archiveIndex, /Design System Scan Reports/);
+  assert.match(archiveIndex, /class="site-nav"/);
+  assert.match(archiveIndex, /\.site-nav \{ max-width: 96rem; margin: 0 auto; padding: 1rem 1rem 0; \}/);
+  assert.match(archiveIndex, /\.site-nav ul \{ list-style: none; padding: 0; margin: 0; display: flex; gap: 1rem; flex-wrap: wrap; \}/);
   assert.match(archiveIndex, /Latest report/);
   assert.match(archiveIndex, /Archives/);
   assert.match(archiveIndex, /newest report for each trigger/);
