@@ -1,0 +1,67 @@
+system:
+  id: govuk
+  name: GOV.UK Design System
+  homepage: https://design-system.service.gov.uk/
+  docs:
+    - https://design-system.service.gov.uk/components/
+  demo_focus:
+    - input
+    - select
+    - checkboxes
+    - radios
+    - button
+    - error summary
+    - breadcrumbs
+    - skip link
+components:
+  - id: input
+    name: Input
+    purpose: Collect single-line text with a clear label and hinting pattern.
+    canonical_patterns:
+      - class: govuk-input
+    required_elements:
+      - label
+      - input
+  - id: select
+    name: Select
+    purpose: Offer a constrained single-choice list.
+    canonical_patterns:
+      - class: govuk-select
+  - id: checkboxes
+    name: Checkboxes
+    purpose: Allow multiple selections in a named group.
+    canonical_patterns:
+      - class: govuk-checkboxes
+    required_elements:
+      - fieldset
+      - legend
+  - id: radios
+    name: Radios
+    purpose: Allow one selection in a named group.
+    canonical_patterns:
+      - class: govuk-radios
+    required_elements:
+      - fieldset
+      - legend
+  - id: button
+    name: Button
+    purpose: Trigger the primary action.
+    canonical_patterns:
+      - class: govuk-button
+  - id: error-summary
+    name: Error summary
+    purpose: Summarize validation problems at the top of a form.
+    canonical_patterns:
+      - class: govuk-error-summary
+    accessibility:
+      - The summary should link to the fields in error.
+  - id: breadcrumbs
+    name: Breadcrumbs
+    purpose: Show the current page hierarchy.
+    canonical_patterns:
+      - class: govuk-breadcrumbs
+  - id: skip-link
+    name: Skip link
+    purpose: Help keyboard users bypass repeated navigation.
+    canonical_patterns:
+      - class: govuk-skip-link

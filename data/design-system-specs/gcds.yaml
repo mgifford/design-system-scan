@@ -1,0 +1,59 @@
+system:
+  id: gcds
+  name: GC Design System
+  homepage: https://design-system.canada.ca/
+  docs:
+    - https://design-system.canada.ca/en/components/
+  demo_focus:
+    - input
+    - select
+    - checkboxes
+    - radio group
+    - button
+    - error summary
+    - breadcrumbs
+    - details
+components:
+  - id: input
+    name: Input
+    purpose: Collect single-line text in a labelled field.
+    canonical_patterns:
+      - tag: gcds-input
+    required_attributes:
+      - input-id
+      - label
+  - id: select
+    name: Select
+    purpose: Offer a constrained single-choice list.
+    canonical_patterns:
+      - tag: gcds-select
+  - id: checkboxes
+    name: Checkboxes
+    purpose: Allow multiple selections in a named group.
+    canonical_patterns:
+      - tag: gcds-checkboxes
+  - id: radio-group
+    name: Radio group
+    purpose: Allow one selection in a named group.
+    canonical_patterns:
+      - tag: gcds-radio-group
+  - id: button
+    name: Button
+    purpose: Trigger the primary action.
+    canonical_patterns:
+      - tag: gcds-button
+  - id: error-summary
+    name: Error summary
+    purpose: Summarize form errors at the top of the page.
+    canonical_patterns:
+      - tag: gcds-error-summary
+  - id: breadcrumbs
+    name: Breadcrumbs
+    purpose: Show the page hierarchy.
+    canonical_patterns:
+      - tag: gcds-breadcrumbs
+  - id: details
+    name: Details
+    purpose: Progressively disclose supporting content.
+    canonical_patterns:
+      - tag: gcds-details

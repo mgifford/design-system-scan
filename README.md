@@ -141,8 +141,10 @@ https://example.gov/
 
 - [`ACCESSIBILITY.md`](/Users/mike.gifford/design-system-scan/ACCESSIBILITY.md): locked accessibility patterns for report UI behavior
 - [`docs/design-system-component-matrix.md`](/Users/mike.gifford/design-system-scan/docs/design-system-component-matrix.md): cross-system semantic matrix and CMS theme comparison
+- [`docs/design-system-semantic-specs.md`](/Users/mike.gifford/design-system-scan/docs/design-system-semantic-specs.md): how the YAML semantic specs support demo generation and cross-system review
 - [`data/design-system-component-matrix.json`](/Users/mike.gifford/design-system-scan/data/design-system-component-matrix.json): machine-readable semantic component matrix
 - [`data/design-systems/`](/Users/mike.gifford/design-system-scan/data/design-systems): official component inventories for each tracked design system
+- [`data/design-system-specs/`](/Users/mike.gifford/design-system-scan/data/design-system-specs): focused YAML semantic specs for demo-friendly components and form patterns
 - [`src/cli.js`](/Users/mike.gifford/design-system-scan/src/cli.js): command-line entrypoint
 - [`src/scanner.js`](/Users/mike.gifford/design-system-scan/src/scanner.js): fetch, extract, score, and summarize pages
 - [`src/snapshots.js`](/Users/mike.gifford/design-system-scan/src/snapshots.js): save, load, and diff scan snapshots
@@ -165,6 +167,7 @@ Recommended workflow:
 3. Adjust weights and thresholds when false positives or false negatives show up in real scans.
 4. Stamp each definition with a tracked revision like `starter-2026-03` so rule changes are visible over time.
 5. Save raw JSON scan results if you want to compare the same site across months or against new rule versions.
+6. Keep the YAML semantic spec for each design system focused on demo-critical component structure and accessibility expectations, especially for form patterns.
 
 Suggested snapshot convention:
 
@@ -215,6 +218,26 @@ npm run validate:inventories
 ```
 
 The workflow uploads JSON and Markdown artifacts so definition drift can be reviewed and updated in this repo.
+
+## Semantic YAML specs
+
+The repo now also includes focused YAML semantic specs for each supported system under [`data/design-system-specs/`](/Users/mike.gifford/design-system-scan/data/design-system-specs).
+
+These are intentionally narrower than the full inventory JSON files. They are meant to support:
+
+- one-page demo sites for each design system
+- AI-assisted interpretation of design-system instructions
+- cross-system semantic comparison for common patterns like inputs, selects, validation, and buttons
+
+They currently focus on demo-critical structure:
+
+- system metadata
+- demo focus areas
+- canonical selectors or custom elements
+- required elements and attributes
+- accessibility expectations
+
+The generated Pages site publishes these raw specs under `/specs/<system-id>.yaml`, and each system page links to its spec directly.
 
 ### SCAN issue convention
 

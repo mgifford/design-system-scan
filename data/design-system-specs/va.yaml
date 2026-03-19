@@ -1,0 +1,76 @@
+system:
+  id: va
+  name: VA.gov Design System
+  homepage: https://design.va.gov/
+  docs:
+    - https://design.va.gov/components/
+  demo_focus:
+    - text input
+    - select
+    - checkbox group
+    - radio button
+    - button
+    - alert
+    - breadcrumb
+    - modal
+components:
+  - id: text-input
+    name: Text input
+    purpose: Capture single-line text with clear labeling.
+    canonical_patterns:
+      - tag: va-text-input
+    required_attributes:
+      - label
+      - name
+    accessibility:
+      - The label attribute should provide the accessible name.
+  - id: select
+    name: Select
+    purpose: Provide a constrained single-choice list.
+    canonical_patterns:
+      - tag: va-select
+    required_attributes:
+      - label
+      - name
+  - id: checkbox
+    name: Checkbox
+    purpose: Support independent option selection.
+    canonical_patterns:
+      - tag: va-checkbox
+    required_attributes:
+      - label
+      - name
+  - id: radio-button
+    name: Radio button
+    purpose: Allow one choice from a small set.
+    canonical_patterns:
+      - tag: va-radio
+    required_attributes:
+      - label
+      - name
+  - id: button
+    name: Button
+    purpose: Trigger the primary user action.
+    canonical_patterns:
+      - tag: va-button
+    required_attributes:
+      - text
+  - id: alert
+    name: Alert
+    purpose: Expose status, warning, and error messages.
+    canonical_patterns:
+      - tag: va-alert
+    accessibility:
+      - The alert status should reflect the urgency of the message.
+  - id: breadcrumbs
+    name: Breadcrumbs
+    purpose: Indicate the page hierarchy.
+    canonical_patterns:
+      - tag: va-breadcrumbs
+  - id: modal
+    name: Modal
+    purpose: Present focused content or confirmation flows in an overlay.
+    canonical_patterns:
+      - tag: va-modal
+    accessibility:
+      - Focus should move into the dialog when it opens and return when it closes.

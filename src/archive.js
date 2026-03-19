@@ -18,6 +18,12 @@ const DESIGN_SYSTEM_MATRIX_PATH = path.join(
   "data",
   "design-system-component-matrix.json"
 );
+const DESIGN_SYSTEM_SPECS_DIR = path.join(
+  path.dirname(fileURLToPath(import.meta.url)),
+  "..",
+  "data",
+  "design-system-specs"
+);
 
 function escapeHtml(value) {
   return String(value ?? "")
@@ -447,9 +453,10 @@ function renderFingerprintSignals(definition) {
   `;
 }
 
-function renderDesignSystemPage(inventory, definition = null) {
+function renderDesignSystemPage(inventory, definition = null, hasSemanticSpec = false) {
   const components = getInventoryComponents(inventory);
   const indexedIds = new Set(inventory.scannerCoverage?.indexedComponentIds ?? []);
+  const semanticSpecHref = `../../specs/${inventory.id}.yaml`;
   const componentRows = components
     .map((component) => {
       const docUrl = buildComponentDocUrl(inventory.id, component.id, inventory);
@@ -525,6 +532,11 @@ function renderDesignSystemPage(inventory, definition = null) {
       <section>
         ${renderAnchoredHeading(2, "Official documentation", "official-documentation")}
         <ul>${docsLinks}</ul>
+        ${
+          hasSemanticSpec
+            ? `<h3>Semantic YAML spec</h3><p>This system also has a focused YAML reference for demo generation and semantic review: <a href="${escapeHtml(semanticSpecHref)}">${escapeHtml(semanticSpecHref)}</a></p>`
+            : ""
+        }
         ${themes ? `<h3>Themes</h3><ul>${themes}</ul>` : ""}
         ${notes ? `<h3>Notes</h3><ul>${notes}</ul>` : ""}
       </section>
@@ -572,6 +584,19 @@ async function loadDesignSystemInventories() {
 async function loadDesignSystemComparisonMatrix() {
   const content = await fs.readFile(DESIGN_SYSTEM_MATRIX_PATH, "utf8");
   return JSON.parse(content);
+}
+
+async function loadSemanticSpecIds() {
+  try {
+    const entries = await fs.readdir(DESIGN_SYSTEM_SPECS_DIR);
+    return new Set(
+      entries
+        .filter((entry) => entry.endsWith(".yaml"))
+        .map((entry) => entry.replace(/\.yaml$/u, ""))
+    );
+  } catch {
+    return new Set();
+  }
 }
 
 function summarizeStatus(status, components) {
@@ -2064,6 +2089,7 @@ export function buildScanReportCsv(scan) {
 export async function writeArchiveSite(outputDir, history) {
   const inventories = await loadDesignSystemInventories();
   const comparisonMatrix = await loadDesignSystemComparisonMatrix();
+  const semanticSpecIds = await loadSemanticSpecIds();
   const definitions = new Map(
     listDetectableSystemDefinitions().map((definition) => [definition.id, definition])
   );
@@ -2123,9 +2149,23 @@ export async function writeArchiveSite(outputDir, history) {
     await fs.mkdir(systemDir, { recursive: true });
     await fs.writeFile(
       path.join(systemDir, "index.html"),
-      renderDesignSystemPage(inventory, definitions.get(inventory.id) ?? null),
+      renderDesignSystemPage(
+        inventory,
+        definitions.get(inventory.id) ?? null,
+        semanticSpecIds.has(inventory.id)
+      ),
       "utf8"
     );
+  }
+
+  const specsOutputDir = path.join(outputDir, "specs");
+  await fs.mkdir(specsOutputDir, { recursive: true });
+
+  for (const specId of semanticSpecIds) {
+    const sourcePath = path.join(DESIGN_SYSTEM_SPECS_DIR, `${specId}.yaml`);
+    const destinationPath = path.join(specsOutputDir, `${specId}.yaml`);
+    const content = await fs.readFile(sourcePath, "utf8");
+    await fs.writeFile(destinationPath, content, "utf8");
   }
 
   const comparisonDir = path.join(outputDir, "comparison");

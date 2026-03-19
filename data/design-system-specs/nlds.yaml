@@ -1,0 +1,63 @@
+system:
+  id: nlds
+  name: NL Design System
+  homepage: https://nldesignsystem.nl/
+  docs:
+    - https://nldesignsystem.nl/componenten/
+  demo_focus:
+    - text input
+    - select
+    - checkbox
+    - radio button
+    - button
+    - breadcrumb navigation
+    - skip link
+    - dialog
+components:
+  - id: text-input
+    name: Text Input
+    purpose: Collect single-line text with a programmatic label.
+    canonical_patterns:
+      - class: nl-text-input
+      - tag: nl-text-input
+  - id: select
+    name: Select
+    purpose: Offer a constrained list of options.
+    canonical_patterns:
+      - class: nl-select
+      - tag: nl-select
+  - id: checkbox
+    name: Checkbox
+    purpose: Support independent option selection.
+    canonical_patterns:
+      - class: nl-checkbox
+      - tag: nl-checkbox
+  - id: radio-button
+    name: Radio Button
+    purpose: Support a single choice inside a group.
+    canonical_patterns:
+      - class: nl-radio-button
+      - tag: nl-radio-button
+  - id: button
+    name: Button
+    purpose: Trigger the primary user action.
+    canonical_patterns:
+      - class: nl-button
+      - tag: nl-button
+  - id: breadcrumb-navigation
+    name: Breadcrumb Navigation
+    purpose: Show page hierarchy and wayfinding.
+    canonical_patterns:
+      - class: nl-breadcrumb-navigation
+  - id: skip-link
+    name: Skip Link
+    purpose: Let keyboard users bypass repeated page furniture.
+    canonical_patterns:
+      - class: nl-skip-link
+      - tag: nl-skip-link
+  - id: dialog
+    name: Dialog
+    purpose: Present focused content in an overlay.
+    canonical_patterns:
+      - class: nl-dialog
+      - tag: nl-dialog

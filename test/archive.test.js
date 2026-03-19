@@ -203,6 +203,7 @@ test("archive site writes stable per-issue report files", async () => {
   );
   const archiveIndex = await fs.readFile(path.join(outputDir, "reports/index.html"), "utf8");
   const rootIndex = await fs.readFile(path.join(outputDir, "index.html"), "utf8");
+  const yamlSpec = await fs.readFile(path.join(outputDir, "specs/uswds.yaml"), "utf8");
   const markdown = await fs.readFile(
     path.join(outputDir, "reports/issues/issue-6/run-23253601700/report.md"),
     "utf8"
@@ -269,6 +270,8 @@ test("archive site writes stable per-issue report files", async () => {
   assert.match(systemPage, /Fingerprint thresholds:/);
   assert.match(systemPage, /Compiled USWDS stylesheet/);
   assert.match(systemPage, /uswds\.min\.css/);
+  assert.match(systemPage, /Semantic YAML spec/);
+  assert.match(systemPage, /\.\.\/\.\.\/specs\/uswds\.yaml/);
   assert.match(systemPage, /USWDS class prefix/);
   assert.match(systemPage, /usa-/);
   assert.match(systemPage, /id="component-accordion"/);
@@ -293,6 +296,17 @@ test("archive site writes stable per-issue report files", async () => {
   assert.match(gcdsPage, /Breadcrumbs/);
   assert.match(gcdsPage, /https:\/\/design-system\.canada\.ca\/en\/components\/breadcrumbs\//);
 
+  const kolibriPage = await fs.readFile(path.join(outputDir, "systems/kolibri/index.html"), "utf8");
+  assert.match(kolibriPage, /KoliBri - Public UI/);
+  assert.match(kolibriPage, /Semantic YAML spec/);
+  assert.match(kolibriPage, /How this system is identified/);
+  assert.match(kolibriPage, /@public-ui\/components/);
+  assert.match(kolibriPage, /https:\/\/public-ui\.github\.io\/docs\/components\/skip-nav/);
+
+  assert.match(yamlSpec, /^system:/m);
+  assert.match(yamlSpec, /^components:/m);
+  assert.match(yamlSpec, /^  id: uswds/m);
+
   const comparisonPage = await fs.readFile(path.join(outputDir, "comparison/index.html"), "utf8");
   assert.match(comparisonPage, /Design system comparison/);
   assert.match(comparisonPage, /Choose systems to compare/);
@@ -313,6 +327,7 @@ test("archive site writes stable per-issue report files", async () => {
   assert.match(comparisonPage, /CMS Design System/);
   assert.match(comparisonPage, /GOV\.UK Design System/);
   assert.match(comparisonPage, /GC Design System/);
+  assert.match(comparisonPage, /KoliBri - Public UI/);
   assert.match(comparisonPage, /Latest report/);
   assert.match(comparisonPage, /href="#component-family-matrix"/);
   assert.match(comparisonPage, /Mostly converged/);

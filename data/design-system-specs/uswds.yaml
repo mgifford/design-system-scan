@@ -1,0 +1,91 @@
+system:
+  id: uswds
+  name: U.S. Web Design System
+  homepage: https://designsystem.digital.gov/
+  docs:
+    - https://designsystem.digital.gov/components/overview/
+  demo_focus:
+    - text input
+    - select
+    - checkbox
+    - radio buttons
+    - button
+    - alert
+    - validation
+    - breadcrumb
+    - skip link
+components:
+  - id: text-input
+    name: Text input
+    purpose: Collect a single line of text with an explicit programmatic label.
+    canonical_patterns:
+      - class: usa-input
+    required_elements:
+      - label
+      - input
+    required_attributes:
+      - id
+      - for
+    accessibility:
+      - A visible label should reference the input by id.
+      - Error text should be associated when validation is shown.
+  - id: select
+    name: Select
+    purpose: Offer a constrained single-choice list.
+    canonical_patterns:
+      - class: usa-select
+    required_elements:
+      - label
+      - select
+    accessibility:
+      - The select should have a visible label.
+  - id: checkbox
+    name: Checkbox
+    purpose: Capture one or more selected options.
+    canonical_patterns:
+      - class: usa-checkbox
+    required_elements:
+      - input[type="checkbox"]
+      - label
+    accessibility:
+      - Checkbox labels should be explicitly associated with each control.
+  - id: radio-buttons
+    name: Radio buttons
+    purpose: Capture a single selection from a small set of options.
+    canonical_patterns:
+      - class: usa-radio
+    required_elements:
+      - fieldset
+      - legend
+      - input[type="radio"]
+      - label
+  - id: button
+    name: Button
+    purpose: Trigger the primary form or page action.
+    canonical_patterns:
+      - class: usa-button
+    required_elements:
+      - button
+  - id: alert
+    name: Alert
+    purpose: Surface status, success, warning, or error messages.
+    canonical_patterns:
+      - class: usa-alert
+    accessibility:
+      - Important alerts should expose an appropriate live-region or status pattern.
+  - id: breadcrumb
+    name: Breadcrumb
+    purpose: Show the page position within a hierarchy.
+    canonical_patterns:
+      - class: usa-breadcrumb
+    required_elements:
+      - nav
+      - ol
+  - id: validation
+    name: Validation
+    purpose: Communicate field-level or form-level problems clearly.
+    canonical_patterns:
+      - class: usa-error-message
+      - class: usa-input--error
+    accessibility:
+      - Validation messaging should be programmatically associated with the affected field.

@@ -1,0 +1,67 @@
+system:
+  id: cms
+  name: CMS Design System
+  homepage: https://design.cms.gov/
+  docs:
+    - https://design.cms.gov/components/overview/
+  demo_focus:
+    - text field
+    - dropdown
+    - choice
+    - button
+    - alert
+    - dialog
+    - header
+    - footer
+components:
+  - id: text-field
+    name: Text field
+    purpose: Collect single-line text with a visible label.
+    canonical_patterns:
+      - tag: ds-text-field
+      - class: ds-c-field
+    required_elements:
+      - label
+      - input
+  - id: dropdown
+    name: Dropdown
+    purpose: Offer a constrained single-choice list.
+    canonical_patterns:
+      - tag: ds-dropdown
+    required_elements:
+      - label
+      - select
+  - id: choice
+    name: Choice
+    purpose: Model checkbox and radio style form choices.
+    canonical_patterns:
+      - tag: ds-choice
+    accessibility:
+      - Choices should expose an explicit group label when rendered as a set.
+  - id: button
+    name: Button
+    purpose: Trigger the primary or secondary action.
+    canonical_patterns:
+      - tag: ds-button
+  - id: alert
+    name: Alert
+    purpose: Surface stateful messaging for users.
+    canonical_patterns:
+      - tag: ds-alert
+  - id: dialog
+    name: Dialog
+    purpose: Present focused overlays or confirmations.
+    canonical_patterns:
+      - tag: ds-dialog
+    accessibility:
+      - Focus should be contained while the dialog is open.
+  - id: header
+    name: Header
+    purpose: Provide site identity and top-level navigation.
+    canonical_patterns:
+      - class: ds-c-header
+  - id: footer
+    name: Footer
+    purpose: Provide site-wide closing navigation and supporting links.
+    canonical_patterns:
+      - class: ds-c-footer

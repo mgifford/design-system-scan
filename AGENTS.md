@@ -15,6 +15,7 @@ The repo includes:
 - NL Design System rules in [`src/systems/nlds.js`](/Users/mike.gifford/design-system-scan/src/systems/nlds.js)
 - GC Design System rules in [`src/systems/gcds.js`](/Users/mike.gifford/design-system-scan/src/systems/gcds.js)
 - KoliBri rules in [`src/systems/kolibri.js`](/Users/mike.gifford/design-system-scan/src/systems/kolibri.js)
+- YAML semantic specs in [`data/design-system-specs/`](/Users/mike.gifford/design-system-scan/data/design-system-specs)
 - GitHub Pages report renderers in [`src/archive.js`](/Users/mike.gifford/design-system-scan/src/archive.js) and [`src/dashboard.js`](/Users/mike.gifford/design-system-scan/src/dashboard.js)
 - workflow automation in [`.github/workflows/scan.yml`](/Users/mike.gifford/design-system-scan/.github/workflows/scan.yml)
 
@@ -40,6 +41,7 @@ Read these first when working here:
 - Scan with crawling: `node src/cli.js --system uswds --crawl --max-pages 20 https://example.gov/`
 - Emit JSON only: `node src/cli.js --system uswds --json https://example.gov/`
 - Validate live design-system inventories: `npm run validate:inventories`
+- Review focused semantic specs for demos and forms in [`data/design-system-specs/`](/Users/mike.gifford/design-system-scan/data/design-system-specs)
 
 ## Testing instructions
 
@@ -70,6 +72,7 @@ Read these first when working here:
 - For run-level details, prefer stable links over moving targets like `/latest/` when referencing a specific scan.
 - Keep labels short and user-facing. Prefer `Date` over internal timestamps or implementation jargon.
 - Keep the shared site header and footer consistent across landing, system, comparison, reports, archives, and dashboard pages.
+- When updating system reference pages, preserve the published raw YAML spec links under `/specs/<system-id>.yaml`.
 
 ## Accessibility rules
 
@@ -98,6 +101,7 @@ Important locked patterns:
   - absence of evidence
 - Prefer documented, stable tells from official design system docs.
 - When changing component coverage or thresholds, keep the reasoning visible in the rules and tests.
+- Keep the YAML semantic specs focused on structure and accessibility semantics, not exhaustive visual styling details.
 
 ## When updating issue comments or reports
 

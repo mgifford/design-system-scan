@@ -1,0 +1,66 @@
+system:
+  id: kolibri
+  name: KoliBri - Public UI
+  homepage: https://public-ui.github.io/
+  docs:
+    - https://public-ui.github.io/docs/components
+  demo_focus:
+    - input text
+    - select
+    - input checkbox
+    - input radio
+    - button
+    - alert
+    - breadcrumb
+    - skip navigation
+    - modal
+components:
+  - id: input-text
+    name: InputText
+    purpose: Collect single-line text with an explicit accessible label.
+    canonical_patterns:
+      - tag: kol-input-text
+    required_attributes:
+      - _label
+  - id: select
+    name: Select
+    purpose: Offer a constrained single-choice list.
+    canonical_patterns:
+      - tag: kol-select
+  - id: input-checkbox
+    name: InputCheckbox
+    purpose: Support independent option selection.
+    canonical_patterns:
+      - tag: kol-input-checkbox
+  - id: input-radio
+    name: InputRadio
+    purpose: Support a single selection inside a group.
+    canonical_patterns:
+      - tag: kol-input-radio
+  - id: button
+    name: Button
+    purpose: Trigger the primary action.
+    canonical_patterns:
+      - tag: kol-button
+  - id: alert
+    name: Alert
+    purpose: Surface status and warning messaging.
+    canonical_patterns:
+      - tag: kol-alert
+  - id: breadcrumb
+    name: Breadcrumb
+    purpose: Show the current location in a hierarchy.
+    canonical_patterns:
+      - tag: kol-breadcrumb
+  - id: skip-nav
+    name: SkipNav
+    purpose: Help keyboard users jump past repeated content.
+    canonical_patterns:
+      - tag: kol-skip-nav
+  - id: modal
+    name: Modal
+    purpose: Present focused content in an overlay dialog.
+    canonical_patterns:
+      - tag: kol-modal
+    accessibility:
+      - Focus should move into the dialog and return to the trigger on close.
