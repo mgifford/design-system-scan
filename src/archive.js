@@ -928,6 +928,8 @@ export function buildScanReportHtml(scan) {
     <style>
       body { margin: 0; font-family: ui-sans-serif, system-ui, sans-serif; color: #112e51; background: #eef5fb; }
       main { max-width: 88rem; margin: 0 auto; padding: 2rem 1rem 4rem; }
+      .report-nav { max-width: 88rem; margin: 0 auto; padding: 1rem 1rem 0; }
+      .report-nav ul { list-style: none; padding: 0; margin: 0; display: flex; gap: 1rem; flex-wrap: wrap; }
       section { background: #fff; border: 1px solid #d0d7de; box-shadow: 0 12px 32px rgba(17, 46, 81, .08); padding: 1rem 1.25rem; margin-bottom: 1rem; }
       .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(11rem, 1fr)); gap: .75rem; }
       .stat { background: #f8fbff; border: 1px solid #d0d7de; padding: .85rem; }
@@ -944,10 +946,17 @@ export function buildScanReportHtml(scan) {
       .table-wrap { overflow-x: auto; }
       .page-section { border-top: 1px solid #d0d7de; padding-top: 1rem; margin-top: 1rem; }
       .page-section:first-of-type { border-top: 0; padding-top: 0; margin-top: 0; }
+      .footer-note { font-size: .95rem; }
       ul { margin: .25rem 0 0 1.25rem; }
     </style>
   </head>
   <body>
+    <nav class="report-nav" aria-label="Report">
+      <ul>
+        <li><a href="../../../../">Project home</a></li>
+        <li><a href="../../../">Reports archive</a></li>
+      </ul>
+    </nav>
     <main>
       <section>
         <h1>Design system scan report</h1>
@@ -1014,6 +1023,11 @@ export function buildScanReportHtml(scan) {
         <h2>Page details</h2>
         <p class="muted">Each scanned page includes the detected design-system fingerprint, component evidence, template evidence, and any asset fetch issues.</p>
         ${renderPageSections(scan.pages)}
+      </section>
+
+      <section>
+        <h2>Project</h2>
+        <p class="footer-note">This report is part of the open source <a href="https://github.com/mgifford/design-system-scan">design-system-scan</a> project. If you want to improve the scanner, add design-system coverage, or help review results, you are welcome to join and contribute.</p>
       </section>
     </main>
   </body>

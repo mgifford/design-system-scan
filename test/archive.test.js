@@ -109,6 +109,9 @@ test("scan report html includes page-level detail content", () => {
 
   assert.match(html, /<strong>Theme:<\/strong> Core/);
   assert.match(html, /<strong>Proposed version:<\/strong> 13\.1\.0/);
+  assert.match(html, /<a href="\.\.\/\.\.\/\.\.\/\.\.\/">Project home<\/a>/);
+  assert.match(html, /<a href="\.\.\/\.\.\/\.\.\/">Reports archive<\/a>/);
+  assert.match(html, /open source <a href="https:\/\/github\.com\/mgifford\/design-system-scan">design-system-scan<\/a> project/);
   assert.match(html, /<strong>Component types identified<\/strong>1/);
   assert.match(html, /<h2>Page details<\/h2>/);
   assert.match(html, /Each scanned page includes the detected design-system fingerprint/);
