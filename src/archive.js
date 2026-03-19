@@ -1,7 +1,14 @@
 import fs from "node:fs/promises";
 import path from "node:path";
+import { fileURLToPath } from "node:url";
 
 const REPORTS_ROOT_DIR = "reports";
+const DESIGN_SYSTEMS_DIR = path.join(
+  path.dirname(fileURLToPath(import.meta.url)),
+  "..",
+  "data",
+  "design-systems"
+);
 
 function escapeHtml(value) {
   return String(value ?? "")
@@ -81,7 +88,9 @@ function buildReportsLandingHtml() {
       section { background: #fff; border: 1px solid #d0d7de; box-shadow: 0 12px 32px rgba(17, 46, 81, .08); padding: 1.25rem 1.5rem; margin-bottom: 1rem; }
       .actions { display: flex; gap: .75rem; flex-wrap: wrap; margin-top: 1rem; }
       .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr)); gap: 1rem; }
-      .card { background: #f8fbff; border: 1px solid #d0d7de; padding: 1rem; }
+      .card-link { color: inherit; text-decoration: none; }
+      .card { background: #f8fbff; border: 1px solid #d0d7de; padding: 1rem; height: 100%; }
+      .card-link:hover .card, .card-link:focus-visible .card { border-color: #005ea2; box-shadow: 0 0 0 3px rgba(0, 94, 162, .16); }
       .card h3, section h2 { margin-top: 0; }
       ul { padding-left: 1.25rem; }
       li { margin-bottom: .4rem; }
@@ -112,22 +121,30 @@ function buildReportsLandingHtml() {
       <section>
         <h2>Currently Supported</h2>
         <div class="grid">
-          <div class="card">
-            <h3>USWDS</h3>
-            <p>U.S. Web Design System support is the most mature and includes broad component coverage plus full/partial detection.</p>
-          </div>
-          <div class="card">
-            <h3>VA.gov</h3>
-            <p>VA detection focuses on the VA Design System and its Web Components-based patterns.</p>
-          </div>
-          <div class="card">
-            <h3>CMS Design System</h3>
-            <p>CMS detection includes the shared CMS design-system family and theme identification for Core, CMS.gov, HealthCare.gov, and Medicare.gov.</p>
-          </div>
-          <div class="card">
-            <h3>GOV.UK</h3>
-            <p>GOV.UK detection provides a starter footprint for the GOV.UK Design System and its frontend conventions.</p>
-          </div>
+          <a class="card-link" href="./systems/uswds/">
+            <div class="card">
+              <h3>USWDS</h3>
+              <p>U.S. Web Design System support is the most mature and includes broad component coverage plus full/partial detection.</p>
+            </div>
+          </a>
+          <a class="card-link" href="./systems/va/">
+            <div class="card">
+              <h3>VA.gov</h3>
+              <p>VA detection focuses on the VA Design System and its Web Components-based patterns.</p>
+            </div>
+          </a>
+          <a class="card-link" href="./systems/cms/">
+            <div class="card">
+              <h3>CMS Design System</h3>
+              <p>CMS detection includes the shared CMS design-system family and theme identification for Core, CMS.gov, HealthCare.gov, and Medicare.gov.</p>
+            </div>
+          </a>
+          <a class="card-link" href="./systems/govuk/">
+            <div class="card">
+              <h3>GOV.UK</h3>
+              <p>GOV.UK detection provides a starter footprint for the GOV.UK Design System and its frontend conventions.</p>
+            </div>
+          </a>
         </div>
       </section>
 
@@ -179,6 +196,197 @@ function getProposedVersion(scan) {
   }
 
   return null;
+}
+
+function buildComponentDocUrl(systemId, componentId, inventory) {
+  const primaryDocsUrl = inventory.docs?.[0] ?? inventory.homepage;
+
+  if (systemId === "uswds") {
+    return `https://designsystem.digital.gov/components/${componentId}/`;
+  }
+
+  if (systemId === "govuk") {
+    return `https://design-system.service.gov.uk/components/${componentId}/`;
+  }
+
+  if (systemId === "cms") {
+    return `https://design.cms.gov/components/${componentId}/`;
+  }
+
+  if (systemId === "va") {
+    return `https://design.va.gov/components/${componentId}`;
+  }
+
+  return primaryDocsUrl;
+}
+
+function buildComponentSummary(name) {
+  const value = String(name ?? "").toLowerCase();
+
+  if (value.includes("accordion")) return "Expandable and collapsible content sections.";
+  if (value.includes("alert")) return "Prominent status, warning, or success messaging.";
+  if (value.includes("banner")) return "High-visibility site or service messaging and identity.";
+  if (value.includes("breadcrumb")) return "Hierarchical navigation trail for page location.";
+  if (value.includes("button")) return "Primary user action trigger.";
+  if (value.includes("card")) return "Grouped content container or summary block.";
+  if (value.includes("checkbox")) return "Multiple-choice form selection control.";
+  if (value.includes("date")) return "Date entry or date selection control.";
+  if (value.includes("details")) return "Progressively disclosed supporting content.";
+  if (value.includes("dialog") || value.includes("modal")) return "Overlay dialog for focused interaction.";
+  if (value.includes("dropdown") || value.includes("select")) return "Single-select form control.";
+  if (value.includes("error")) return "Validation or problem feedback for users.";
+  if (value.includes("fieldset")) return "Structural grouping for related form fields.";
+  if (value.includes("file")) return "File upload control.";
+  if (value.includes("footer")) return "Global page footer content and navigation.";
+  if (value.includes("header")) return "Global site header and top-level navigation.";
+  if (value.includes("hint") || value.includes("tooltip")) return "Supporting explanatory guidance.";
+  if (value.includes("icon")) return "Decorative or semantic iconography.";
+  if (value.includes("input") || value.includes("text field") || value.includes("textarea")) return "Freeform user input control.";
+  if (value.includes("link")) return "Navigational link or action link pattern.";
+  if (value.includes("list")) return "Structured list, steps, or grouped items.";
+  if (value.includes("navigation") || value.includes("nav")) return "Navigation within a site, section, or page.";
+  if (value.includes("pagination")) return "Navigation between result or content pages.";
+  if (value.includes("panel") || value.includes("summary box") || value.includes("summary")) return "Grouped summary or emphasis container.";
+  if (value.includes("progress")) return "Progress indicator for steps or activity.";
+  if (value.includes("radio")) return "Single-choice form selection control.";
+  if (value.includes("search")) return "Search input and query submission pattern.";
+  if (value.includes("skip")) return "Keyboard shortcut to bypass repeated blocks.";
+  if (value.includes("snackbar") || value.includes("notification")) return "Short-lived or contextual notification message.";
+  if (value.includes("table")) return "Tabular data presentation.";
+  if (value.includes("tabs")) return "Switching between related interface panels.";
+  if (value.includes("tag") || value.includes("badge")) return "Compact label for status or categorization.";
+  if (value.includes("telephone")) return "Phone number display or entry pattern.";
+
+  return "See upstream docs for the official definition and usage guidance.";
+}
+
+function getInventoryComponents(inventory) {
+  return inventory.officialComponents ?? inventory.currentComponents ?? [];
+}
+
+function renderDesignSystemPage(inventory) {
+  const components = getInventoryComponents(inventory);
+  const indexedIds = new Set(inventory.scannerCoverage?.indexedComponentIds ?? []);
+  const componentRows = components
+    .map((component) => {
+      const docUrl = buildComponentDocUrl(inventory.id, component.id, inventory);
+      return `
+        <tr>
+          <td>${escapeHtml(component.name)}</td>
+          <td>${escapeHtml(component.id)}</td>
+          <td>${indexedIds.has(component.id) ? "Yes" : "Not yet"}</td>
+          <td>${escapeHtml(buildComponentSummary(component.name))}</td>
+          <td><a href="${escapeHtml(docUrl)}">Upstream docs</a></td>
+        </tr>
+      `;
+    })
+    .join("");
+
+  const docsLinks = (inventory.docs ?? [])
+    .map((url) => `<li><a href="${escapeHtml(url)}">${escapeHtml(url)}</a></li>`)
+    .join("");
+
+  const notes = (inventory.notes ?? [])
+    .map((note) => `<li>${escapeHtml(note)}</li>`)
+    .join("");
+
+  const themes = (inventory.themes ?? [])
+    .map((theme) => `<li>${escapeHtml(theme.name)}</li>`)
+    .join("");
+
+  return `<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>${escapeHtml(inventory.name)}</title>
+    <style>
+      body { margin: 0; font-family: ui-sans-serif, system-ui, sans-serif; color: #112e51; background: #eef5fb; }
+      .system-nav { max-width: 88rem; margin: 0 auto; padding: 1rem 1rem 0; }
+      .system-nav ul { list-style: none; padding: 0; margin: 0; display: flex; gap: 1rem; flex-wrap: wrap; }
+      main { max-width: 88rem; margin: 0 auto; padding: 1rem 1rem 4rem; }
+      section { background: #fff; border: 1px solid #d0d7de; box-shadow: 0 12px 32px rgba(17, 46, 81, .08); padding: 1rem 1.25rem; margin-bottom: 1rem; }
+      .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr)); gap: .75rem; }
+      .stat { background: #f8fbff; border: 1px solid #d0d7de; padding: .85rem; }
+      .stat strong { display: block; color: #5c6f82; font-size: .8rem; text-transform: uppercase; letter-spacing: .04em; margin-bottom: .25rem; }
+      table { width: 100%; border-collapse: collapse; }
+      th, td { text-align: left; vertical-align: top; padding: .65rem .5rem; border-bottom: 1px solid #d0d7de; }
+      th { font-size: .8rem; text-transform: uppercase; letter-spacing: .04em; color: #5c6f82; }
+      .table-wrap { overflow-x: auto; }
+      a { color: #005ea2; }
+      ul { margin: .25rem 0 0 1.25rem; }
+      .footer-note { font-size: .95rem; }
+    </style>
+  </head>
+  <body>
+    <nav class="system-nav" aria-label="System">
+      <ul>
+        <li><a href="../../">Project home</a></li>
+        <li><a href="../../reports/">Reports archive</a></li>
+      </ul>
+    </nav>
+    <main>
+      <section>
+        <h1>${escapeHtml(inventory.name)}</h1>
+        <p><strong>Homepage:</strong> <a href="${escapeHtml(inventory.homepage)}">${escapeHtml(inventory.homepage)}</a></p>
+        <p><strong>Scanner coverage:</strong> ${escapeHtml(inventory.scannerCoverage?.status ?? "unknown")}</p>
+        <p><strong>Inventory date:</strong> ${escapeHtml(inventory.inventoryDate ?? "unknown")}</p>
+      </section>
+
+      <section>
+        <div class="stats">
+          <div class="stat"><strong>Defined components</strong>${components.length}</div>
+          <div class="stat"><strong>Indexed for scanning</strong>${indexedIds.size}</div>
+          <div class="stat"><strong>Coverage status</strong>${escapeHtml(inventory.scannerCoverage?.status ?? "unknown")}</div>
+        </div>
+      </section>
+
+      <section>
+        <h2>Official documentation</h2>
+        <ul>${docsLinks}</ul>
+        ${themes ? `<h3>Themes</h3><ul>${themes}</ul>` : ""}
+        ${notes ? `<h3>Notes</h3><ul>${notes}</ul>` : ""}
+      </section>
+
+      <section>
+        <h2>Indexed components</h2>
+        <p>This list shows the components defined for this design system, whether the current scanner can search for them yet, where they are defined upstream, and a short explanation of what each component is for.</p>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Component</th>
+                <th>ID</th>
+                <th>Scanner support</th>
+                <th>What it does</th>
+                <th>Defined at</th>
+              </tr>
+            </thead>
+            <tbody>${componentRows}</tbody>
+          </table>
+        </div>
+      </section>
+
+      <section>
+        <h2>Project</h2>
+        <p class="footer-note">This reference page is part of the open source <a href="https://github.com/mgifford/design-system-scan">design-system-scan</a> project. If you want to improve component coverage or help validate upstream definitions, you are welcome to contribute.</p>
+      </section>
+    </main>
+  </body>
+</html>`;
+}
+
+async function loadDesignSystemInventories() {
+  const entries = await fs.readdir(DESIGN_SYSTEMS_DIR);
+  const jsonEntries = entries.filter((entry) => entry.endsWith(".json")).sort();
+  const inventories = [];
+
+  for (const entry of jsonEntries) {
+    const content = await fs.readFile(path.join(DESIGN_SYSTEMS_DIR, entry), "utf8");
+    inventories.push(JSON.parse(content));
+  }
+
+  return inventories;
 }
 
 function renderDateCell(value, id) {
@@ -1110,6 +1318,7 @@ export function buildScanReportCsv(scan) {
 }
 
 export async function writeArchiveSite(outputDir, history) {
+  const inventories = await loadDesignSystemInventories();
   await fs.mkdir(outputDir, { recursive: true });
   await fs.writeFile(path.join(outputDir, "index.html"), buildReportsLandingHtml(), "utf8");
   await fs.mkdir(path.join(outputDir, REPORTS_ROOT_DIR), { recursive: true });
@@ -1153,5 +1362,11 @@ export async function writeArchiveSite(outputDir, history) {
       await fs.mkdir(path.dirname(absoluteIssueDateAliasPath), { recursive: true });
       await fs.writeFile(absoluteIssueDateAliasPath, buildScanReportHtml(scan), "utf8");
     }
+  }
+
+  for (const inventory of inventories) {
+    const systemDir = path.join(outputDir, "systems", inventory.id);
+    await fs.mkdir(systemDir, { recursive: true });
+    await fs.writeFile(path.join(systemDir, "index.html"), renderDesignSystemPage(inventory), "utf8");
   }
 }

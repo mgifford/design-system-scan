@@ -190,6 +190,10 @@ test("archive site writes stable per-issue report files", async () => {
   assert.match(rootIndex, /VA\.gov/);
   assert.match(rootIndex, /CMS Design System/);
   assert.match(rootIndex, /GOV\.UK/);
+  assert.match(rootIndex, /href="\.\/systems\/uswds\/"/);
+  assert.match(rootIndex, /href="\.\/systems\/va\/"/);
+  assert.match(rootIndex, /href="\.\/systems\/cms\/"/);
+  assert.match(rootIndex, /href="\.\/systems\/govuk\/"/);
   assert.match(archiveIndex, /Design System Scan Archive/);
   assert.match(html, /Accepted URLs<\/strong>10/);
   assert.match(issueAlias, /Design system scan report/);
@@ -198,4 +202,12 @@ test("archive site writes stable per-issue report files", async () => {
   assert.match(html, /<a href="\.\.\/\.\.\/\.\.\/">Archive index<\/a>/);
   assert.match(markdown, /Accepted URLs: 10/);
   assert.match(csv, /page_url,fingerprint_status/);
+
+  const systemPage = await fs.readFile(path.join(outputDir, "systems/uswds/index.html"), "utf8");
+  assert.match(systemPage, /U\.S\. Web Design System/);
+  assert.match(systemPage, /Indexed components/);
+  assert.match(systemPage, /Scanner support/);
+  assert.match(systemPage, /What it does/);
+  assert.match(systemPage, /Accordion/);
+  assert.match(systemPage, /https:\/\/designsystem\.digital\.gov\/components\/accordion\//);
 });
