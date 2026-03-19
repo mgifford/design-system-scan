@@ -108,6 +108,7 @@ test("scan report html includes page-level detail content", () => {
   });
 
   assert.match(html, /<strong>Theme:<\/strong> Core/);
+  assert.match(html, /<strong>Proposed version:<\/strong> 13\.1\.0/);
   assert.match(html, /<strong>Component types identified<\/strong>1/);
   assert.match(html, /<h2>Page details<\/h2>/);
   assert.match(html, /Each scanned page includes the detected design-system fingerprint/);

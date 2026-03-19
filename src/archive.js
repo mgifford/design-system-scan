@@ -171,6 +171,16 @@ function buildIssueDateAliasPath(scan) {
   return `${REPORTS_ROOT_DIR}/${issueNumber}/${formatScanDateSlug(scan.scannedAt)}/index.html`;
 }
 
+function getProposedVersion(scan) {
+  for (const page of scan.pages ?? []) {
+    if (page?.versions?.length) {
+      return page.versions[0];
+    }
+  }
+
+  return null;
+}
+
 function renderDateCell(value, id) {
   const iso = String(value ?? "");
   const tooltipId = `tooltip-${id}`;
@@ -907,6 +917,7 @@ export function buildScanReportHtml(scan) {
   const templateSnapshot = summarizeTopItems(scan.siteSummary?.templates, 8);
   const themeSnapshot = summarizeTopItems(scan.siteSummary?.themes, 8);
   const primaryTheme = scan.siteSummary?.primaryTheme?.name;
+  const proposedVersion = getProposedVersion(scan);
 
   return `<!doctype html>
 <html lang="en">
@@ -942,6 +953,7 @@ export function buildScanReportHtml(scan) {
         <h1>Design system scan report</h1>
         <p><strong>Seed URL:</strong> <a href="${escapeHtml(scan.seedUrl)}">${escapeHtml(scan.seedUrl)}</a></p>
         <p><strong>System:</strong> ${escapeHtml(scan.systemInfo?.name ?? scan.system)}</p>
+        ${proposedVersion ? `<p><strong>Proposed version:</strong> ${escapeHtml(proposedVersion)}</p>` : ""}
         ${primaryTheme ? `<p><strong>Theme:</strong> ${escapeHtml(primaryTheme)}</p>` : ""}
         <p><strong>Trigger:</strong> ${renderTrigger(scan.trigger, scan.repository)}</p>
         <p><strong>Workflow run:</strong> <a href="${escapeHtml(scan.runUrl)}">${escapeHtml(scan.runUrl)}</a></p>
