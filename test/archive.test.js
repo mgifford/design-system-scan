@@ -219,6 +219,8 @@ test("archive site writes stable per-issue report files", async () => {
   const rootIndex = await fs.readFile(path.join(outputDir, "index.html"), "utf8");
   const yamlSpec = await fs.readFile(path.join(outputDir, "specs/uswds.yaml"), "utf8");
   const demoPage = await fs.readFile(path.join(outputDir, "demos/uswds/index.html"), "utf8");
+  const cmsYamlSpec = await fs.readFile(path.join(outputDir, "specs/cms.yaml"), "utf8");
+  const cmsDemoPage = await fs.readFile(path.join(outputDir, "demos/cms/index.html"), "utf8");
   const markdown = await fs.readFile(
     path.join(outputDir, "reports/issues/issue-6/run-23253601700/report.md"),
     "utf8"
@@ -328,12 +330,31 @@ test("archive site writes stable per-issue report files", async () => {
   assert.match(yamlSpec, /^system:/m);
   assert.match(yamlSpec, /^components:/m);
   assert.match(yamlSpec, /^  id: uswds/m);
+  assert.match(cmsYamlSpec, /^  cdn_css:/m);
+  assert.match(cmsYamlSpec, /^  cdn_js:/m);
+  assert.match(cmsYamlSpec, /^  - id: autocomplete/m);
   assert.match(demoPage, /U\.S\. Web Design System demo/);
   assert.match(demoPage, /semantic demo page generated from the focused YAML spec/);
   assert.match(demoPage, /\.\.\/\.\.\/systems\/uswds\//);
   assert.match(demoPage, /\.\.\/\.\.\/specs\/uswds\.yaml/);
   assert.match(demoPage, /Component examples/);
   assert.match(demoPage, /Example markup/);
+  assert.match(cmsDemoPage, /CMS Design System demo/);
+  assert.match(cmsDemoPage, /officially documented CDN CSS and web components bundle/);
+  assert.match(cmsDemoPage, /https:\/\/design\.cms\.gov\/cdn\/design-system\/13\.2\.0\/css\/index\.css/);
+  assert.match(cmsDemoPage, /https:\/\/design\.cms\.gov\/cdn\/design-system\/13\.2\.0\/css\/core-theme\.css/);
+  assert.match(cmsDemoPage, /https:\/\/design\.cms\.gov\/cdn\/design-system\/13\.2\.0\/web-components\/bundle\/web-components\.js/);
+  assert.match(cmsDemoPage, /<ds-skip-nav href="#main-content">/);
+  assert.match(cmsDemoPage, /<ds-usa-banner><\/ds-usa-banner>/);
+  assert.match(cmsDemoPage, /<ds-alert heading="Application saved" variation="success">/);
+  assert.match(cmsDemoPage, /<ds-text-field label="Full name" name="full-name"><\/ds-text-field>/);
+  assert.match(cmsDemoPage, /<ds-autocomplete label="State or territory" name="state-or-territory"><\/ds-autocomplete>/);
+  assert.match(cmsDemoPage, /<ds-choice-list label="Choose one contact method">/);
+  assert.match(cmsDemoPage, /<ds-help-drawer heading="Need help finding your member ID\?">/);
+  assert.match(cmsDemoPage, /<ds-review heading="Review your application details">/);
+  assert.match(cmsDemoPage, /<ds-pagination current-page="2" root-url="#page-">/);
+  assert.match(cmsDemoPage, /Loaded assets/);
+  assert.match(cmsDemoPage, /Component examples/);
 
   const comparisonPage = await fs.readFile(path.join(outputDir, "comparison/index.html"), "utf8");
   assert.match(comparisonPage, /Design system comparison/);

@@ -3,17 +3,61 @@ system:
   name: CMS Design System
   homepage: https://design.cms.gov/
   docs:
+    - https://design.cms.gov/
+    - https://design.cms.gov/getting-started/for-developers/?theme=core
     - https://design.cms.gov/components/overview/
+  cdn_css:
+    - https://design.cms.gov/cdn/design-system/13.2.0/css/index.css
+    - https://design.cms.gov/cdn/design-system/13.2.0/css/core-theme.css
+  cdn_js:
+    - https://design.cms.gov/cdn/design-system/13.2.0/web-components/bundle/web-components.js
   demo_focus:
+    - skip navigation
+    - usa banner
+    - alert
     - text field
+    - autocomplete
     - dropdown
     - choice
+    - date field
+    - hint
+    - inline error
     - button
-    - alert
-    - dialog
+    - help drawer
+    - review
+    - card
+    - pagination
+    - table
     - header
     - footer
 components:
+  - id: skip-nav
+    name: Skip navigation
+    purpose: Provide a fast keyboard path to the main content region.
+    canonical_patterns:
+      - tag: ds-skip-nav
+    required_elements:
+      - main landmark target
+    required_attributes:
+      - href
+    accessibility:
+      - Skip navigation should move keyboard focus to the main content region.
+  - id: usa-banner
+    name: USA banner
+    purpose: Identify the site as an official United States government service.
+    canonical_patterns:
+      - tag: ds-usa-banner
+    accessibility:
+      - The banner should remain available before primary content.
+  - id: alert
+    name: Alert
+    purpose: Surface stateful messaging for users.
+    canonical_patterns:
+      - tag: ds-alert
+    required_attributes:
+      - heading
+    accessibility:
+      - Alerts should communicate status without relying on color alone.
   - id: text-field
     name: Text field
     purpose: Collect single-line text with a visible label.
@@ -23,6 +67,21 @@ components:
     required_elements:
       - label
       - input
+    required_attributes:
+      - label
+      - name
+    accessibility:
+      - Text fields should expose a persistent visible label.
+      - Error and hint messaging should be programmatically associated when present.
+  - id: autocomplete
+    name: Autocomplete
+    purpose: Help users search a large, known set of possible answers.
+    canonical_patterns:
+      - tag: ds-autocomplete
+    required_attributes:
+      - label
+    accessibility:
+      - Autocomplete should keep suggestions perceivable to screen reader users.
   - id: dropdown
     name: Dropdown
     purpose: Offer a constrained single-choice list.
@@ -31,23 +90,62 @@ components:
     required_elements:
       - label
       - select
+      - option
+    required_attributes:
+      - label
+      - name
   - id: choice
     name: Choice
     purpose: Model checkbox and radio style form choices.
     canonical_patterns:
       - tag: ds-choice
+    required_attributes:
+      - type
+      - label
+      - name
     accessibility:
       - Choices should expose an explicit group label when rendered as a set.
+  - id: single-input-date-field
+    name: Single input date field
+    purpose: Collect a date in one field with date-specific guidance.
+    canonical_patterns:
+      - tag: ds-date-field
+      - attr: type="single"
+    required_attributes:
+      - label
+      - name
+    accessibility:
+      - Date guidance should explain the expected format.
+  - id: hint
+    name: Hint
+    purpose: Provide supporting guidance before the user enters data.
+    canonical_patterns:
+      - tag: ds-hint
+    accessibility:
+      - Hint text should supplement, not replace, labels.
+  - id: inline-error
+    name: Inline error
+    purpose: Explain a field-level validation problem near the control.
+    canonical_patterns:
+      - tag: ds-inline-error
+    accessibility:
+      - Error text should be associated with the relevant form control.
+  - id: choice-list
+    name: Choice list
+    purpose: Group related checkbox or radio options in a single fieldset-like pattern.
+    canonical_patterns:
+      - tag: ds-choice-list
+    required_elements:
+      - ds-choice
+    accessibility:
+      - Choice lists should expose a shared group label.
   - id: button
     name: Button
     purpose: Trigger the primary or secondary action.
     canonical_patterns:
       - tag: ds-button
-  - id: alert
-    name: Alert
-    purpose: Surface stateful messaging for users.
-    canonical_patterns:
-      - tag: ds-alert
+    required_attributes:
+      - variation
   - id: dialog
     name: Dialog
     purpose: Present focused overlays or confirmations.
@@ -55,6 +153,42 @@ components:
       - tag: ds-dialog
     accessibility:
       - Focus should be contained while the dialog is open.
+  - id: help-drawer
+    name: Help drawer
+    purpose: Provide contextual secondary guidance without leaving the task.
+    canonical_patterns:
+      - tag: ds-help-drawer
+    required_attributes:
+      - heading
+  - id: review
+    name: Review
+    purpose: Summarize submitted content before completion.
+    canonical_patterns:
+      - tag: ds-review
+    required_attributes:
+      - heading
+  - id: card
+    name: Card
+    purpose: Group a short summary with a next action.
+    canonical_patterns:
+      - tag: ds-card
+    required_attributes:
+      - heading
+  - id: pagination
+    name: Pagination
+    purpose: Move between related pages of results or content.
+    canonical_patterns:
+      - tag: ds-pagination
+    required_attributes:
+      - current-page
+  - id: table
+    name: Table
+    purpose: Present structured comparison or status data.
+    canonical_patterns:
+      - tag: ds-table
+    required_elements:
+      - thead
+      - tbody
   - id: header
     name: Header
     purpose: Provide site identity and top-level navigation.

@@ -263,7 +263,7 @@ They currently focus on demo-critical structure:
 - accessibility expectations
 
 The generated Pages site publishes these raw specs under `/specs/<system-id>.yaml`, and each system page links to its spec directly.
-It also now publishes starter demo pages under `/demos/<system-id>/`, generated from those YAML specs for semantic review and testing.
+It also now publishes starter demo pages under `/demos/<system-id>/`, generated from those YAML specs for semantic review and testing. Where a system exposes stable official CDN assets, the demo can load those assets directly so the page more closely resembles the real design system; the CMS demo now does this with the documented CMS CDN CSS and web-components bundle.
 
 ### SCAN issue convention
 

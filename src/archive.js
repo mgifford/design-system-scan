@@ -393,7 +393,236 @@ function buildDemoCode(component) {
   return escapeHtml(buildDemoMarkup(component));
 }
 
+function renderCmsDemoPage(spec) {
+  const system = spec.parsed.system ?? {};
+  const components = spec.parsed.components ?? [];
+  const demoFocus = spec.parsed.demoFocus ?? [];
+  const cdnCss = system.cdn_css ?? [];
+  const cdnJs = system.cdn_js ?? [];
+  const topExamples = components.slice(0, 12);
+  const exampleLinks = topExamples
+    .map(
+      (component) =>
+        `<li><a href="#demo-${escapeHtml(component.id)}">${escapeHtml(component.name ?? component.id)}</a></li>`
+    )
+    .join("");
+  const exampleCards = topExamples
+    .map(
+      (component) => `
+        <article class="demo-card" id="demo-${escapeHtml(component.id)}">
+          <h3>${escapeHtml(component.name ?? component.id)}</h3>
+          <p>${escapeHtml(component.purpose ?? "No purpose documented.")}</p>
+          <div class="demo-code">
+            <h4>Canonical patterns</h4>
+            ${renderCanonicalPatterns(component)}
+            <h4>Example markup</h4>
+            <pre><code>${buildDemoCode(component)}</code></pre>
+          </div>
+        </article>
+      `
+    )
+    .join("");
+  const assetLinks = [...cdnCss, ...cdnJs]
+    .map((assetUrl) => `<li><a href="${escapeAttribute(assetUrl)}">${escapeHtml(assetUrl)}</a></li>`)
+    .join("");
+
+  return `<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>${escapeHtml(system.name ?? spec.id)} demo</title>
+    ${cdnCss.map((assetUrl) => `<link rel="stylesheet" href="${escapeAttribute(assetUrl)}">`).join("\n    ")}
+    <style>
+      body { margin: 0; color: #1b1b1b; background: #f7f7f2; }
+      .demo-nav { max-width: 88rem; margin: 0 auto; padding: 1rem 1rem 0; }
+      .demo-shell { max-width: 88rem; margin: 0 auto; padding: 1rem 1rem 4rem; }
+      .demo-meta { background: #fff; border: 1px solid #dfe1e2; border-radius: .5rem; box-shadow: 0 16px 32px rgba(0, 0, 0, .06); padding: 1.25rem 1.5rem; margin-bottom: 1rem; }
+      .demo-lead { max-width: 72ch; }
+      .demo-grid { display: grid; grid-template-columns: 2fr 1fr; gap: 1rem; align-items: start; }
+      .demo-main { background: #fff; border: 1px solid #dfe1e2; border-radius: .5rem; padding: 1.5rem; }
+      .demo-aside { display: grid; gap: 1rem; }
+      .demo-panel { background: #fff; border: 1px solid #dfe1e2; border-radius: .5rem; padding: 1.25rem; }
+      .demo-card { background: #fff; border: 1px solid #dfe1e2; border-radius: .5rem; padding: 1.25rem; margin-bottom: 1rem; }
+      .demo-card h3, .demo-panel h2, .demo-main h2, .demo-meta h1 { margin-top: 0; }
+      .demo-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr)); gap: .75rem; margin-top: 1rem; }
+      .demo-stat { background: #f0f8ff; border: 1px solid #c7d8ea; border-radius: .35rem; padding: .85rem; }
+      .demo-stat strong { display: block; font-size: .82rem; text-transform: uppercase; letter-spacing: .04em; color: #4d5560; margin-bottom: .2rem; }
+      .demo-form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr)); gap: 1rem; }
+      .demo-actions { display: flex; gap: .75rem; flex-wrap: wrap; margin-top: 1rem; }
+      .demo-actions ds-button { margin-right: .5rem; }
+      .demo-flow > * + * { margin-top: 1rem; }
+      .demo-code pre { overflow-x: auto; background: #112e51; color: #f8fafc; padding: .85rem; border-radius: .35rem; }
+      .demo-code code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
+      .heading-anchor-group { display: flex; align-items: baseline; gap: .5rem; }
+      .heading-anchor { opacity: 0; text-decoration: none; }
+      .heading-anchor-group:hover .heading-anchor, .heading-anchor:focus { opacity: 1; }
+      .muted { color: #5c6f82; }
+      .demo-section { margin-top: 2rem; }
+      .demo-inline-list { padding-left: 1.25rem; }
+      .demo-inline-list li { margin-bottom: .5rem; }
+      .demo-review-list { margin: 0; padding-left: 1.25rem; }
+      .demo-review-list li + li { margin-top: .5rem; }
+      .demo-table { width: 100%; border-collapse: collapse; margin-top: .5rem; }
+      .demo-table th, .demo-table td { border: 1px solid #dfe1e2; padding: .65rem; text-align: left; }
+      @media (max-width: 56rem) {
+        .demo-grid { grid-template-columns: 1fr; }
+      }
+    </style>
+    ${cdnJs.map((assetUrl) => `<script src="${escapeAttribute(assetUrl)}"></script>`).join("\n    ")}
+  </head>
+  <body>
+    ${renderSiteNav("../../", "../../reports/", "../../reports/latest/", "../../archives/", "demo-nav")}
+    <div class="demo-shell">
+      <section class="demo-meta">
+        ${renderAnchoredHeading(1, `${system.name ?? spec.id} demo`, `${escapeHtml(spec.id)}-demo-top`)}
+        <p class="demo-lead">This CMS demo page uses the officially documented CDN CSS and web components bundle so the result looks and behaves much closer to the real design system than the generic semantic demos. It is still a local demonstration page for this project, but it is intentionally built from CMS component patterns rather than plain placeholder HTML.</p>
+        <p><strong>System page:</strong> <a href="../../systems/${escapeHtml(spec.id)}/">../../systems/${escapeHtml(spec.id)}/</a></p>
+        <p><strong>YAML spec:</strong> <a href="../../specs/${escapeHtml(spec.id)}.yaml">../../specs/${escapeHtml(spec.id)}.yaml</a></p>
+        <p><strong>Official homepage:</strong> <a href="${escapeAttribute(system.homepage ?? "#")}">${escapeHtml(system.homepage ?? "Not documented")}</a></p>
+        <div class="demo-stats">
+          <div class="demo-stat"><strong>Demo focus areas</strong>${demoFocus.length}</div>
+          <div class="demo-stat"><strong>CMS examples shown</strong>${topExamples.length}</div>
+          <div class="demo-stat"><strong>Asset strategy</strong>Official CDN</div>
+        </div>
+      </section>
+
+      <ds-skip-nav href="#main-content">Skip to main content</ds-skip-nav>
+      <ds-usa-banner></ds-usa-banner>
+
+      <div class="demo-grid">
+        <main class="demo-main" id="main-content">
+          ${renderAnchoredHeading(2, "CMS application intake example", "cms-application-intake-example")}
+          <p>This mock application page shows how the scanner’s CMS semantic spec can be expressed as a form-heavy service page. It uses CMS components for alerts, inputs, choices, review, pagination, and supporting guidance.</p>
+
+          <div class="demo-flow">
+            <ds-alert heading="Application saved" variation="success">
+              Your draft application has been saved. You can review your details and continue when you are ready.
+            </ds-alert>
+
+            <section class="demo-section" aria-labelledby="demo-form-heading">
+              <h3 id="demo-form-heading">Applicant details</h3>
+              <ds-hint>Required fields are marked and should match the information on your eligibility record.</ds-hint>
+              <div class="demo-form-grid">
+                <ds-text-field label="Full name" name="full-name"></ds-text-field>
+                <ds-text-field label="Member ID" name="member-id"></ds-text-field>
+                <ds-autocomplete label="State or territory" name="state-or-territory"></ds-autocomplete>
+                <ds-dropdown label="Program" name="program">
+                  <option value="">Select a program</option>
+                  <option>Medicare</option>
+                  <option>Marketplace</option>
+                  <option>CMS enterprise portal</option>
+                </ds-dropdown>
+                <ds-date-field label="Coverage start date" name="coverage-start-date"></ds-date-field>
+              </div>
+              <div class="demo-section">
+                <h4>Contact preference</h4>
+                <ds-choice-list label="Choose one contact method">
+                  <ds-choice checked label="Email" name="contact-method" type="radio" value="email"></ds-choice>
+                  <ds-choice label="Phone" name="contact-method" type="radio" value="phone"></ds-choice>
+                  <ds-choice label="Mail" name="contact-method" type="radio" value="mail"></ds-choice>
+                </ds-choice-list>
+              </div>
+              <div class="demo-section">
+                <h4>Communication consent</h4>
+                <ds-choice-list label="Choose any options that apply">
+                  <ds-choice checked label="Send appointment reminders" name="reminders" type="checkbox" value="appointments"></ds-choice>
+                  <ds-choice label="Send policy updates" name="reminders" type="checkbox" value="policy"></ds-choice>
+                </ds-choice-list>
+              </div>
+              <div class="demo-section">
+                <ds-inline-error>Enter a valid member ID to continue.</ds-inline-error>
+              </div>
+              <div class="demo-actions">
+                <ds-button variation="solid">Continue to review</ds-button>
+                <ds-button variation="transparent">Save draft</ds-button>
+              </div>
+            </section>
+
+            <section class="demo-section" aria-labelledby="demo-support-heading">
+              <h3 id="demo-support-heading">Guidance and support</h3>
+              <ds-help-drawer heading="Need help finding your member ID?">
+                Your member ID usually appears on your eligibility letter or insurance card. If you do not have it, contact support before submitting this form.
+              </ds-help-drawer>
+              <ds-card heading="Why we ask for this information">
+                We use this information to match your application to the correct program and reduce manual follow-up.
+              </ds-card>
+            </section>
+
+            <section class="demo-section" aria-labelledby="demo-review-heading">
+              <h3 id="demo-review-heading">Review and results</h3>
+              <ds-review heading="Review your application details">
+                <ul class="demo-review-list">
+                  <li><strong>Applicant:</strong> Jordan Example</li>
+                  <li><strong>Program:</strong> Medicare</li>
+                  <li><strong>Coverage start date:</strong> 2026-04-01</li>
+                  <li><strong>Contact method:</strong> Email</li>
+                </ul>
+              </ds-review>
+
+              <div class="demo-section">
+                <h4>Recent application activity</h4>
+                <table class="demo-table">
+                  <thead>
+                    <tr>
+                      <th>Step</th>
+                      <th>Status</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      <td>Identity confirmed</td>
+                      <td>Complete</td>
+                    </tr>
+                    <tr>
+                      <td>Eligibility review</td>
+                      <td>In progress</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+
+              <div class="demo-section">
+                <ds-pagination current-page="2" root-url="#page-">
+                  <span slot="label">Application steps</span>
+                </ds-pagination>
+              </div>
+            </section>
+          </div>
+        </main>
+
+        <aside class="demo-aside">
+          <section class="demo-panel">
+            ${renderAnchoredHeading(2, "How to use this demo", "how-to-use-this-demo")}
+            <p>Use this page to see the repo’s CMS understanding rendered as an actual service page. It is especially useful for testing scanner clues, semantic structure, and whether AI-generated examples stay close to documented CMS patterns.</p>
+            <p><strong>Demo focus:</strong> ${escapeHtml(demoFocus.join(", ") || "No demo focus listed")}</p>
+            <ul class="demo-inline-list">${exampleLinks}</ul>
+          </section>
+
+          <section class="demo-panel">
+            ${renderAnchoredHeading(2, "Loaded assets", "loaded-assets")}
+            <p>The page uses versioned assets documented by CMS for CDN delivery.</p>
+            <ul class="demo-inline-list">${assetLinks}</ul>
+          </section>
+
+          <section class="demo-panel">
+            ${renderAnchoredHeading(2, "Component examples", "component-examples")}
+            ${exampleCards}
+          </section>
+        </aside>
+      </div>
+
+      ${renderProjectFooter()}
+    </div>
+  </body>
+</html>`;
+}
+
 function renderDemoPage(spec) {
+  if (spec.id === "cms") {
+    return renderCmsDemoPage(spec);
+  }
+
   const system = spec.parsed.system ?? {};
   const components = spec.parsed.components ?? [];
   const demoFocus = spec.parsed.demoFocus ?? [];
