@@ -41,6 +41,10 @@ const components = [
     htmlRegex("Alert variation prop", "(variation|weight)=", 1),
     textSubstring("Alert analytics config", "alertSendsAnalytics", 1),
   ]),
+  component("autocomplete", "Autocomplete", [
+    exactTag("Autocomplete tag", "ds-autocomplete", 3),
+    htmlRegex("Autocomplete label prop", "label=", 1),
+  ]),
   component("badge", "Badge", [
     exactTag("Badge tag", "ds-badge", 3),
     htmlRegex("Badge variation prop", "variation=", 1),
@@ -50,18 +54,32 @@ const components = [
     htmlRegex("Button variation prop", "variation=", 1),
     textSubstring("Button analytics config", "buttonSendsAnalytics", 1),
   ]),
-  component("choice", "Choice", [
-    exactTag("Choice tag", "ds-choice", 3),
-    htmlRegex("Choice checked prop", "checked", 1),
-    htmlRegex("Choice type prop", "type=", 1),
+  component("card", "Card", [
+    exactTag("Card tag", "ds-card", 3),
+    htmlRegex("Card heading prop", "heading=", 1),
   ]),
-  component("date-field", "Date field", [
+  component("checkbox", "Checkbox", [
+    exactTag("Choice tag", "ds-choice", 2),
+    htmlRegex("Checkbox type prop", "type=[\"']checkbox[\"']", 2),
+    htmlRegex("Checkbox checked prop", "checked", 1),
+  ]),
+  component("single-input-date-field", "Single Input Date Field", [
     exactTag("Date field tag", "ds-date-field", 3),
-    exactTag("Month picker tag", "ds-month-picker", 1),
     htmlRegex("Date field label", "label=", 1),
   ]),
-  component("dialog", "Dialog", [
-    exactTag("Dialog tag", "ds-dialog", 3),
+  component("multi-input-date-field", "Multi Input Date Field", [
+    exactTag("Date field tag", "ds-date-field", 2),
+    htmlRegex("Multi-input date field type", "type=[\"']multi[\"']", 2),
+    htmlRegex("Date field label", "label=", 1),
+  ]),
+  component("drawer-help-drawer", "Drawer & Help Drawer", [
+    exactTag("Help drawer tag", "ds-help-drawer", 3),
+    exactTag("Drawer tag", "ds-drawer", 3),
+    textSubstring("Help drawer analytics config", "helpDrawerSendsAnalytics", 1),
+  ]),
+  component("modal-dialog", "Modal Dialog", [
+    exactTag("Dialog tag", "ds-dialog", 2),
+    exactTag("Modal dialog tag", "ds-modal-dialog", 3),
     htmlRegex("Dialog heading", "heading=", 1),
     textSubstring("Dialog analytics config", "dialogSendsAnalytics", 1),
   ]),
@@ -70,23 +88,86 @@ const components = [
     htmlRegex("Dropdown label prop", "label=", 1),
     htmlRegex("Dropdown options", "<option\\b", 1),
   ]),
-  component("footer", "Footer", [
+  component("filter-chip", "Filter Chip", [
+    exactTag("Filter chip tag", "ds-filter-chip", 3),
+    htmlRegex("Filter chip label prop", "label=", 1),
+  ]),
+  component("healthcare-footer", "Healthcare.gov Footer", [
     htmlRegex("Healthcare footer tag", "<ds-healthcare-gov-footer\\b", 3),
+    textSubstring("Footer analytics config", "footerSendsAnalytics", 1),
+  ]),
+  component("medicare-footer", "Medicare.gov Footer", [
     htmlRegex("Medicare footer tag", "<ds-medicare-gov-footer\\b", 3),
     textSubstring("Footer analytics config", "footerSendsAnalytics", 1),
   ]),
-  component("header", "Header", [
+  component("healthcare-header", "Healthcare.gov Header", [
     htmlRegex("Healthcare header tag", "<ds-healthcare-gov-header\\b", 3),
-    htmlRegex("Medicare header tag", "<ds-medicare-gov-header\\b", 3),
     textSubstring("Header analytics config", "headerSendsAnalytics", 1),
   ]),
-  component("help-drawer", "Help drawer", [
-    exactTag("Help drawer tag", "ds-help-drawer", 3),
-    textSubstring("Help drawer analytics config", "helpDrawerSendsAnalytics", 1),
+  component("medicare-header", "Medicare.gov Header", [
+    htmlRegex("Medicare header tag", "<ds-medicare-gov-header\\b", 3),
+    textSubstring("Header analytics config", "headerSendsAnalytics", 1),
   ]),
   component("hint", "Hint", [
     exactTag("Hint tag", "ds-hint", 3),
     htmlRegex("Hint requirement prop", "requirement-label", 1),
+  ]),
+  component("icon", "Icon", [
+    exactTag("Icon tag", "ds-icon", 3),
+    htmlRegex("Icon name prop", "icon=", 1),
+  ]),
+  component("inline-error", "Inline Error", [
+    exactTag("Inline error tag", "ds-inline-error", 3),
+    htmlRegex("Inline error id prop", "id=", 1),
+  ]),
+  component("label-legend", "Label & Legend", [
+    exactTag("Label tag", "ds-label", 2),
+    exactTag("Legend tag", "ds-legend", 2),
+  ]),
+  component("month-picker", "Month Picker", [
+    exactTag("Month picker tag", "ds-month-picker", 3),
+    htmlRegex("Month picker label", "label=", 1),
+  ]),
+  component("note-box", "Note Box", [
+    exactTag("Note box tag", "ds-note-box", 3),
+    htmlRegex("Note box heading", "heading=", 1),
+  ]),
+  component("pagination", "Pagination", [
+    exactTag("Pagination tag", "ds-pagination", 3),
+    htmlRegex("Pagination current page", "current-page", 1),
+  ]),
+  component("radio-button", "Radio Button", [
+    exactTag("Choice tag", "ds-choice", 2),
+    htmlRegex("Radio type prop", "type=[\"']radio[\"']", 2),
+    htmlRegex("Choice checked prop", "checked", 1),
+  ]),
+  component("review", "Review", [
+    exactTag("Review tag", "ds-review", 3),
+    htmlRegex("Review heading", "heading=", 1),
+  ]),
+  component("skip-nav", "Skip Nav", [
+    exactTag("Skip nav tag", "ds-skip-nav", 3),
+    htmlRegex("Skip nav href", "href=", 1),
+  ]),
+  component("spinner", "Spinner", [
+    exactTag("Spinner tag", "ds-spinner", 3),
+    htmlRegex("Spinner size prop", "size=", 1),
+  ]),
+  component("table", "Table", [
+    exactTag("Table tag", "ds-table", 3),
+    htmlRegex("Table head markup", "<thead\\b", 1),
+  ]),
+  component("tabs", "Tabs", [
+    exactTag("Tabs tag", "ds-tabs", 3),
+    htmlRegex("Tabs panel markup", "<ds-tab-panel\\b", 1),
+  ]),
+  component("text-field", "Text Field", [
+    exactTag("Text field tag", "ds-text-field", 3),
+    htmlRegex("Text field label prop", "label=", 1),
+  ]),
+  component("third-party-external-link", "Third Party External Link", [
+    exactTag("Third-party external link tag", "ds-third-party-external-link", 3),
+    htmlRegex("External link href", "href=", 1),
   ]),
   component("tooltip", "Tooltip", [
     exactTag("Tooltip tag", "ds-tooltip", 3),
@@ -96,6 +177,10 @@ const components = [
   component("usa-banner", "USA Banner", [
     exactTag("USA banner tag", "ds-usa-banner", 3),
     textSubstring("Banner utility text", "An official website of the United States government", 1),
+  ]),
+  component("vertical-navigation", "Vertical Navigation", [
+    exactTag("Vertical navigation tag", "ds-vertical-nav", 3),
+    htmlRegex("Vertical nav item tag", "<ds-vertical-nav-item\\b", 1),
   ]),
 ];
 
