@@ -174,6 +174,13 @@ test("archive site writes stable per-issue report files", async () => {
 
   assert.match(rootIndex, /Open archive/);
   assert.match(rootIndex, /href="\.\/reports\/"/);
+  assert.match(rootIndex, /Why This Matters/);
+  assert.match(rootIndex, /Currently Supported/);
+  assert.match(rootIndex, /How To Read A Report/);
+  assert.match(rootIndex, /USWDS/);
+  assert.match(rootIndex, /VA\.gov/);
+  assert.match(rootIndex, /CMS Design System/);
+  assert.match(rootIndex, /GOV\.UK/);
   assert.match(archiveIndex, /Design System Scan Archive/);
   assert.match(html, /Accepted URLs<\/strong>10/);
   assert.match(html, /<a href="\.\/report\.md">Markdown report<\/a>/);

@@ -69,8 +69,15 @@ function buildReportsLandingHtml() {
     <style>
       body { margin: 0; font-family: ui-sans-serif, system-ui, sans-serif; color: #112e51; background: linear-gradient(180deg, #eef5fb 0%, #f7f7f2 100%); }
       main { max-width: 60rem; margin: 0 auto; padding: 3rem 1rem 4rem; }
-      section { background: #fff; border: 1px solid #d0d7de; box-shadow: 0 12px 32px rgba(17, 46, 81, .08); padding: 1.25rem 1.5rem; }
+      section { background: #fff; border: 1px solid #d0d7de; box-shadow: 0 12px 32px rgba(17, 46, 81, .08); padding: 1.25rem 1.5rem; margin-bottom: 1rem; }
       .actions { display: flex; gap: .75rem; flex-wrap: wrap; margin-top: 1rem; }
+      .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr)); gap: 1rem; }
+      .card { background: #f8fbff; border: 1px solid #d0d7de; padding: 1rem; }
+      .card h3, section h2 { margin-top: 0; }
+      ul { padding-left: 1.25rem; }
+      li { margin-bottom: .4rem; }
+      p, li { line-height: 1.55; }
+      code { background: #f0f4f8; padding: .1rem .3rem; border-radius: .2rem; }
       a.button { display: inline-block; padding: .6rem .9rem; border-radius: .35rem; background: #005ea2; color: #fff; text-decoration: none; }
       a.button.secondary { background: #fff; color: #005ea2; border: 1px solid #005ea2; }
     </style>
@@ -79,11 +86,58 @@ function buildReportsLandingHtml() {
     <main>
       <section>
         <h1>Design System Scan Reports</h1>
-        <p>The scan archive and run-specific reports are published under <code>/reports/</code>.</p>
+        <p>This project helps track where public-sector design systems are actually being used, and how faithfully their patterns are being implemented across real sites.</p>
         <div class="actions">
           <a class="button" href="./reports/">Open archive</a>
           <a class="button secondary" href="./reports/latest/">Open latest scan</a>
         </div>
+      </section>
+
+      <section>
+        <h2>Why This Matters</h2>
+        <p>Design systems are hard-coded organizational good practices. They package accessibility, consistency, usability, and maintainability into reusable patterns so teams do not need to solve the same problems from scratch on every page.</p>
+        <p>From an accessibility point of view, this matters because tested components can encode better semantics, keyboard support, focus management, color contrast expectations, error handling, and naming patterns. But having a design system is not enough on its own. The open question is where those patterns are actually implemented, and how faithfully they are implemented in production.</p>
+        <p>This scanner is meant to help answer that question. It creates a feedback loop between documented patterns and real-world adoption by surfacing which design-system tells appear on a site, which components look fully or partially aligned, and where adoption appears to be missing or drifting.</p>
+      </section>
+
+      <section>
+        <h2>Currently Supported</h2>
+        <div class="grid">
+          <div class="card">
+            <h3>USWDS</h3>
+            <p>U.S. Web Design System support is the most mature and includes broad component coverage plus full/partial detection.</p>
+          </div>
+          <div class="card">
+            <h3>VA.gov</h3>
+            <p>VA detection focuses on the VA Design System and its Web Components-based patterns.</p>
+          </div>
+          <div class="card">
+            <h3>CMS Design System</h3>
+            <p>CMS detection includes the shared CMS design-system family and theme identification for Core, CMS.gov, HealthCare.gov, and Medicare.gov.</p>
+          </div>
+          <div class="card">
+            <h3>GOV.UK</h3>
+            <p>GOV.UK detection provides a starter footprint for the GOV.UK Design System and its frontend conventions.</p>
+          </div>
+        </div>
+      </section>
+
+      <section>
+        <h2>How To Read A Report</h2>
+        <ul>
+          <li><strong>Archive:</strong> The archive at <code>/reports/</code> is the main index of scans over time.</li>
+          <li><strong>Latest:</strong> The latest dashboard shows the newest run in a more focused single-run view.</li>
+          <li><strong>Detected system:</strong> This is the design system the scanner thinks best matches the submitted site.</li>
+          <li><strong>Pages with design system fingerprint:</strong> These are pages where the scanner found enough evidence to treat the design system as present.</li>
+          <li><strong>Components identified:</strong> This shows how many distinct component types were found, including whether the strongest evidence was full or partial.</li>
+          <li><strong>Stable report links:</strong> Each issue-triggered scan publishes HTML, Markdown, CSV, and JSON outputs so the exact result of a run can be reviewed later.</li>
+        </ul>
+      </section>
+
+      <section>
+        <h2>What This Project Is Trying To Track</h2>
+        <p>Organizations are developing and publishing design patterns to solve real internal needs, but it is often unclear how broadly those patterns have been adopted, whether teams are using the official components or local variations, and whether there is a feedback loop between documented guidance and production use.</p>
+        <p>This project is an attempt to make that visible. It is not a conformance checker or an accessibility certification tool. It is a way to observe adoption, compare implementations, and create better evidence about how design systems are being used in practice.</p>
       </section>
     </main>
   </body>
