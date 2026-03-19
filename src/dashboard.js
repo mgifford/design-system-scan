@@ -88,6 +88,8 @@ function renderPageRow(page) {
     .slice(0, 5)
     .map((item) => `<li>${escapeHtml(item)}</li>`)
     .join("");
+  const modalId = `page-modal-${Buffer.from(String(page.url)).toString("base64url")}`;
+  const detailsLabel = `Details for ${page.url}`;
 
   return `
     <tr>
@@ -99,24 +101,35 @@ function renderPageRow(page) {
       <td>${page.error ? "0" : page.summary.matchedTemplateCount}</td>
       <td>${escapeHtml(versions)}</td>
       <td>
-        <details>
-          <summary>Details</summary>
-          ${error}
-          ${
-            page.error
-              ? ""
-              : `
-                <p><strong>Adoption:</strong> ${page.summary.fullComponentCount} full, ${page.summary.partialComponentCount} partial, ${formatPercent(page.summary.overallCoverage)} overall</p>
-                ${renderMatchList("Components", page.components)}
-                ${renderMatchList("Templates", page.templates)}
-                ${
-                  assetErrors
-                    ? `<section><h4>Asset fetch issues</h4><ul>${assetErrors}</ul></section>`
-                    : ""
-                }
-              `
-          }
-        </details>
+        <button type="button" class="button-link" data-open-modal="${escapeHtml(modalId)}" aria-label="${escapeHtml(detailsLabel)}">Details</button>
+        <dialog id="${escapeHtml(modalId)}" class="page-modal" aria-label="${escapeHtml(detailsLabel)}">
+          <div class="page-modal__content">
+            <div class="modal-actions">
+              <div>
+                <h4>${escapeHtml(page.url)}</h4>
+                <p class="muted">Version clues: ${escapeHtml(versions)}</p>
+              </div>
+              <form method="dialog">
+                <button type="submit" class="button-link button-link--secondary">Close</button>
+              </form>
+            </div>
+            ${error}
+            ${
+              page.error
+                ? ""
+                : `
+                  <p><strong>Adoption:</strong> ${page.summary.fullComponentCount} full, ${page.summary.partialComponentCount} partial, ${formatPercent(page.summary.overallCoverage)} overall</p>
+                  ${renderMatchList("Components", page.components)}
+                  ${renderMatchList("Templates", page.templates)}
+                  ${
+                    assetErrors
+                      ? `<section><h4>Asset fetch issues</h4><ul>${assetErrors}</ul></section>`
+                      : ""
+                  }
+                `
+            }
+          </div>
+        </dialog>
       </td>
     </tr>
   `;
@@ -298,12 +311,12 @@ export function buildDashboardHtml(report, metadata) {
         --color-button-hover: #bfdeff;
       }
 
-      html, body, main, section, .hero, .meta-card, table, th, td, details, summary, a, button, input, pre {
+      html, body, main, section, .hero, .meta-card, table, th, td, dialog, a, button, input, pre {
         transition: background-color .2s ease, color .2s ease, border-color .2s ease, box-shadow .2s ease;
       }
 
       @media (prefers-reduced-motion: reduce) {
-        html, body, main, section, .hero, .meta-card, table, th, td, details, summary, a, button, input, pre {
+        html, body, main, section, .hero, .meta-card, table, th, td, dialog, a, button, input, pre {
           transition: none;
         }
       }
@@ -334,13 +347,27 @@ export function buildDashboardHtml(report, metadata) {
       .badge--absent { background: var(--color-badge-absent-bg); color: var(--color-badge-absent-text); }
       .muted { color: var(--color-muted); }
       .error { color: var(--color-error); font-weight: 700; }
-      details { margin-top: .5rem; }
-      details summary { cursor: pointer; font-weight: 700; }
       a { color: var(--color-link); }
       a:hover { color: var(--color-link-hover); }
-      a:focus-visible, button:focus-visible, input:focus-visible, summary:focus-visible {
+      a:focus-visible, button:focus-visible, input:focus-visible {
         outline: 3px solid var(--color-focus);
         outline-offset: 2px;
+      }
+      .button-link {
+        appearance: none;
+        border: 1px solid var(--color-button-bg);
+        background: var(--color-button-bg);
+        color: var(--color-button-text);
+        border-radius: .3rem;
+        padding: .45rem .75rem;
+        font: inherit;
+        cursor: pointer;
+      }
+      .button-link:hover { background: var(--color-button-hover); border-color: var(--color-button-hover); }
+      .button-link--secondary {
+        background: var(--color-surface);
+        color: var(--color-link);
+        border-color: var(--color-border-strong);
       }
       .theme-toggle {
         margin-left: auto;
@@ -364,18 +391,36 @@ export function buildDashboardHtml(report, metadata) {
       [data-theme="light"] .sun-icon { display: none; }
       [data-theme="light"] .moon-icon { display: block; }
       pre { white-space: pre-wrap; overflow-wrap: anywhere; background: var(--color-pre-bg); color: var(--color-pre-text); padding: 1rem; border-radius: .25rem; }
+      .page-modal {
+        width: min(92rem, calc(100vw - 2rem));
+        max-height: calc(100vh - 2rem);
+        border: 1px solid var(--color-border);
+        padding: 0;
+        background: var(--color-surface);
+        color: var(--color-text);
+      }
+      .page-modal::backdrop { background: rgba(17, 46, 81, .6); }
+      .page-modal__content { padding: 1.25rem; }
+      .modal-actions {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 1rem;
+        margin-bottom: 1rem;
+      }
+      .modal-actions h4 { margin: 0 0 .25rem; }
 
       @media (forced-colors: active) {
-        .hero, section, .meta-card, table, th, td, .theme-toggle {
+        .hero, section, .meta-card, table, th, td, .theme-toggle, .page-modal, .button-link {
           border-color: CanvasText;
           box-shadow: none;
         }
-        body, .hero, section, .meta-card, table, th, td {
+        body, .hero, section, .meta-card, table, th, td, .page-modal {
           background: Canvas;
           color: CanvasText;
         }
         a { color: LinkText; }
-        .theme-toggle {
+        .theme-toggle, .button-link {
           background: ButtonFace;
           color: ButtonText;
         }
@@ -491,6 +536,13 @@ export function buildDashboardHtml(report, metadata) {
       });
 
       applyTheme(currentTheme);
+
+      document.querySelectorAll('[data-open-modal]').forEach((button) => {
+        button.addEventListener('click', () => {
+          const modal = document.getElementById(button.dataset.openModal);
+          modal?.showModal();
+        });
+      });
     </script>
   </body>
 </html>`;
