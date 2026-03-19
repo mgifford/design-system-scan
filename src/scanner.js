@@ -187,6 +187,34 @@ function extractLinkedPages(html, baseUrl) {
   return uniq(links);
 }
 
+function extractSitemapUrls(xml, baseUrl) {
+  const urls = [];
+
+  for (const match of xml.matchAll(/<loc>\s*([^<\s]+)\s*<\/loc>/giu)) {
+    const absolute = normalizePageUrl(resolveUrl(baseUrl, match[1]));
+
+    if (!absolute || !sameOrigin(baseUrl, absolute) || shouldSkipCrawlUrl(absolute)) {
+      continue;
+    }
+
+    urls.push(absolute);
+  }
+
+  return uniq(urls);
+}
+
+function buildSitemapCandidates(seedUrl) {
+  try {
+    const parsed = new URL(seedUrl);
+    return uniq([
+      `${parsed.origin}/sitemap.xml`,
+      `${parsed.origin}/sitemap_index.xml`,
+    ]);
+  } catch {
+    return [];
+  }
+}
+
 function detectVersions(texts) {
   const hits = [];
 
@@ -388,6 +416,23 @@ async function fetchAssets(urls, limit, timeoutMs) {
   return responses;
 }
 
+async function discoverSitemapUrls(seedUrl, options) {
+  const fetcher = options.fetchText ?? fetchText;
+  const candidates = buildSitemapCandidates(seedUrl);
+  const discovered = [];
+
+  for (const sitemapUrl of candidates) {
+    try {
+      const xml = await fetcher(sitemapUrl, options.timeoutMs);
+      discovered.push(...extractSitemapUrls(xml, seedUrl));
+    } catch {
+      continue;
+    }
+  }
+
+  return uniq(discovered);
+}
+
 function summarizePage(pageReport, definition) {
   const matchedComponents = pageReport.components.filter(
     (component) => component.status !== "absent"
@@ -576,6 +621,27 @@ export async function discoverUrls(seedUrls, options) {
   const queue = seedUrls.map((url) => normalizePageUrl(url));
   const seen = new Set();
   const discovered = [];
+  const seededSitemapUrls = options.crawl
+    ? uniq(
+        (
+          await Promise.all(
+            seedUrls.map((url) => discoverSitemapUrls(url, options))
+          )
+        ).flat()
+      )
+    : [];
+
+  for (const sitemapUrl of seededSitemapUrls) {
+    if (queue.length >= options.maxPages * 4) {
+      break;
+    }
+
+    if (!queue.includes(sitemapUrl)) {
+      queue.push(sitemapUrl);
+    }
+  }
+
+  const fetcher = options.fetchText ?? fetchText;
 
   while (queue.length > 0 && discovered.length < options.maxPages) {
     const url = queue.shift();
@@ -594,7 +660,7 @@ export async function discoverUrls(seedUrls, options) {
     let html = "";
 
     try {
-      html = await fetchText(url, options.timeoutMs);
+      html = await fetcher(url, options.timeoutMs);
     } catch {
       continue;
     }
