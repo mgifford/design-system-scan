@@ -1,6 +1,7 @@
 import fs from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { listDetectableSystemDefinitions } from "./systems/index.js";
 
 const REPORTS_ROOT_DIR = "reports";
 const ARCHIVES_ROOT_DIR = "archives";
@@ -355,7 +356,88 @@ function getInventoryComponents(inventory) {
   return inventory.officialComponents ?? inventory.currentComponents ?? [];
 }
 
-function renderDesignSystemPage(inventory) {
+function describeFingerprintSignal(signal) {
+  const pattern = String(signal?.pattern ?? "");
+
+  if (signal?.type === "asset-substring") {
+    return `Asset URL contains ${pattern}`;
+  }
+
+  if (signal?.type === "class-exact") {
+    return `Exact class ${pattern}`;
+  }
+
+  if (signal?.type === "class-prefix") {
+    return `Class prefix ${pattern}`;
+  }
+
+  if (signal?.type === "class-regex") {
+    return `Class name matching ${pattern}`;
+  }
+
+  if (signal?.type === "tag-exact") {
+    return `Exact custom element or tag ${pattern}`;
+  }
+
+  if (signal?.type === "tag-prefix") {
+    return `Tag prefix ${pattern}`;
+  }
+
+  if (signal?.type === "html-regex") {
+    return `HTML matching ${pattern}`;
+  }
+
+  if (signal?.type === "text-substring") {
+    return `Source text contains ${pattern}`;
+  }
+
+  return pattern || "No pattern documented";
+}
+
+function renderFingerprintSignals(definition) {
+  const signals = definition?.siteFingerprint?.signals ?? [];
+  const thresholds = definition?.siteFingerprint?.thresholds ?? {};
+
+  if (signals.length === 0) {
+    return "";
+  }
+
+  const rows = signals
+    .map(
+      (signal) => `
+        <tr>
+          <td>${escapeHtml(signal.label ?? "Unnamed signal")}</td>
+          <td>${escapeHtml(signal.type ?? "unknown")}</td>
+          <td><code>${escapeHtml(describeFingerprintSignal(signal))}</code></td>
+          <td>${escapeHtml(signal.weight ?? 1)}</td>
+        </tr>
+      `
+    )
+    .join("");
+
+  return `
+      <section>
+        ${renderAnchoredHeading(2, "How this system is identified", "how-this-system-is-identified")}
+        <p>This section shows the site-level tells the scanner uses to decide whether a page appears to implement this design system. These are heuristic signals based on documented classes, assets, package markers, custom elements, and other stable implementation patterns.</p>
+        <p><strong>Fingerprint thresholds:</strong> full at ${escapeHtml(thresholds.full ?? "unknown")}, partial at ${escapeHtml(thresholds.partial ?? "unknown")}.</p>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Signal</th>
+                <th>Type</th>
+                <th>Looks for</th>
+                <th>Weight</th>
+              </tr>
+            </thead>
+            <tbody>${rows}</tbody>
+          </table>
+        </div>
+      </section>
+  `;
+}
+
+function renderDesignSystemPage(inventory, definition = null) {
   const components = getInventoryComponents(inventory);
   const indexedIds = new Set(inventory.scannerCoverage?.indexedComponentIds ?? []);
   const componentRows = components
@@ -436,6 +518,8 @@ function renderDesignSystemPage(inventory) {
         ${themes ? `<h3>Themes</h3><ul>${themes}</ul>` : ""}
         ${notes ? `<h3>Notes</h3><ul>${notes}</ul>` : ""}
       </section>
+
+      ${renderFingerprintSignals(definition)}
 
       <section>
         ${renderAnchoredHeading(2, "Indexed components", "indexed-components")}
@@ -1970,6 +2054,9 @@ export function buildScanReportCsv(scan) {
 export async function writeArchiveSite(outputDir, history) {
   const inventories = await loadDesignSystemInventories();
   const comparisonMatrix = await loadDesignSystemComparisonMatrix();
+  const definitions = new Map(
+    listDetectableSystemDefinitions().map((definition) => [definition.id, definition])
+  );
   await fs.mkdir(outputDir, { recursive: true });
   await fs.writeFile(path.join(outputDir, "index.html"), buildReportsLandingHtml(), "utf8");
   await fs.mkdir(path.join(outputDir, REPORTS_ROOT_DIR), { recursive: true });
@@ -2024,7 +2111,11 @@ export async function writeArchiveSite(outputDir, history) {
   for (const inventory of inventories) {
     const systemDir = path.join(outputDir, "systems", inventory.id);
     await fs.mkdir(systemDir, { recursive: true });
-    await fs.writeFile(path.join(systemDir, "index.html"), renderDesignSystemPage(inventory), "utf8");
+    await fs.writeFile(
+      path.join(systemDir, "index.html"),
+      renderDesignSystemPage(inventory, definitions.get(inventory.id) ?? null),
+      "utf8"
+    );
   }
 
   const comparisonDir = path.join(outputDir, "comparison");

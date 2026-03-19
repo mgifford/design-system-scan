@@ -263,6 +263,12 @@ test("archive site writes stable per-issue report files", async () => {
   assert.match(systemPage, /U\.S\. Web Design System/);
   assert.match(systemPage, /Latest report/);
   assert.match(systemPage, /href="#indexed-components"/);
+  assert.match(systemPage, /How this system is identified/);
+  assert.match(systemPage, /Fingerprint thresholds:/);
+  assert.match(systemPage, /Compiled USWDS stylesheet/);
+  assert.match(systemPage, /uswds\.min\.css/);
+  assert.match(systemPage, /USWDS class prefix/);
+  assert.match(systemPage, /usa-/);
   assert.match(systemPage, /id="component-accordion"/);
   assert.match(systemPage, /Indexed components/);
   assert.match(systemPage, /Scanner support/);
@@ -278,6 +284,10 @@ test("archive site writes stable per-issue report files", async () => {
   const gcdsPage = await fs.readFile(path.join(outputDir, "systems/gcds/index.html"), "utf8");
   assert.match(gcdsPage, /GC Design System/);
   assert.match(gcdsPage, /Indexed components/);
+  assert.match(gcdsPage, /How this system is identified/);
+  assert.match(gcdsPage, /GCDS web component prefix/);
+  assert.match(gcdsPage, /gcds-/);
+  assert.match(gcdsPage, /@cdssnc\/gcds-components/);
   assert.match(gcdsPage, /Breadcrumbs/);
   assert.match(gcdsPage, /https:\/\/design-system\.canada\.ca\/en\/components\/breadcrumbs\//);
 
