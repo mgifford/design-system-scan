@@ -201,11 +201,13 @@ test("archive site writes stable per-issue report files", async () => {
   assert.match(rootIndex, /CMS Design System/);
   assert.match(rootIndex, /GOV\.UK/);
   assert.match(rootIndex, /NL Design System/);
+  assert.match(rootIndex, /GC Design System/);
   assert.match(rootIndex, /href="\.\/systems\/uswds\/"/);
   assert.match(rootIndex, /href="\.\/systems\/va\/"/);
   assert.match(rootIndex, /href="\.\/systems\/cms\/"/);
   assert.match(rootIndex, /href="\.\/systems\/govuk\/"/);
   assert.match(rootIndex, /href="\.\/systems\/nlds\/"/);
+  assert.match(rootIndex, /href="\.\/systems\/gcds\/"/);
   assert.match(rootIndex, /href="\.\/comparison\/"/);
   assert.match(rootIndex, /Design System Comparison/);
   assert.match(rootIndex, /Join the community on GitHub/);
@@ -243,6 +245,12 @@ test("archive site writes stable per-issue report files", async () => {
   assert.match(nldsPage, /Indexed components/);
   assert.match(nldsPage, /Button/);
 
+  const gcdsPage = await fs.readFile(path.join(outputDir, "systems/gcds/index.html"), "utf8");
+  assert.match(gcdsPage, /GC Design System/);
+  assert.match(gcdsPage, /Indexed components/);
+  assert.match(gcdsPage, /Breadcrumbs/);
+  assert.match(gcdsPage, /https:\/\/design-system\.canada\.ca\/en\/components\/breadcrumbs\//);
+
   const comparisonPage = await fs.readFile(path.join(outputDir, "comparison/index.html"), "utf8");
   assert.match(comparisonPage, /Design system comparison/);
   assert.match(comparisonPage, /Example: Breadcrumbs/);
@@ -251,6 +259,7 @@ test("archive site writes stable per-issue report files", async () => {
   assert.match(comparisonPage, /VA\.gov Design System/);
   assert.match(comparisonPage, /CMS Design System/);
   assert.match(comparisonPage, /GOV\.UK Design System/);
+  assert.match(comparisonPage, /GC Design System/);
   assert.match(comparisonPage, /Latest report/);
   assert.match(comparisonPage, /href="#component-family-matrix"/);
   assert.match(comparisonPage, /Mostly converged/);

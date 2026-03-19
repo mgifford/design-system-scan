@@ -8,6 +8,7 @@ const inventoryFiles = [
   "data/design-systems/cms.json",
   "data/design-systems/govuk.json",
   "data/design-systems/nlds.json",
+  "data/design-systems/gcds.json",
 ];
 
 test("design system inventory JSON files are present and populated", () => {
@@ -40,4 +41,12 @@ test("NL Design System inventory indexes the full official component set current
     inventory.officialComponents.some((component) => component.id === "breadcrumb-navigation")
   );
   assert.ok(inventory.officialComponents.some((component) => component.id === "youtube-video"));
+});
+
+test("GC Design System inventory indexes the full official component set currently tracked", () => {
+  const inventory = JSON.parse(fs.readFileSync("data/design-systems/gcds.json", "utf8"));
+
+  assert.equal(inventory.officialComponents.length, 33);
+  assert.ok(inventory.officialComponents.some((component) => component.id === "breadcrumbs"));
+  assert.ok(inventory.officialComponents.some((component) => component.id === "theme-and-topic-menu"));
 });

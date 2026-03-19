@@ -17,6 +17,10 @@
     {
       "id": "govuk",
       "name": "GOV.UK Design System"
+    },
+    {
+      "id": "gcds",
+      "name": "GC Design System"
     }
   ],
   "cmsThemes": [
@@ -45,7 +49,8 @@
       "systems": {
         "uswds": { "status": "direct", "components": ["banner"] },
         "va": { "status": "direct", "components": ["official-gov-banner"] },
-        "cms": { "status": "direct", "components": ["usa-banner"] }
+        "cms": { "status": "direct", "components": ["usa-banner"] },
+        "gcds": { "status": "semantic", "components": ["signature", "header"] }
       },
       "cmsThemes": {
         "core": "Y",
@@ -96,7 +101,8 @@
         "uswds": { "status": "direct", "components": ["button"] },
         "va": { "status": "direct", "components": ["button"] },
         "cms": { "status": "direct", "components": ["button"] },
-        "govuk": { "status": "direct", "components": ["button"] }
+        "govuk": { "status": "direct", "components": ["button"] },
+        "gcds": { "status": "direct", "components": ["button"] }
       },
       "cmsThemes": {
         "core": "Y",
@@ -130,7 +136,8 @@
         "uswds": { "status": "direct", "components": ["breadcrumb"] },
         "va": { "status": "direct", "components": ["breadcrumbs"] },
         "cms": { "status": "none", "components": [] },
-        "govuk": { "status": "direct", "components": ["breadcrumbs"] }
+        "govuk": { "status": "direct", "components": ["breadcrumbs"] },
+        "gcds": { "status": "direct", "components": ["breadcrumbs"] }
       },
       "cmsThemes": {
         "core": "N",
@@ -147,7 +154,8 @@
         "uswds": { "status": "direct", "components": ["header"] },
         "va": { "status": "none", "components": [] },
         "cms": { "status": "direct", "components": ["header"] },
-        "govuk": { "status": "direct", "components": ["header", "service-navigation"] }
+        "govuk": { "status": "direct", "components": ["header", "service-navigation"] },
+        "gcds": { "status": "direct", "components": ["header", "top-nav", "theme-and-topic-menu"] }
       },
       "cmsThemes": {
         "core": "N",
@@ -164,7 +172,8 @@
         "uswds": { "status": "direct", "components": ["footer"] },
         "va": { "status": "none", "components": [] },
         "cms": { "status": "direct", "components": ["footer"] },
-        "govuk": { "status": "direct", "components": ["footer"] }
+        "govuk": { "status": "direct", "components": ["footer"] },
+        "gcds": { "status": "direct", "components": ["footer", "signature"] }
       },
       "cmsThemes": {
         "core": "N",
@@ -198,7 +207,8 @@
         "uswds": { "status": "direct", "components": ["checkbox", "radio-buttons"] },
         "va": { "status": "none", "components": [] },
         "cms": { "status": "direct", "components": ["choice"] },
-        "govuk": { "status": "direct", "components": ["checkboxes", "radios"] }
+        "govuk": { "status": "direct", "components": ["checkboxes", "radios"] },
+        "gcds": { "status": "direct", "components": ["checkboxes", "radio-group"] }
       },
       "cmsThemes": {
         "core": "Y",
@@ -215,7 +225,8 @@
         "uswds": { "status": "direct", "components": ["select", "combo-box"] },
         "va": { "status": "none", "components": [] },
         "cms": { "status": "direct", "components": ["dropdown"] },
-        "govuk": { "status": "direct", "components": ["select"] }
+        "govuk": { "status": "direct", "components": ["select"] },
+        "gcds": { "status": "direct", "components": ["select"] }
       },
       "cmsThemes": {
         "core": "Y",
@@ -232,7 +243,8 @@
         "uswds": { "status": "direct", "components": ["date-picker", "date-range-picker", "memorable-date"] },
         "va": { "status": "none", "components": [] },
         "cms": { "status": "direct", "components": ["date-field"] },
-        "govuk": { "status": "direct", "components": ["date-input"] }
+        "govuk": { "status": "direct", "components": ["date-input"] },
+        "gcds": { "status": "direct", "components": ["date-input"] }
       },
       "cmsThemes": {
         "core": "Y",

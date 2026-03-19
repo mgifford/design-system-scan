@@ -59,6 +59,16 @@ const SYSTEMS = [
       );
     },
   },
+  {
+    id: "gcds",
+    name: "GC Design System",
+    inventoryFile: "gcds.json",
+    sourceUrl: "https://design-system.canada.ca/en/components/",
+    inventoryKey: "officialComponents",
+    extractIds(html) {
+      return extractSlugSet(html, /\/en\/components\/([a-z0-9-]+)\/?/giu);
+    },
+  },
 ];
 
 function extractSlugSet(html, pattern) {

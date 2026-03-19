@@ -18,24 +18,26 @@ Legend:
 | VA.gov Design System | Starter coverage focused on distinctive Web Components and high-signal patterns |
 | CMS Design System | Starter coverage focused on `ds-*` Web Components, package/CDN fingerprints, and child-theme detection |
 | GOV.UK Design System | Starter coverage focused on GOV.UK Frontend classes, `data-module` hooks, and the official component inventory |
+| NL Design System | Starter coverage focused on the official component inventory and distinctive `nl-` candidate/component signals |
+| GC Design System | Starter coverage focused on `gcds-*` web components and the official GC component inventory |
 
 ## Cross-system semantic grid
 
-| Semantic family | USWDS | VA | CMSDS | GOV.UK | Notes |
-| --- | --- | --- | --- | --- | --- |
-| Official government banner | Y | Y | Y | N | GOV.UK does not expose a directly equivalent official-banner component in the current scanner model. |
-| Accordion / disclosure | Y | Y | Y | Y | Strong convergence. |
-| Alert / notification | Y | Y | Y | ~ | GOV.UK expresses this mostly via notification and error patterns. |
-| Button / primary action | Y | Y | Y | Y | Strong convergence. |
-| Modal / dialog | Y | Y | Y | ~ | GOV.UK tends to use other disclosure patterns instead of a modal component. |
-| Breadcrumbs | Y | Y | N | Y | Strong semantic alignment across USWDS, VA, and GOV.UK. |
-| Header / global navigation | Y | N | Y | Y | CMS currently models theme-specific headers. |
-| Footer / site footer | Y | N | Y | Y | CMS currently models theme-specific footers. |
-| Tooltip / inline help | Y | N | Y | N | GOV.UK does not currently expose a tooltip component in the scanner model. |
-| Choice controls | Y | N | Y | Y | Semantics align, but systems split the pattern differently. |
-| Select / dropdown | Y | N | Y | Y | Same semantic role, different implementation granularity. |
-| Date input | Y | N | Y | Y | Same semantic role, different implementation granularity. |
-| Badge / tag / status label | ~ | N | Y | Y | GOV.UK and CMS align directly here; USWDS is adjacent via `Tag`. |
+| Semantic family | USWDS | VA | CMSDS | GOV.UK | GCDS | Notes |
+| --- | --- | --- | --- | --- | --- | --- |
+| Official government banner | Y | Y | Y | N | ~ | GCDS expresses government identity via signature/header patterns rather than a direct banner component. |
+| Accordion / disclosure | Y | Y | Y | Y | N | GCDS does not yet expose a direct accordion in the current scanner model. |
+| Alert / notification | Y | Y | Y | ~ | N | GOV.UK expresses this mostly via notification and error patterns. |
+| Button / primary action | Y | Y | Y | Y | Y | Strong convergence. |
+| Modal / dialog | Y | Y | Y | ~ | N | GOV.UK and GCDS currently lean on other disclosure patterns in the scanner model. |
+| Breadcrumbs | Y | Y | N | Y | Y | Strong semantic alignment across multiple systems, including GCDS. |
+| Header / global navigation | Y | N | Y | Y | Y | CMS currently models theme-specific headers; GCDS includes header and navigation patterns. |
+| Footer / site footer | Y | N | Y | Y | Y | CMS currently models theme-specific footers; GCDS includes footer and signature patterns. |
+| Tooltip / inline help | Y | N | Y | N | N | Tooltip coverage is still uneven across systems. |
+| Choice controls | Y | N | Y | Y | Y | Semantics align, but systems split the pattern differently. |
+| Select / dropdown | Y | N | Y | Y | Y | Same semantic role, different implementation granularity. |
+| Date input | Y | N | Y | Y | Y | Same semantic role, different implementation granularity. |
+| Badge / tag / status label | ~ | N | Y | Y | N | GOV.UK and CMS align directly here; USWDS is adjacent via `Tag`. |
 
 ## Where convergence is strongest
 
@@ -47,7 +49,7 @@ The clearest common pattern across the currently tracked systems is:
 4. Header/footer
 5. Core form controls
 
-Those are the best candidates for a shared semantic taxonomy across USWDS, CMS, GOV.UK, and the currently indexed VA subset.
+Those are the best candidates for a shared semantic taxonomy across USWDS, CMS, GOV.UK, GCDS, and the currently indexed VA subset.
 
 The next tier of convergence is partial:
 
@@ -122,8 +124,8 @@ These are the semantic families most worth normalizing as new design systems are
 ## Important limitations
 
 1. This matrix describes the scanner-supported inventory today.
-2. USWDS is much more complete than VA, CMS, and GOV.UK at the moment.
-3. VA, CMS, and GOV.UK should still be expanded toward their full official component inventories in scanner logic.
+2. USWDS is much more complete than VA, CMS, GOV.UK, NLDS, and GCDS at the moment.
+3. VA, CMS, GOV.UK, NLDS, and GCDS should still be expanded toward their full official component inventories in scanner logic.
 4. Some semantic matches are intentionally broad because different systems split the same user need into different component shapes.
 
 ## Sources
@@ -135,3 +137,5 @@ These are the semantic families most worth normalizing as new design systems are
 - [CMS components overview](https://design.cms.gov/components/overview/)
 - [CMS component analytics](https://design.cms.gov/components/analytics/?theme=cmsgov)
 - [GOV.UK components](https://design-system.service.gov.uk/components/)
+- [NL Design System components](https://nldesignsystem.nl/componenten/)
+- [GC Design System components](https://design-system.canada.ca/en/components/)

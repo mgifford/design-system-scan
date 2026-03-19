@@ -2,6 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 
 import { cms } from "../src/systems/cms.js";
+import { gcds } from "../src/systems/gcds.js";
 import { govuk } from "../src/systems/govuk.js";
 import { nlds } from "../src/systems/nlds.js";
 import { evaluateHtml, selectBestSystemReport } from "../src/scanner.js";
@@ -130,4 +131,27 @@ test("auto detection prefers NL Design System on nl-design-system markup", () =>
   ]);
 
   assert.equal(selection.selected.system.id, "nlds");
+});
+
+test("auto detection prefers GC Design System on gcds web components", () => {
+  const html = `
+    <script type="module">
+      import "@cdssnc/gcds-components";
+    </script>
+    <gcds-header></gcds-header>
+    <gcds-breadcrumbs></gcds-breadcrumbs>
+    <gcds-button>Continue</gcds-button>
+    <gcds-footer></gcds-footer>
+  `;
+
+  const selection = selectBestSystemReport([
+    wrapReport(uswds, evaluateHtml("https://www.canada.ca/", html, uswds)),
+    wrapReport(va, evaluateHtml("https://www.canada.ca/", html, va)),
+    wrapReport(cms, evaluateHtml("https://www.canada.ca/", html, cms)),
+    wrapReport(govuk, evaluateHtml("https://www.canada.ca/", html, govuk)),
+    wrapReport(nlds, evaluateHtml("https://www.canada.ca/", html, nlds)),
+    wrapReport(gcds, evaluateHtml("https://www.canada.ca/", html, gcds)),
+  ]);
+
+  assert.equal(selection.selected.system.id, "gcds");
 });

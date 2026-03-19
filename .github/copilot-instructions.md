@@ -2,7 +2,7 @@
 
 ## What this repo is
 
-This is a small Node.js 24+ repository for scanning public sites for design-system adoption, currently focused on USWDS. It has two main surfaces:
+This is a small Node.js 24+ repository for scanning public sites for design-system adoption across USWDS, VA.gov, CMS, GOV.UK, NL Design System, and GC Design System. It has two main surfaces:
 
 - a CLI scanner that fetches pages, scores component/template “tells,” and optionally crawls same-origin URLs
 - a GitHub Actions + GitHub Pages reporting pipeline that publishes an archive, latest dashboard, and stable issue/run report files
@@ -29,7 +29,7 @@ Run from the repo root.
 Observed:
 
 - `node src/cli.js --help` works immediately
-- `node src/cli.js --list-systems` works immediately and currently lists only `uswds`
+- `node src/cli.js --list-systems` works immediately and should list `auto`, `uswds`, `va`, `cms`, `govuk`, `nlds`, and `gcds`
 - `npm test` passes without any install step and took about 0.1s in this environment
 
 ### Live scan commands that worked
@@ -87,6 +87,7 @@ Core source:
 - `src/snapshots.js`: save/load/diff of JSON snapshots
 - `src/systems/index.js`: registry of design-system definitions
 - `src/systems/uswds.js`: USWDS component/template tells and thresholds
+- `src/systems/va.js`, `src/systems/cms.js`, `src/systems/govuk.js`, `src/systems/nlds.js`, `src/systems/gcds.js`: other supported system definitions
 
 Published Pages UI:
 
@@ -96,6 +97,8 @@ Published Pages UI:
 Tests:
 
 - `test/uswds-components.test.js`: official USWDS inventory + absent/partial/full fixtures
+- `test/auto-detect.test.js`: cross-system auto-detect coverage
+- `test/system-inventories.test.js`: inventory JSON presence/count coverage
 - `test/archive.test.js`: archive renderer regressions
 - `test/dashboard.test.js`: dashboard renderer regressions
 

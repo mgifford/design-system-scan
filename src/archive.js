@@ -218,6 +218,12 @@ function buildReportsLandingHtml() {
               <p>NL Design System detection provides starter support for the Netherlands government design-system family and its official component inventory.</p>
             </div>
           </a>
+          <a class="card-link" href="./systems/gcds/">
+            <div class="card">
+              <h3>GC Design System</h3>
+              <p>GC Design System detection provides starter support for the Government of Canada web components and the official GC component inventory.</p>
+            </div>
+          </a>
           <a class="card-link" href="./comparison/">
             <div class="card">
               <h3>Design System Comparison</h3>
@@ -296,6 +302,10 @@ function buildComponentDocUrl(systemId, componentId, inventory) {
 
   if (systemId === "va") {
     return `https://design.va.gov/components/${componentId}`;
+  }
+
+  if (systemId === "gcds") {
+    return `https://design-system.canada.ca/en/components/${componentId}/`;
   }
 
   return primaryDocsUrl;
