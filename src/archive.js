@@ -508,6 +508,11 @@ function renderDesignSystemPage(inventory, definition = null, hasSemanticSpec = 
       <section>
         ${renderAnchoredHeading(1, inventory.name, `${inventory.id}-top`)}
         <p><strong>Homepage:</strong> <a href="${escapeHtml(inventory.homepage)}">${escapeHtml(inventory.homepage)}</a></p>
+        ${
+          hasSemanticSpec
+            ? `<p><strong>YAML spec:</strong> <a href="${escapeHtml(semanticSpecHref)}">${escapeHtml(semanticSpecHref)}</a></p>`
+            : ""
+        }
         <p><strong>Scanner coverage:</strong> ${escapeHtml(inventory.scannerCoverage?.status ?? "unknown")}</p>
         <p><strong>Inventory date:</strong> ${escapeHtml(inventory.inventoryDate ?? "unknown")}</p>
       </section>

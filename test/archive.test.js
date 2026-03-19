@@ -273,6 +273,7 @@ test("archive site writes stable per-issue report files", async () => {
   assert.match(systemPage, /Fingerprint thresholds:/);
   assert.match(systemPage, /Compiled USWDS stylesheet/);
   assert.match(systemPage, /uswds\.min\.css/);
+  assert.match(systemPage, /<strong>YAML spec:<\/strong> <a href="\.\.\/\.\.\/specs\/uswds\.yaml">\.\.\/\.\.\/specs\/uswds\.yaml<\/a>/);
   assert.match(systemPage, /Semantic YAML spec/);
   assert.match(systemPage, /\.\.\/\.\.\/specs\/uswds\.yaml/);
   assert.match(systemPage, /USWDS class prefix/);
@@ -301,6 +302,7 @@ test("archive site writes stable per-issue report files", async () => {
 
   const kolibriPage = await fs.readFile(path.join(outputDir, "systems/kolibri/index.html"), "utf8");
   assert.match(kolibriPage, /KoliBri - Public UI/);
+  assert.match(kolibriPage, /<strong>YAML spec:<\/strong> <a href="\.\.\/\.\.\/specs\/kolibri\.yaml">\.\.\/\.\.\/specs\/kolibri\.yaml<\/a>/);
   assert.match(kolibriPage, /Semantic YAML spec/);
   assert.match(kolibriPage, /How this system is identified/);
   assert.match(kolibriPage, /@public-ui\/components/);
