@@ -29,6 +29,10 @@ const FETCH_HEADERS = {
   "user-agent":
     "design-system-scan/0.1 (+https://github.com/mgifford/design-system-scan)",
 };
+const PAGE_FETCH_HEADERS = {
+  ...FETCH_HEADERS,
+  accept: "text/html,application/xhtml+xml;q=0.9,*/*;q=0.8",
+};
 
 function normalizeWhitespace(value) {
   return value.replace(/\s+/gu, " ").trim();
@@ -78,6 +82,55 @@ async function fetchText(url, timeoutMs) {
       }
 
       return await response.text();
+    } finally {
+      timeout.clear();
+    }
+  }
+
+  throw new Error("Max retries exceeded");
+}
+
+async function fetchPage(url, timeoutMs) {
+  for (let attempt = 0; attempt <= MAX_FETCH_RETRIES; attempt++) {
+    const timeout = createTimeoutSignal(timeoutMs);
+
+    try {
+      const response = await fetch(url, {
+        signal: timeout.signal,
+        headers: PAGE_FETCH_HEADERS,
+      });
+
+      if (RETRYABLE_STATUSES.has(response.status) && attempt < MAX_FETCH_RETRIES) {
+        const retryAfterHeader = response.headers.get("retry-after");
+        let delayMs;
+        if (retryAfterHeader) {
+          const seconds = Number(retryAfterHeader);
+          if (Number.isFinite(seconds)) {
+            delayMs = Math.min(seconds * 1000, 30000);
+          } else {
+            const retryDate = Date.parse(retryAfterHeader);
+            delayMs = Number.isNaN(retryDate)
+              ? Math.min(1000 * 2 ** attempt, 8000)
+              : Math.min(Math.max(retryDate - Date.now(), 0), 30000);
+          }
+        } else {
+          delayMs = Math.min(1000 * 2 ** attempt, 8000);
+        }
+        await sleep(delayMs);
+        continue;
+      }
+
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}`);
+      }
+
+      return {
+        url,
+        finalUrl: normalizePageUrl(response.url || url),
+        redirected: response.redirected,
+        contentType: response.headers.get("content-type") || "",
+        text: await response.text(),
+      };
     } finally {
       timeout.clear();
     }
@@ -144,6 +197,29 @@ function shouldSkipCrawlUrl(url) {
   } catch {
     return true;
   }
+}
+
+function isLikelyHtmlPage(pageResponse) {
+  const contentType = String(pageResponse?.contentType ?? "").toLowerCase();
+
+  if (contentType.includes("text/html") || contentType.includes("application/xhtml+xml")) {
+    return true;
+  }
+
+  if (
+    contentType.includes("application/xml") ||
+    contentType.includes("text/xml") ||
+    contentType.includes("application/pdf") ||
+    contentType.includes("text/plain") ||
+    contentType.includes("application/json") ||
+    contentType.includes("application/rss+xml") ||
+    contentType.includes("application/atom+xml")
+  ) {
+    return false;
+  }
+
+  const text = String(pageResponse?.text ?? "").trimStart().toLowerCase();
+  return text.startsWith("<!doctype html") || text.startsWith("<html");
 }
 
 function extractClasses(html) {
@@ -616,10 +692,22 @@ export function evaluateHtml(url, html, definition) {
 }
 
 export async function scanUrl(url, definition, options) {
-  let html = "";
+  const pageFetcher =
+    options.fetchPage ??
+    (options.fetchText
+      ? async (candidateUrl, timeoutMs) => ({
+          url: candidateUrl,
+          finalUrl: normalizePageUrl(candidateUrl),
+          redirected: false,
+          contentType: "text/html",
+          text: await options.fetchText(candidateUrl, timeoutMs),
+        })
+      : fetchPage);
+
+  let pageResponse;
 
   try {
-    html = await fetchText(url, options.timeoutMs);
+    pageResponse = await pageFetcher(url, options.timeoutMs);
   } catch (error) {
     return {
       url,
@@ -637,7 +725,18 @@ export async function scanUrl(url, definition, options) {
       },
     };
   }
-  const linkedAssets = extractLinkedAssets(html, url);
+  const finalUrl = normalizePageUrl(pageResponse.finalUrl || url);
+
+  if (!sameOrigin(url, finalUrl) || !isLikelyHtmlPage(pageResponse)) {
+    return {
+      url: finalUrl,
+      skipped: true,
+      skipReason: !sameOrigin(url, finalUrl) || pageResponse.redirected ? "redirect" : "non-html",
+    };
+  }
+
+  const html = pageResponse.text;
+  const linkedAssets = extractLinkedAssets(html, finalUrl);
 
   const assetContent = {
     css: [],
@@ -649,12 +748,13 @@ export async function scanUrl(url, definition, options) {
     assetContent.js = await fetchAssets(linkedAssets.jsUrls, options.assetLimit, options.timeoutMs);
   }
 
-  return evaluatePageContent(url, html, definition, options, assetContent);
+  return evaluatePageContent(finalUrl, html, definition, options, assetContent);
 }
 
 export async function discoverUrls(seedUrls, options) {
   const queue = seedUrls.map((url) => normalizePageUrl(url));
   const seen = new Set();
+  const accepted = new Set();
   const discovered = [];
   const seededSitemapUrls = options.crawl
     ? uniq(
@@ -676,7 +776,17 @@ export async function discoverUrls(seedUrls, options) {
     }
   }
 
-  const fetcher = options.fetchText ?? fetchText;
+  const pageFetcher =
+    options.fetchPage ??
+    (options.fetchText
+      ? async (candidateUrl, timeoutMs) => ({
+          url: candidateUrl,
+          finalUrl: normalizePageUrl(candidateUrl),
+          redirected: false,
+          contentType: "text/html",
+          text: await options.fetchText(candidateUrl, timeoutMs),
+        })
+      : fetchPage);
 
   while (queue.length > 0 && discovered.length < options.maxPages) {
     const url = queue.shift();
@@ -686,21 +796,30 @@ export async function discoverUrls(seedUrls, options) {
     }
 
     seen.add(url);
-    discovered.push(url);
+    let pageResponse;
+
+    try {
+      pageResponse = await pageFetcher(url, options.timeoutMs);
+    } catch {
+      continue;
+    }
+
+    const finalUrl = normalizePageUrl(pageResponse.finalUrl || url);
+
+    if (!sameOrigin(url, finalUrl) || !isLikelyHtmlPage(pageResponse) || shouldSkipCrawlUrl(finalUrl)) {
+      continue;
+    }
+
+    if (!accepted.has(finalUrl)) {
+      accepted.add(finalUrl);
+      discovered.push(finalUrl);
+    }
 
     if (!options.crawl) {
       continue;
     }
 
-    let html = "";
-
-    try {
-      html = await fetcher(url, options.timeoutMs);
-    } catch {
-      continue;
-    }
-
-    const nextUrls = extractLinkedPages(html, url);
+    const nextUrls = extractLinkedPages(pageResponse.text, finalUrl);
 
     for (const nextUrl of nextUrls) {
       if (!seen.has(nextUrl) && queue.length + discovered.length < options.maxPages * 4) {

@@ -119,5 +119,112 @@ test("discoverUrls continues crawling after a failed page fetch", async () => {
 
   assert.ok(urls.includes("https://example.com/"));
   assert.ok(urls.includes("https://example.com/ok.html"));
-  assert.ok(urls.includes("https://example.com/fail.html"));
+  assert.ok(!urls.includes("https://example.com/fail.html"));
+});
+
+test("discoverUrls excludes sitemap xml, pdf files, and redirect-only endpoints from scanned pages", async () => {
+  const urls = await discoverUrls(["https://www.dhs.gov/"], {
+    crawl: true,
+    maxPages: 10,
+    timeoutMs: 1000,
+    fetchPage: async (url) => {
+      if (url === "https://www.dhs.gov/") {
+        return {
+          url,
+          finalUrl: url,
+          redirected: false,
+          contentType: "text/html; charset=utf-8",
+          text: `<html><body>
+            <a href="/news.html">News</a>
+            <a href="/sitemap.xml?page=1">XML</a>
+            <a href="/files/report.pdf">PDF</a>
+            <a href="/facebook">Facebook</a>
+          </body></html>`,
+        };
+      }
+
+      if (url === "https://www.dhs.gov/news.html") {
+        return {
+          url,
+          finalUrl: url,
+          redirected: false,
+          contentType: "text/html; charset=utf-8",
+          text: `<html><body><p>News</p></body></html>`,
+        };
+      }
+
+      if (url === "https://www.dhs.gov/facebook") {
+        return {
+          url,
+          finalUrl: "https://www.facebook.com/dhsgov",
+          redirected: true,
+          contentType: "text/html; charset=utf-8",
+          text: `<html><body><p>Redirected</p></body></html>`,
+        };
+      }
+
+      throw new Error(`Unexpected fetch: ${url}`);
+    },
+  });
+
+  assert.deepEqual(urls, [
+    "https://www.dhs.gov/",
+    "https://www.dhs.gov/news.html",
+  ]);
+});
+
+test("discoverUrls excludes non-html responses discovered from sitemap entries", async () => {
+  const responses = new Map([
+    [
+      "https://example.gov/sitemap.xml",
+      `<?xml version="1.0" encoding="UTF-8"?>
+      <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+        <url><loc>https://example.gov/</loc></url>
+        <url><loc>https://example.gov/policy.xml</loc></url>
+        <url><loc>https://example.gov/guide.pdf</loc></url>
+        <url><loc>https://example.gov/apply</loc></url>
+      </urlset>`,
+    ],
+  ]);
+
+  const urls = await discoverUrls(["https://example.gov/"], {
+    crawl: true,
+    maxPages: 10,
+    timeoutMs: 1000,
+    fetchText: async (url) => {
+      if (!responses.has(url)) {
+        throw new Error(`Unexpected sitemap fetch: ${url}`);
+      }
+
+      return responses.get(url);
+    },
+    fetchPage: async (url) => {
+      if (url === "https://example.gov/" || url === "https://example.gov/apply") {
+        return {
+          url,
+          finalUrl: url,
+          redirected: false,
+          contentType: "text/html; charset=utf-8",
+          text: `<html><body><p>HTML page</p></body></html>`,
+        };
+      }
+
+      if (url === "https://example.gov/policy.xml") {
+        return {
+          url,
+          finalUrl: url,
+          redirected: false,
+          contentType: "application/xml; charset=utf-8",
+          text: `<?xml version="1.0"?><policy />`,
+        };
+      }
+
+      throw new Error(`Unexpected page fetch: ${url}`);
+    },
+  });
+
+  assert.deepEqual(urls, [
+    "https://example.gov/",
+    "https://example.gov/apply",
+  ]);
 });
