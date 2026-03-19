@@ -2,13 +2,16 @@
 
 ## Project overview
 
-`design-system-scan` is a Node.js CLI and GitHub Actions workflow for scanning sites for design-system adoption, currently focused on USWDS.
+`design-system-scan` is a Node.js CLI and GitHub Actions workflow for scanning sites for design-system adoption across USWDS, VA.gov, the CMS Design System, and GOV.UK.
 
 The repo includes:
 
 - a CLI scanner in [`src/cli.js`](/Users/mike.gifford/design-system-scan/src/cli.js)
 - detection and crawl logic in [`src/scanner.js`](/Users/mike.gifford/design-system-scan/src/scanner.js)
 - USWDS rules in [`src/systems/uswds.js`](/Users/mike.gifford/design-system-scan/src/systems/uswds.js)
+- VA rules in [`src/systems/va.js`](/Users/mike.gifford/design-system-scan/src/systems/va.js)
+- CMS rules in [`src/systems/cms.js`](/Users/mike.gifford/design-system-scan/src/systems/cms.js)
+- GOV.UK rules in [`src/systems/govuk.js`](/Users/mike.gifford/design-system-scan/src/systems/govuk.js)
 - GitHub Pages report renderers in [`src/archive.js`](/Users/mike.gifford/design-system-scan/src/archive.js) and [`src/dashboard.js`](/Users/mike.gifford/design-system-scan/src/dashboard.js)
 - workflow automation in [`.github/workflows/scan.yml`](/Users/mike.gifford/design-system-scan/.github/workflows/scan.yml)
 
@@ -21,14 +24,16 @@ Read these first when working here:
 
 - Use Node.js 24 or newer.
 - Preferred local version switch: `nvm use`
-- Install dependencies if needed: `npm install`
+- Install dependencies only if needed: `npm install`
 
 ## Common commands
 
 - Run tests: `npm test`
-- Run a sample scan: `npm run scan:uswds -- https://designsystem.digital.gov/`
+- Run a sample auto-detect scan: `npm run scan -- https://designsystem.digital.gov/`
+- Run a sample USWDS scan: `npm run scan:uswds -- https://designsystem.digital.gov/`
 - Scan with crawling: `node src/cli.js --system uswds --crawl --max-pages 20 https://example.gov/`
 - Emit JSON only: `node src/cli.js --system uswds --json https://example.gov/`
+- Validate live design-system inventories: `npm run validate:inventories`
 
 ## Testing instructions
 
@@ -44,17 +49,21 @@ Read these first when working here:
 - `SCAN:` issues can trigger scans through [`.github/workflows/scan.yml`](/Users/mike.gifford/design-system-scan/.github/workflows/scan.yml).
 - Issue titles or bodies may contain either full URLs or bare domains like `gsa.gov`.
 - The workflow publishes:
-  - `/` as the archive
-  - `/latest/` as the newest dashboard
-  - `/runs/<run-id>/` as the stable page for a specific run
+  - `/` as the landing page
+  - `/reports/` as the current reports index
+  - `/reports/latest/` as the newest dashboard
+  - `/reports/issues/issue-<n>/run-<run-id>/report.html` as the stable page for a specific issue-triggered run
+  - `/archives/` as the long-term archive index
+  - `/archives/issues/issue-<n>/<date>/report-package.zip` as the archived run package
 - Issue comments should point people to the exact run page, archive entry, workflow run, and artifacts.
 
 ## Report UI guidance
 
 - Treat the Pages UI as a product surface, not a throwaway report.
-- Favor compact tables first, with deeper details available through progressive disclosure.
+- Favor compact tables first, with deeper details available through modals or stable detail pages.
 - For run-level details, prefer stable links over moving targets like `/latest/` when referencing a specific scan.
 - Keep labels short and user-facing. Prefer `Date` over internal timestamps or implementation jargon.
+- Keep the shared site header and footer consistent across landing, system, comparison, reports, archives, and dashboard pages.
 
 ## Accessibility rules
 
@@ -89,6 +98,7 @@ Important locked patterns:
 - Link to exact destinations whenever possible.
 - Avoid generic links that stop being correct after the next scan.
 - Make the next user action obvious.
+- Distinguish between current reports and archived packages in user-facing links and wording.
 - If a scan fails because input is ambiguous, improve the workflow guidance or parser instead of only changing the error text.
 
 ## Commit guidance
