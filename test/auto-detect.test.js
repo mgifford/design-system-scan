@@ -155,3 +155,28 @@ test("auto detection prefers GC Design System on gcds web components", () => {
 
   assert.equal(selection.selected.system.id, "gcds");
 });
+
+test("auto detection returns unknown when no system has clear evidence", () => {
+  const html = `
+    <main>
+      <h1>Example service</h1>
+      <p>This page uses plain HTML without any tracked design-system conventions.</p>
+      <a href="/about">About</a>
+    </main>
+  `;
+
+  const selection = selectBestSystemReport([
+    wrapReport(uswds, evaluateHtml("https://example.com/", html, uswds)),
+    wrapReport(va, evaluateHtml("https://example.com/", html, va)),
+    wrapReport(cms, evaluateHtml("https://example.com/", html, cms)),
+    wrapReport(govuk, evaluateHtml("https://example.com/", html, govuk)),
+    wrapReport(nlds, evaluateHtml("https://example.com/", html, nlds)),
+    wrapReport(gcds, evaluateHtml("https://example.com/", html, gcds)),
+  ]);
+
+  assert.equal(selection.selected.system.id, "unknown");
+  assert.equal(selection.selected.system.name, "Unknown design system");
+  assert.equal(selection.selected.siteSummary.fingerprintedPageCount, 0);
+  assert.deepEqual(selection.selected.pages[0].components, []);
+  assert.deepEqual(selection.selected.pages[0].templates, []);
+});

@@ -706,6 +706,60 @@ function summarizeCandidate(report) {
   };
 }
 
+function hasConfidentDetection(summary) {
+  return (
+    (summary.fingerprintedPages ?? 0) > 0 ||
+    (summary.fullComponents ?? 0) > 0 ||
+    (summary.matchedTemplates ?? 0) > 0
+  );
+}
+
+function buildUnknownSystemReport(report) {
+  const pages = report.pages.map((page) => {
+    if (page.error) {
+      return page;
+    }
+
+    return {
+      ...page,
+      versions: [],
+      siteFingerprint: {
+        status: "absent",
+        coverage: 0,
+        matchedWeight: 0,
+        possibleWeight: 0,
+        matchedSignals: [],
+        missingSignals: [],
+      },
+      components: [],
+      themes: [],
+      templates: [],
+      primaryTheme: null,
+      summary: {
+        matchedComponentCount: 0,
+        matchedThemeCount: 0,
+        fullComponentCount: 0,
+        partialComponentCount: 0,
+        matchedTemplateCount: 0,
+        overallCoverage: 0,
+      },
+    };
+  });
+
+  return {
+    ...report,
+    system: {
+      id: "unknown",
+      name: "Unknown design system",
+      trackedVersion: "not-detected",
+      homepage: "",
+      docs: [],
+    },
+    pages,
+    siteSummary: summarizeSite(pages),
+  };
+}
+
 export function selectBestSystemReport(reports) {
   const candidates = reports.map((report) => ({
     report,
@@ -728,8 +782,15 @@ export function selectBestSystemReport(reports) {
     return left.summary.name.localeCompare(right.summary.name);
   });
 
+  const selectedCandidate = candidates[0] ?? null;
+
   return {
-    selected: candidates[0]?.report ?? null,
+    selected:
+      !selectedCandidate
+        ? null
+        : hasConfidentDetection(selectedCandidate.summary)
+          ? selectedCandidate.report
+          : buildUnknownSystemReport(selectedCandidate.report),
     candidates: candidates.map((candidate) => candidate.summary),
   };
 }
