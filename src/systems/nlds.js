@@ -154,6 +154,38 @@ export const nlds = {
   },
   components,
   templates: [],
+  tokens: [
+    component(
+      "color-tokens",
+      "Color design tokens",
+      [
+        signal("css-regex", "NLDS color token in CSS", "--nl-color-", 2),
+        htmlRegex("NLDS color token defined", "--nl-color-[a-z0-9-]+\\s*:", 2),
+        htmlRegex("NLDS color token used", "var\\(--nl-color-", 1),
+      ],
+      { full: 0.55, partial: 0.35 }
+    ),
+    component(
+      "typography-tokens",
+      "Typography design tokens",
+      [
+        signal("css-regex", "NLDS typography token in CSS", "--nl-typography-", 2),
+        htmlRegex("NLDS typography token defined", "--nl-typography-[a-z0-9-]+\\s*:", 2),
+        htmlRegex("NLDS typography token used", "var\\(--nl-typography-", 1),
+      ],
+      { full: 0.55, partial: 0.35 }
+    ),
+    component(
+      "spacing-tokens",
+      "Spacing design tokens",
+      [
+        signal("css-regex", "NLDS space token in CSS", "--nl-space-", 2),
+        htmlRegex("NLDS space token defined", "--nl-space-[a-z0-9-]+\\s*:", 2),
+        htmlRegex("NLDS space token used", "var\\(--nl-space-", 1),
+      ],
+      { full: 0.55, partial: 0.35 }
+    ),
+  ],
   maintenance: {
     notes: [
       "NL Design System is a distributed design-system community with shared component definitions and multiple implementation packages.",

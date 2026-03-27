@@ -113,6 +113,39 @@ const components = [
   ]),
 ];
 
+const tokens = [
+  component(
+    "color-tokens",
+    "Color design tokens",
+    [
+      signal("css-regex", "GCDS color token in CSS", "--gcds-color-", 2),
+      htmlRegex("GCDS color token defined", "--gcds-color-[a-z0-9-]+\\s*:", 2),
+      htmlRegex("GCDS color token used", "var\\(--gcds-color-", 1),
+    ],
+    { full: 0.55, partial: 0.35 }
+  ),
+  component(
+    "typography-tokens",
+    "Typography design tokens",
+    [
+      signal("css-regex", "GCDS font token in CSS", "--gcds-font-", 2),
+      htmlRegex("GCDS font token defined", "--gcds-font-[a-z0-9-]+\\s*:", 2),
+      htmlRegex("GCDS font token used", "var\\(--gcds-font-", 1),
+    ],
+    { full: 0.55, partial: 0.35 }
+  ),
+  component(
+    "spacing-tokens",
+    "Spacing design tokens",
+    [
+      signal("css-regex", "GCDS spacing token in CSS", "--gcds-spacing-", 2),
+      htmlRegex("GCDS spacing token defined", "--gcds-spacing-[a-z0-9-]+\\s*:", 2),
+      htmlRegex("GCDS spacing token used", "var\\(--gcds-spacing-", 1),
+    ],
+    { full: 0.55, partial: 0.35 }
+  ),
+];
+
 export const gcds = {
   id: "gcds",
   name: "GC Design System",
@@ -140,6 +173,7 @@ export const gcds = {
   },
   components,
   templates: [],
+  tokens,
   maintenance: {
     notes: [
       "GC Design System provides production-ready, framework-agnostic web components for Government of Canada services.",
