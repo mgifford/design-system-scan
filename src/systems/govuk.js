@@ -195,6 +195,38 @@ export const govuk = {
   },
   components,
   templates: [],
+  tokens: [
+    component(
+      "colour-tokens",
+      "Colour design tokens",
+      [
+        signal("css-regex", "GOV.UK colour token in CSS", "--govuk-colour-", 2),
+        htmlRegex("GOV.UK colour token defined", "--govuk-colour-[a-z0-9][a-z0-9-]*\\s*:", 2),
+        htmlRegex("GOV.UK colour token used", "var\\(--govuk-colour-", 1),
+      ],
+      { full: 0.55, partial: 0.35 }
+    ),
+    component(
+      "typography-tokens",
+      "Typography design tokens",
+      [
+        signal("css-regex", "GOV.UK font token in CSS", "--govuk-font-", 2),
+        htmlRegex("GOV.UK font token defined", "--govuk-font-[a-z0-9][a-z0-9-]*\\s*:", 2),
+        htmlRegex("GOV.UK font token used", "var\\(--govuk-font-", 1),
+      ],
+      { full: 0.55, partial: 0.35 }
+    ),
+    component(
+      "spacing-tokens",
+      "Spacing design tokens",
+      [
+        signal("css-regex", "GOV.UK spacing token in CSS", "--govuk-spacing-", 2),
+        htmlRegex("GOV.UK spacing token defined", "--govuk-spacing-[a-z0-9][a-z0-9-]*\\s*:", 2),
+        htmlRegex("GOV.UK spacing token used", "var\\(--govuk-spacing-", 1),
+      ],
+      { full: 0.55, partial: 0.35 }
+    ),
+  ],
   maintenance: {
     notes: [
       "The GOV.UK Design System is usually implemented via GOV.UK Frontend and uses a consistent govuk- class prefix.",

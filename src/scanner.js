@@ -552,6 +552,7 @@ function summarizePage(pageReport, definition) {
   const matchedTemplates = (pageReport.templates ?? []).filter(
     (template) => template.status !== "absent"
   );
+  const matchedTokens = (pageReport.tokens ?? []).filter((token) => token.status !== "absent");
   const fullyImplemented = matchedComponents.filter(
     (component) => component.status === "full"
   ).length;
@@ -569,6 +570,7 @@ function summarizePage(pageReport, definition) {
     fullComponentCount: fullyImplemented,
     partialComponentCount: partiallyImplemented,
     matchedTemplateCount: matchedTemplates.length,
+    matchedTokenCount: matchedTokens.length,
     overallCoverage: Number.parseFloat(clamp(overallCoverage, 0, 1).toFixed(3)),
   };
 }
@@ -651,6 +653,12 @@ function evaluatePageContent(url, html, definition, options, assetContent = { cs
     ),
   }));
 
+  const tokens = (definition.tokens ?? []).map((tokenGroup) => ({
+    id: tokenGroup.id,
+    name: tokenGroup.name,
+    ...scoreSignals(tokenGroup.signals, context, tokenGroup.thresholds),
+  }));
+
   const versionTexts = [
     page.html,
     ...context.assetUrls,
@@ -671,6 +679,7 @@ function evaluatePageContent(url, html, definition, options, assetContent = { cs
     components,
     themes,
     templates,
+    tokens,
     primaryTheme: selectPrimaryMatch(themes),
     assetInventory: {
       cssUrls: page.cssUrls,
@@ -679,7 +688,7 @@ function evaluatePageContent(url, html, definition, options, assetContent = { cs
       jsFetched: assetContent.js.length,
       assetErrors,
     },
-    summary: summarizePage({ components, templates }, definition),
+    summary: summarizePage({ components, templates, tokens }, definition),
   };
 }
 
@@ -716,11 +725,13 @@ export async function scanUrl(url, definition, options) {
       versions: [],
       components: [],
       themes: [],
+      tokens: [],
       summary: {
         matchedComponentCount: 0,
         matchedThemeCount: 0,
         fullComponentCount: 0,
         partialComponentCount: 0,
+        matchedTokenCount: 0,
         overallCoverage: 0,
       },
     };
@@ -958,6 +969,7 @@ function buildUnknownSystemReport(report) {
       components: [],
       themes: [],
       templates: [],
+      tokens: [],
       primaryTheme: null,
       summary: {
         matchedComponentCount: 0,
@@ -965,6 +977,7 @@ function buildUnknownSystemReport(report) {
         fullComponentCount: 0,
         partialComponentCount: 0,
         matchedTemplateCount: 0,
+        matchedTokenCount: 0,
         overallCoverage: 0,
       },
     };
@@ -1051,6 +1064,7 @@ function summarizeSite(pages) {
   const componentCounts = new Map();
   const themeCounts = new Map();
   const templateCounts = new Map();
+  const tokenCounts = new Map();
 
   for (const page of successfulPages) {
     for (const component of page.components) {
@@ -1115,6 +1129,27 @@ function summarizeSite(pages) {
 
       templateCounts.set(template.id, current);
     }
+
+    for (const token of page.tokens ?? []) {
+      if (token.status === "absent") {
+        continue;
+      }
+
+      const current = tokenCounts.get(token.id) ?? {
+        id: token.id,
+        name: token.name,
+        full: 0,
+        partial: 0,
+      };
+
+      if (token.status === "full") {
+        current.full += 1;
+      } else if (token.status === "partial") {
+        current.partial += 1;
+      }
+
+      tokenCounts.set(token.id, current);
+    }
   }
 
   return {
@@ -1132,6 +1167,11 @@ function summarizeSite(pages) {
       return rightScore - leftScore;
     }),
     templates: [...templateCounts.values()].sort((left, right) => {
+      const leftScore = left.full * 2 + left.partial;
+      const rightScore = right.full * 2 + right.partial;
+      return rightScore - leftScore;
+    }),
+    tokens: [...tokenCounts.values()].sort((left, right) => {
       const leftScore = left.full * 2 + left.partial;
       const rightScore = right.full * 2 + right.partial;
       return rightScore - leftScore;

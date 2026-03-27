@@ -16,6 +16,13 @@ function topTemplates(templates) {
     .slice(0, 5);
 }
 
+function topTokens(tokens) {
+  return (tokens ?? [])
+    .filter((token) => token.status !== "absent")
+    .sort((left, right) => right.coverage - left.coverage)
+    .slice(0, 6);
+}
+
 function describeMissing(item) {
   return item.missingSignals
     .slice(0, 3)
@@ -79,6 +86,14 @@ export function formatTextReport(report) {
       .map((template) => `${template.name} (${template.full} full, ${template.partial} partial)`)
       .join("; ");
     lines.push(`Site-wide template tells: ${templateSummary}`);
+  }
+
+  if ((report.siteSummary.tokens ?? []).length > 0) {
+    const tokenSummary = report.siteSummary.tokens
+      .slice(0, 6)
+      .map((token) => `${token.name} (${token.full} full, ${token.partial} partial)`)
+      .join("; ");
+    lines.push(`Site-wide token tells: ${tokenSummary}`);
   }
 
   lines.push("");
@@ -145,6 +160,22 @@ export function formatTextReport(report) {
         if (missing) {
           lines.push(`      missing: ${missing}`);
         }
+      }
+    }
+
+    const tokens = topTokens(page.tokens ?? []);
+
+    if (tokens.length > 0) {
+      lines.push("  Design tokens:");
+
+      for (const token of tokens) {
+        const evidence = token.matchedSignals
+          .slice(0, 2)
+          .map((signal) => signal.value)
+          .join(" | ");
+        lines.push(
+          `    - ${token.name}: ${token.status} (${formatPercent(token.coverage)})${evidence ? ` via ${evidence}` : ""}`
+        );
       }
     }
 

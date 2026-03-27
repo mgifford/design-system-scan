@@ -246,6 +246,38 @@ export const cms = {
   components,
   themes,
   templates: [],
+  tokens: [
+    component(
+      "color-tokens",
+      "Color design tokens",
+      [
+        signal("css-regex", "CMSDS color token in CSS", "--cmsgov-color-", 2),
+        htmlRegex("CMSDS color token defined", "--cmsgov-color-[a-z0-9][a-z0-9-]*\\s*:", 2),
+        htmlRegex("CMSDS color token used", "var\\(--cmsgov-color-", 1),
+      ],
+      { full: 0.55, partial: 0.35 }
+    ),
+    component(
+      "typography-tokens",
+      "Typography design tokens",
+      [
+        signal("css-regex", "CMSDS font token in CSS", "--cmsgov-font-", 2),
+        htmlRegex("CMSDS font token defined", "--cmsgov-font-[a-z0-9][a-z0-9-]*\\s*:", 2),
+        htmlRegex("CMSDS font token used", "var\\(--cmsgov-font-", 1),
+      ],
+      { full: 0.55, partial: 0.35 }
+    ),
+    component(
+      "spacing-tokens",
+      "Spacing design tokens",
+      [
+        signal("css-regex", "CMSDS spacing token in CSS", "--cmsgov-spacing-", 2),
+        htmlRegex("CMSDS spacing token defined", "--cmsgov-spacing-[a-z0-9][a-z0-9-]*\\s*:", 2),
+        htmlRegex("CMSDS spacing token used", "var\\(--cmsgov-spacing-", 1),
+      ],
+      { full: 0.55, partial: 0.35 }
+    ),
+  ],
   maintenance: {
     notes: [
       "CMSDS is a family of design systems with a Core package plus CMS.gov, HealthCare.gov, and Medicare.gov child themes.",
