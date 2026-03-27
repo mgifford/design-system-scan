@@ -90,7 +90,7 @@ export const kolibri = {
       "Color design tokens",
       [
         signal("css-regex", "KoliBri color token in CSS", "--kol-color-", 2),
-        htmlRegex("KoliBri color token defined", "--kol-color-[a-z0-9-]+\\s*:", 2),
+        htmlRegex("KoliBri color token defined", "--kol-color-[a-z0-9][a-z0-9-]*\\s*:", 2),
         htmlRegex("KoliBri color token used", "var\\(--kol-color-", 1),
       ],
       { full: 0.55, partial: 0.35 }
@@ -100,7 +100,7 @@ export const kolibri = {
       "Typography design tokens",
       [
         signal("css-regex", "KoliBri font token in CSS", "--kol-font-", 2),
-        htmlRegex("KoliBri font token defined", "--kol-font-[a-z0-9-]+\\s*:", 2),
+        htmlRegex("KoliBri font token defined", "--kol-font-[a-z0-9][a-z0-9-]*\\s*:", 2),
         htmlRegex("KoliBri font token used", "var\\(--kol-font-", 1),
       ],
       { full: 0.55, partial: 0.35 }
@@ -110,7 +110,7 @@ export const kolibri = {
       "Border design tokens",
       [
         signal("css-regex", "KoliBri border token in CSS", "--kol-border-", 2),
-        htmlRegex("KoliBri border token defined", "--kol-border-[a-z0-9-]+\\s*:", 2),
+        htmlRegex("KoliBri border token defined", "--kol-border-[a-z0-9][a-z0-9-]*\\s*:", 2),
         htmlRegex("KoliBri border token used", "var\\(--kol-border-", 1),
       ],
       { full: 0.55, partial: 0.35 }

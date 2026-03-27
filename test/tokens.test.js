@@ -16,7 +16,7 @@ function wrap(html) {
 
 function evaluateToken(tokenId, html, definition) {
   const page = evaluateHtml("https://example.test/", wrap(html), definition);
-  return (page.tokens ?? []).find((t) => t.id === tokenId);
+  return (page.tokens ?? []).find((token) => token.id === tokenId);
 }
 
 // ── USWDS ──────────────────────────────────────────────────────────────────

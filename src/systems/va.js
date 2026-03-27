@@ -95,7 +95,7 @@ export const va = {
       "Color design tokens",
       [
         signal("css-regex", "VADS color token in CSS", "--vads-color-", 2),
-        htmlRegex("VADS color token defined", "--vads-color-[a-z0-9-]+\\s*:", 2),
+        htmlRegex("VADS color token defined", "--vads-color-[a-z0-9][a-z0-9-]*\\s*:", 2),
         htmlRegex("VADS color token used", "var\\(--vads-color-", 1),
       ],
       { full: 0.55, partial: 0.35 }
@@ -105,7 +105,7 @@ export const va = {
       "Typography design tokens",
       [
         signal("css-regex", "VADS font token in CSS", "--vads-font-", 2),
-        htmlRegex("VADS font token defined", "--vads-font-[a-z0-9-]+\\s*:", 2),
+        htmlRegex("VADS font token defined", "--vads-font-[a-z0-9][a-z0-9-]*\\s*:", 2),
         htmlRegex("VADS font token used", "var\\(--vads-font-", 1),
       ],
       { full: 0.55, partial: 0.35 }
@@ -115,7 +115,7 @@ export const va = {
       "Spacing design tokens",
       [
         signal("css-regex", "VADS spacing token in CSS", "--vads-spacing-", 2),
-        htmlRegex("VADS spacing token defined", "--vads-spacing-[a-z0-9-]+\\s*:", 2),
+        htmlRegex("VADS spacing token defined", "--vads-spacing-[a-z0-9][a-z0-9-]*\\s*:", 2),
         htmlRegex("VADS spacing token used", "var\\(--vads-spacing-", 1),
       ],
       { full: 0.55, partial: 0.35 }

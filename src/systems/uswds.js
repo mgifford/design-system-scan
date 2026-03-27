@@ -354,7 +354,7 @@ const tokens = [
     "Color design tokens",
     [
       signal("css-regex", "USWDS color token in CSS", "--uswds-color-", 2),
-      htmlRegex("USWDS color token defined", "--uswds-color-[a-z0-9-]+\\s*:", 2),
+      htmlRegex("USWDS color token defined", "--uswds-color-[a-z0-9][a-z0-9-]*\\s*:", 2),
       htmlRegex("USWDS color token used", "var\\(--uswds-color-", 1),
     ],
     { full: 0.55, partial: 0.35 }
@@ -364,7 +364,7 @@ const tokens = [
     "Typography design tokens",
     [
       signal("css-regex", "USWDS font token in CSS", "--uswds-font-", 2),
-      htmlRegex("USWDS font token defined", "--uswds-font-[a-z0-9-]+\\s*:", 2),
+      htmlRegex("USWDS font token defined", "--uswds-font-[a-z0-9][a-z0-9-]*\\s*:", 2),
       htmlRegex("USWDS font token used", "var\\(--uswds-font-", 1),
     ],
     { full: 0.55, partial: 0.35 }
@@ -374,7 +374,7 @@ const tokens = [
     "Spacing design tokens",
     [
       signal("css-regex", "USWDS spacing token in CSS", "--uswds-spacing-", 2),
-      htmlRegex("USWDS spacing token defined", "--uswds-spacing-[a-z0-9-]+\\s*:", 2),
+      htmlRegex("USWDS spacing token defined", "--uswds-spacing-[a-z0-9][a-z0-9-]*\\s*:", 2),
       htmlRegex("USWDS spacing token used", "var\\(--uswds-spacing-", 1),
     ],
     { full: 0.55, partial: 0.35 }
@@ -384,7 +384,7 @@ const tokens = [
     "Theme override tokens",
     [
       signal("css-regex", "USWDS theme token in CSS", "--uswds-theme-", 2),
-      htmlRegex("USWDS theme token defined", "--uswds-theme-[a-z0-9-]+\\s*:", 2),
+      htmlRegex("USWDS theme token defined", "--uswds-theme-[a-z0-9][a-z0-9-]*\\s*:", 2),
       htmlRegex("USWDS theme token used", "var\\(--uswds-theme-", 1),
     ],
     { full: 0.55, partial: 0.35 }
