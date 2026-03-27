@@ -14,13 +14,15 @@ The scanner is built to answer questions like:
 
 ## What it does
 
-The scanner evaluates each URL in three layers:
+The scanner evaluates each URL in four layers:
 
 1. Site fingerprint
    It looks for broad tells such as `uswds.min.css`, `uswds.min.js`, `uswds-init`, the `usa-` class prefix, the VA `va-` Web Component prefix, and other system-specific package or event markers.
 2. Component detection
    It scores known components using weighted tells. For example, `usa-banner` alone suggests partial banner adoption, while `usa-banner` plus `usa-banner__header` and `usa-banner__content` is stronger evidence of a fuller implementation.
-3. Version clues
+3. Design token detection
+   It looks for system-specific CSS custom properties (design tokens) defined or consumed in inline styles and style blocks. Each system has its own token prefixes (for example `--uswds-color-`, `--govuk-colour-`, `--gcds-spacing-`), so a page using USWDS color tokens will not inadvertently score a GOV.UK result.
+4. Version clues
    It searches page HTML, asset URLs, CSS, and JS for visible USWDS version strings.
 
 This is heuristic, not a conformance validator. It helps surface evidence and likely alignment, not certify compliance.
@@ -340,6 +342,57 @@ The Pages site now publishes:
 
 Each new successful run merges into the published history. The current reports index stays focused on recent latest-per-trigger results, while older runs remain available through the archive packages.
 
+## Design token detection
+
+The scanner looks for design tokens through three signal types for each token group:
+
+1. A CSS external-asset regex that matches the token prefix inside linked stylesheets (weight 2).
+2. An HTML regex that matches a token being defined as a CSS custom property, for example `:root { --uswds-color-primary: … }` (weight 2).
+3. An HTML regex that matches a token being consumed via `var()`, for example `color: var(--uswds-color-primary)` (weight 1).
+
+Thresholds are `full` at 0.55 and `partial` at 0.35. A token group is scored `absent` if none of the signals match.
+
+Token prefixes are system-specific, so GCDS token usage will not score a USWDS result and vice versa.
+
+### Token groups by system
+
+| System | Token group | CSS custom property prefix | Token docs |
+| --- | --- | --- | --- |
+| USWDS | Color tokens | `--uswds-color-` | [Design tokens – color](https://designsystem.digital.gov/design-tokens/color/overview/) |
+| USWDS | Typography tokens | `--uswds-font-` | [Design tokens – typography](https://designsystem.digital.gov/design-tokens/typesetting/overview/) |
+| USWDS | Spacing tokens | `--uswds-spacing-` | [Design tokens – spacing](https://designsystem.digital.gov/design-tokens/spacing-units/) |
+| USWDS | Theme override tokens | `--uswds-theme-` | [Design tokens – settings](https://designsystem.digital.gov/documentation/settings/) |
+| VA.gov | Color tokens | `--vads-color-` | [VA Design System tokens](https://design.va.gov/foundation/color-palette) |
+| VA.gov | Typography tokens | `--vads-font-` | [VA Design System typography](https://design.va.gov/foundation/typography) |
+| VA.gov | Spacing tokens | `--vads-spacing-` | [VA Design System spacing](https://design.va.gov/foundation/spacing-units) |
+| CMS | Color tokens | `--cmsgov-color-` | [CMSDS design tokens](https://design.cms.gov/design-tokens/) |
+| CMS | Typography tokens | `--cmsgov-font-` | [CMSDS design tokens](https://design.cms.gov/design-tokens/) |
+| CMS | Spacing tokens | `--cmsgov-spacing-` | [CMSDS design tokens](https://design.cms.gov/design-tokens/) |
+| GOV.UK | Colour tokens¹ | `--govuk-colour-` | [GOV.UK Frontend variables](https://frontend.design-system.service.gov.uk/sass-api-reference/) |
+| GOV.UK | Typography tokens | `--govuk-font-` | [GOV.UK Frontend variables](https://frontend.design-system.service.gov.uk/sass-api-reference/) |
+| GOV.UK | Spacing tokens | `--govuk-spacing-` | [GOV.UK Frontend variables](https://frontend.design-system.service.gov.uk/sass-api-reference/) |
+| NL Design System | Color tokens | `--nl-color-` | [NLDS design tokens](https://nldesignsystem.nl/richtlijnen/stijl/design-tokens/) |
+| NL Design System | Typography tokens | `--nl-typography-` | [NLDS design tokens](https://nldesignsystem.nl/richtlijnen/stijl/design-tokens/) |
+| NL Design System | Spacing tokens | `--nl-space-` | [NLDS design tokens](https://nldesignsystem.nl/richtlijnen/stijl/design-tokens/) |
+| GC Design System | Color tokens | `--gcds-color-` | [GCDS tokens](https://design-system.canada.ca/en/styles/design-tokens/) |
+| GC Design System | Typography tokens | `--gcds-font-` | [GCDS tokens](https://design-system.canada.ca/en/styles/design-tokens/) |
+| GC Design System | Spacing tokens | `--gcds-spacing-` | [GCDS tokens](https://design-system.canada.ca/en/styles/design-tokens/) |
+| KoliBri | Color tokens | `--kol-color-` | [KoliBri theming](https://public-ui.github.io/docs/concepts/theming) |
+| KoliBri | Typography tokens | `--kol-font-` | [KoliBri theming](https://public-ui.github.io/docs/concepts/theming) |
+| KoliBri | Border tokens | `--kol-border-` | [KoliBri theming](https://public-ui.github.io/docs/concepts/theming) |
+
+Token detection results appear in the plain-text report under `Design tokens:` per page and in the site-wide summary under `Site-wide token tells:`.
+
+To see token results in JSON output:
+
+```bash
+node src/cli.js --system uswds --json https://designsystem.digital.gov/
+```
+
+¹ GOV.UK uses British English (`colour`) in its official CSS custom property names and token group id.
+
+Token groups appear in each page result under the `tokens` array, and in the site-wide summary under `siteSummary.tokens`.
+
 ## USWDS starter signals
 
 The initial USWDS definition uses signals derived from official documentation, especially:
@@ -355,12 +408,14 @@ The current component coverage includes:
 - the full current official USWDS component inventory from the Components overview
 - fixture-based `absent` / `partial` / `full` tests for every official component
 - starter template detection for documentation pages, landing pages, 404 pages, authentication pages, and form templates
+- design token detection for color, typography, spacing, and theme tokens
 
 The test suite uses synthetic HTML fixtures that mirror live-site evidence like documented classes, attributes, and structure. It validates the scanner’s rule model, which is different from proving that any arbitrary site is semantically correct.
 
 ## VA.gov starter signals
 
 The initial VA definition is optimized around the official Web Components guidance and distinctive `va-` custom elements.
+It includes design token detection for `--vads-color-`, `--vads-font-`, and `--vads-spacing-` prefixes.
 
 ## CMS Design System starter signals
 
@@ -381,6 +436,7 @@ The scanner treats this as one CMS design-system family with child-theme detecti
 ## GOV.UK starter signals
 
 The GOV.UK definition is optimized around the official `govuk-` class prefix, `govuk-frontend`, and the standard `data-module` hooks used by GOV.UK Frontend.
+It includes design token detection for `--govuk-colour-`, `--govuk-font-`, and `--govuk-spacing-` prefixes.
 
 The repo now also tracks machine-readable component inventories for each design system under [data/design-systems/](/Users/mike.gifford/design-system-scan/data/design-systems), so all official component sets can be indexed separately from current scanner coverage.
 

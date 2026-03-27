@@ -20,6 +20,23 @@ Legend:
 | GOV.UK Design System | Starter coverage focused on GOV.UK Frontend classes, `data-module` hooks, and the official component inventory |
 | NL Design System | Starter coverage focused on the official component inventory and distinctive `nl-` candidate/component signals |
 | GC Design System | Starter coverage focused on `gcds-*` web components and the official GC component inventory |
+| KoliBri - Public UI | Starter coverage focused on `kol-*` web components and design token prefixes |
+
+## Design token detection grid
+
+Each tracked system exposes CSS custom properties (design tokens). The scanner detects token usage through three signals per group: token prefix in external CSS assets, token defined in inline styles, and token consumed via `var()`.
+
+| Token group | USWDS | VA | CMS | GOV.UK | NLDS | GCDS | KoliBri |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| Color / Colour tokens | `--uswds-color-` | `--vads-color-` | `--cmsgov-color-` | `--govuk-colour-`\* | `--nl-color-` | `--gcds-color-` | `--kol-color-` |
+| Typography tokens | `--uswds-font-` | `--vads-font-` | `--cmsgov-font-` | `--govuk-font-` | `--nl-typography-` | `--gcds-font-` | `--kol-font-` |
+| Spacing tokens | `--uswds-spacing-` | `--vads-spacing-` | `--cmsgov-spacing-` | `--govuk-spacing-` | `--nl-space-` | `--gcds-spacing-` | N/A |
+| Theme override tokens | `--uswds-theme-` | N/A | N/A | N/A | N/A | N/A | N/A |
+| Border tokens | N/A | N/A | N/A | N/A | N/A | N/A | `--kol-border-` |
+
+\* GOV.UK uses British English spelling (`colour`) in its official CSS custom property names and token group id.
+
+Scoring thresholds: `full` ≥ 0.55, `partial` ≥ 0.35, `absent` below 0.35.
 
 ## Cross-system semantic grid
 
