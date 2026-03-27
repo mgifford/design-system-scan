@@ -764,6 +764,7 @@ export async function scanUrl(url, definition, options) {
 
 export async function discoverUrls(seedUrls, options) {
   const queue = seedUrls.map((url) => normalizePageUrl(url));
+  const seedSet = new Set(queue);
   const seen = new Set();
   const accepted = new Set();
   const discovered = [];
@@ -817,7 +818,31 @@ export async function discoverUrls(seedUrls, options) {
 
     const finalUrl = normalizePageUrl(pageResponse.finalUrl || url);
 
-    if (!sameOrigin(url, finalUrl) || !isLikelyHtmlPage(pageResponse) || shouldSkipCrawlUrl(finalUrl)) {
+    if (!sameOrigin(url, finalUrl)) {
+      // For seed URLs that redirect cross-origin (e.g. ncbi.nlm.nih.gov →
+      // www.ncbi.nlm.nih.gov), follow the redirect so the crawl is not silently
+      // abandoned.  Re-queue the canonical URL at the front of the queue and
+      // mark it as a seed so its own redirects are followed too.
+      if (seedSet.has(url) && !seen.has(finalUrl)) {
+        seedSet.add(finalUrl);
+        queue.unshift(finalUrl);
+
+        // Discover sitemaps from the canonical origin since the original
+        // sitemap lookup used the pre-redirect URL.
+        if (options.crawl) {
+          const redirectedSitemapUrls = await discoverSitemapUrls(finalUrl, options);
+          for (const sitemapUrl of redirectedSitemapUrls) {
+            if (!seen.has(sitemapUrl) && !queue.includes(sitemapUrl) && queue.length < options.maxPages * 4) {
+              queue.push(sitemapUrl);
+            }
+          }
+        }
+      }
+
+      continue;
+    }
+
+    if (!isLikelyHtmlPage(pageResponse) || shouldSkipCrawlUrl(finalUrl)) {
       continue;
     }
 
