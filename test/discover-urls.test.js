@@ -228,3 +228,198 @@ test("discoverUrls excludes non-html responses discovered from sitemap entries",
     "https://example.gov/apply",
   ]);
 });
+
+test("discoverUrls follows cross-origin redirect from seed URL (bare domain to www)", async () => {
+  // Simulates ncbi.nlm.nih.gov → www.ncbi.nlm.nih.gov
+  const urls = await discoverUrls(["https://ncbi.nlm.nih.gov/"], {
+    crawl: true,
+    maxPages: 3,
+    timeoutMs: 1000,
+    fetchPage: async (url) => {
+      if (url === "https://ncbi.nlm.nih.gov/") {
+        return {
+          url,
+          finalUrl: "https://www.ncbi.nlm.nih.gov/",
+          redirected: true,
+          contentType: "text/html; charset=utf-8",
+          text: `<html><body><a href="/about">About</a><a href="/search">Search</a></body></html>`,
+        };
+      }
+
+      if (url === "https://www.ncbi.nlm.nih.gov/") {
+        return {
+          url,
+          finalUrl: url,
+          redirected: false,
+          contentType: "text/html; charset=utf-8",
+          text: `<html><body><a href="/about">About</a><a href="/search">Search</a></body></html>`,
+        };
+      }
+
+      if (url === "https://www.ncbi.nlm.nih.gov/about") {
+        return {
+          url,
+          finalUrl: url,
+          redirected: false,
+          contentType: "text/html; charset=utf-8",
+          text: `<html><body><p>About NCBI</p></body></html>`,
+        };
+      }
+
+      if (url === "https://www.ncbi.nlm.nih.gov/search") {
+        return {
+          url,
+          finalUrl: url,
+          redirected: false,
+          contentType: "text/html; charset=utf-8",
+          text: `<html><body><p>Search</p></body></html>`,
+        };
+      }
+
+      throw new Error(`Unexpected fetch: ${url}`);
+    },
+  });
+
+  assert.ok(urls.length > 0, "Expected at least one page to be discovered after following redirect");
+  assert.ok(urls.some((u) => u === "https://www.ncbi.nlm.nih.gov/"), "Expected canonical www URL to be discovered");
+});
+
+test("discoverUrls follows cross-origin redirect from seed URL without crawling", async () => {
+  const urls = await discoverUrls(["https://ncbi.nlm.nih.gov/"], {
+    crawl: false,
+    maxPages: 1,
+    timeoutMs: 1000,
+    fetchPage: async (url) => {
+      if (url === "https://ncbi.nlm.nih.gov/") {
+        return {
+          url,
+          finalUrl: "https://www.ncbi.nlm.nih.gov/",
+          redirected: true,
+          contentType: "text/html; charset=utf-8",
+          text: `<html><body><p>Home</p></body></html>`,
+        };
+      }
+
+      if (url === "https://www.ncbi.nlm.nih.gov/") {
+        return {
+          url,
+          finalUrl: url,
+          redirected: false,
+          contentType: "text/html; charset=utf-8",
+          text: `<html><body><p>Home</p></body></html>`,
+        };
+      }
+
+      throw new Error(`Unexpected fetch: ${url}`);
+    },
+  });
+
+  assert.deepEqual(urls, ["https://www.ncbi.nlm.nih.gov/"]);
+});
+
+test("discoverUrls still blocks cross-origin redirects from non-seed crawled links", async () => {
+  const urls = await discoverUrls(["https://example.gov/"], {
+    crawl: true,
+    maxPages: 5,
+    timeoutMs: 1000,
+    fetchPage: async (url) => {
+      if (url === "https://example.gov/") {
+        return {
+          url,
+          finalUrl: url,
+          redirected: false,
+          contentType: "text/html; charset=utf-8",
+          text: `<html><body>
+            <a href="/local">Local</a>
+            <a href="/external-redirect">External redirect</a>
+          </body></html>`,
+        };
+      }
+
+      if (url === "https://example.gov/local") {
+        return {
+          url,
+          finalUrl: url,
+          redirected: false,
+          contentType: "text/html; charset=utf-8",
+          text: `<html><body><p>Local page</p></body></html>`,
+        };
+      }
+
+      if (url === "https://example.gov/external-redirect") {
+        return {
+          url,
+          finalUrl: "https://other-domain.gov/",
+          redirected: true,
+          contentType: "text/html; charset=utf-8",
+          text: `<html><body><p>Redirected away</p></body></html>`,
+        };
+      }
+
+      throw new Error(`Unexpected fetch: ${url}`);
+    },
+  });
+
+  assert.ok(urls.some((u) => u === "https://example.gov/"), "Expected seed page");
+  assert.ok(urls.some((u) => u === "https://example.gov/local"), "Expected local link");
+  assert.ok(!urls.some((u) => u === "https://other-domain.gov/"), "Cross-origin redirect from crawled link should be blocked");
+});
+
+test("discoverUrls discovers sitemaps from canonical URL after seed cross-origin redirect", async () => {
+  const urls = await discoverUrls(["https://example.gov/"], {
+    crawl: true,
+    maxPages: 5,
+    timeoutMs: 1000,
+    fetchText: async (url) => {
+      if (url === "https://www.example.gov/sitemap.xml") {
+        return `<?xml version="1.0" encoding="UTF-8"?>
+        <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+          <url><loc>https://www.example.gov/news</loc></url>
+          <url><loc>https://www.example.gov/about</loc></url>
+        </urlset>`;
+      }
+
+      // Original domain sitemap fails (or has no matching entries)
+      throw new Error(`No sitemap at ${url}`);
+    },
+    fetchPage: async (url) => {
+      if (url === "https://example.gov/") {
+        return {
+          url,
+          finalUrl: "https://www.example.gov/",
+          redirected: true,
+          contentType: "text/html; charset=utf-8",
+          text: `<html><body><p>Home</p></body></html>`,
+        };
+      }
+
+      if (url === "https://www.example.gov/") {
+        return {
+          url,
+          finalUrl: url,
+          redirected: false,
+          contentType: "text/html; charset=utf-8",
+          text: `<html><body><p>Home</p></body></html>`,
+        };
+      }
+
+      if (url === "https://www.example.gov/news" || url === "https://www.example.gov/about") {
+        return {
+          url,
+          finalUrl: url,
+          redirected: false,
+          contentType: "text/html; charset=utf-8",
+          text: `<html><body><p>Page</p></body></html>`,
+        };
+      }
+
+      throw new Error(`Unexpected fetch: ${url}`);
+    },
+  });
+
+  assert.ok(urls.some((u) => u === "https://www.example.gov/"), "Expected canonical home page");
+  assert.ok(
+    urls.some((u) => u === "https://www.example.gov/news") || urls.some((u) => u === "https://www.example.gov/about"),
+    "Expected sitemap URLs from canonical origin to be discovered"
+  );
+});
