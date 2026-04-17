@@ -249,6 +249,96 @@ function extractTags(html) {
   return uniq(tags);
 }
 
+const INTERACTIVE_ARIA_ROLES = new Set([
+  "alertdialog",
+  "combobox",
+  "dialog",
+  "grid",
+  "listbox",
+  "menu",
+  "menubar",
+  "menuitem",
+  "menuitemcheckbox",
+  "menuitemradio",
+  "option",
+  "progressbar",
+  "scrollbar",
+  "searchbox",
+  "slider",
+  "spinbutton",
+  "switch",
+  "tab",
+  "tablist",
+  "tabpanel",
+  "tooltip",
+  "tree",
+  "treegrid",
+  "treeitem",
+]);
+
+function extractAriaWidgetRoles(html) {
+  const found = new Set();
+
+  for (const match of html.matchAll(/\brole=["']([^"']+)["']/giu)) {
+    for (const role of match[1].split(/\s+/u)) {
+      const normalized = role.toLowerCase().trim();
+
+      if (INTERACTIVE_ARIA_ROLES.has(normalized)) {
+        found.add(normalized);
+      }
+    }
+  }
+
+  return [...found];
+}
+
+function getSystemCoveredTags(definition) {
+  const exactTags = new Set();
+  const tagPrefixes = [];
+  const allDefinitions = [
+    ...(definition.components ?? []),
+    ...(definition.templates ?? []),
+    ...(definition.themes ?? []),
+  ];
+
+  for (const item of allDefinitions) {
+    for (const sig of item.signals ?? []) {
+      if (sig.type === "tag-exact") {
+        exactTags.add(sig.pattern.toLowerCase());
+      }
+
+      if (sig.type === "tag-prefix") {
+        tagPrefixes.push(sig.pattern.toLowerCase());
+      }
+    }
+  }
+
+  return { exactTags, tagPrefixes };
+}
+
+function isTagCoveredBySystem(tag, coveredTags) {
+  if (coveredTags.exactTags.has(tag)) {
+    return true;
+  }
+
+  return coveredTags.tagPrefixes.some((prefix) => tag.startsWith(prefix));
+}
+
+function detectUnknownPatterns(html, tags, definition) {
+  const coveredTags = getSystemCoveredTags(definition);
+
+  const uncoveredCustomElements = tags
+    .filter((tag) => tag.includes("-"))
+    .filter((tag) => !isTagCoveredBySystem(tag, coveredTags));
+
+  const ariaRoles = extractAriaWidgetRoles(html);
+
+  return [
+    ...uncoveredCustomElements.map((tag) => ({ type: "custom-element", pattern: tag })),
+    ...ariaRoles.map((role) => ({ type: "aria-role", pattern: role })),
+  ];
+}
+
 function extractLinkedAssets(html, baseUrl) {
   const stylesheetUrls = [];
   const scriptUrls = [];
@@ -670,6 +760,8 @@ function evaluatePageContent(url, html, definition, options, assetContent = { cs
     .filter((asset) => asset.error)
     .map((asset) => `${asset.url}: ${asset.error}`);
 
+  const unknownPatterns = detectUnknownPatterns(html, page.tags, definition);
+
   return {
     url,
     error: null,
@@ -681,6 +773,7 @@ function evaluatePageContent(url, html, definition, options, assetContent = { cs
     templates,
     tokens,
     primaryTheme: selectPrimaryMatch(themes),
+    unknownPatterns,
     assetInventory: {
       cssUrls: page.cssUrls,
       jsUrls: page.jsUrls,
@@ -1177,6 +1270,21 @@ function summarizeSite(pages) {
     }
   }
 
+  const unknownPatternCounts = new Map();
+
+  for (const page of successfulPages) {
+    for (const pattern of page.unknownPatterns ?? []) {
+      const key = `${pattern.type}:${pattern.pattern}`;
+      const current = unknownPatternCounts.get(key) ?? {
+        type: pattern.type,
+        pattern: pattern.pattern,
+        pageCount: 0,
+      };
+      current.pageCount += 1;
+      unknownPatternCounts.set(key, current);
+    }
+  }
+
   return {
     pageCount: pages.length,
     successfulPageCount: successfulPages.length,
@@ -1214,5 +1322,8 @@ function summarizeSite(pages) {
           full: theme.full,
           partial: theme.partial,
         }))[0] ?? null,
+    unknownPatterns: [...unknownPatternCounts.values()].sort(
+      (left, right) => right.pageCount - left.pageCount
+    ),
   };
 }

@@ -2,6 +2,12 @@ function formatPercent(value) {
   return `${Math.round(value * 100)}%`;
 }
 
+function unknownPatternLabel(pattern) {
+  return pattern.type === "custom-element"
+    ? `<${pattern.pattern}>`
+    : `role="${pattern.pattern}"`;
+}
+
 function topComponents(components) {
   return components
     .filter((component) => component.status !== "absent")
@@ -96,6 +102,17 @@ export function formatTextReport(report) {
     lines.push(`Site-wide token tells: ${tokenSummary}`);
   }
 
+  if ((report.siteSummary.unknownPatterns ?? []).length > 0) {
+    const patternSummary = report.siteSummary.unknownPatterns
+      .slice(0, 6)
+      .map((p) => {
+        const label = unknownPatternLabel(p);
+        return `${label} (${p.pageCount} page${p.pageCount === 1 ? "" : "s"})`;
+      })
+      .join("; ");
+    lines.push(`Site-wide unknown patterns: ${patternSummary}`);
+  }
+
   lines.push("");
 
   for (const page of report.pages) {
@@ -176,6 +193,14 @@ export function formatTextReport(report) {
         lines.push(
           `    - ${token.name}: ${token.status} (${formatPercent(token.coverage)})${evidence ? ` via ${evidence}` : ""}`
         );
+      }
+    }
+
+    if ((page.unknownPatterns ?? []).length > 0) {
+      lines.push("  Unknown patterns:");
+
+      for (const pattern of page.unknownPatterns) {
+        lines.push(`    - ${unknownPatternLabel(pattern)}`);
       }
     }
 
