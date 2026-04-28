@@ -38,6 +38,10 @@ permissions:
   pages: write
   id-token: write
 
+concurrency:
+  group: "pages"
+  cancel-in-progress: false
+
 jobs:
   test:
     runs-on: ubuntu-latest
@@ -437,13 +441,13 @@ jobs:
           cat artifacts/report.txt >> "$GITHUB_STEP_SUMMARY"
 
       - name: Upload scan artifacts
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: design-system-scan-${{ steps.inputs.outputs.trigger }}-${{ github.run_number }}
           path: artifacts/
 
       - name: Upload Pages artifact
-        uses: actions/upload-pages-artifact@v4
+        uses: actions/upload-pages-artifact@v5
         with:
           path: site/
 
@@ -458,7 +462,7 @@ jobs:
     steps:
       - name: Deploy to GitHub Pages
         id: deployment
-        uses: actions/deploy-pages@v4
+        uses: actions/deploy-pages@v5
 
   issue-followup:
     runs-on: ubuntu-latest
